@@ -1,5 +1,6 @@
 package com.discworld.jdownloaderx;
 
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GridLayout;
 
@@ -24,6 +25,11 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.stream.StreamSource;
 
 import java.awt.Component;
 
@@ -33,34 +39,23 @@ import java.awt.FlowLayout;
 
 import javax.swing.JTextField;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import com.discworld.jdownloaderx.dto.Book;
+import com.discworld.jdownloaderx.dto.BookDownloadTableModel;
+import com.discworld.jdownloaderx.dto.BookURLsTableModel;
+import com.discworld.jdownloaderx.dto.JABXList;
 
 import java.awt.Font;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,25 +69,6 @@ public class JDownloaderX implements ActionListener
                   sUrlEpub,
                   sUrlTxt,
                   sUrlSfb;
-   
-   private Pattern ptnAuthotBgn,
-                   ptnTitleBgn,
-                   ptnUrlFb2,
-                   ptnUrlEpub,
-                   ptnUrlTxt,
-                   ptnUrlSfb;
-   
-   private JButton btnAdd,
-                   btnRemove,
-                   btnStart,
-                   btnStop;
-
-   private JFrame frame;
-   private JTable table;
-   private JTextField txtURL;
-   
-   private ClipboardListener           oClipboardListener;
-   
    private final static String DOMAIN = "chitanka.info",
                                AUTHOR_BGN = "<span itemscope itemtype=\"http://schema\\.org/Person\"><a href=\"/person/[\\w\\-]+\" itemprop=\"name\" data-edit=\"/admin/person/\\d+/edit\">",
                                AUTHOR_END = "</a></span>",
@@ -108,7 +84,37 @@ public class JDownloaderX implements ActionListener
                                URL_END = "\"",
                                BOOK = "/book/",
                                DOWNLOAD_FLD = "D://";
+   
+   private static String sVersion;
+   
+   private Pattern ptnAuthotBgn,
+                   ptnTitleBgn,
+                   ptnUrlFb2,
+                   ptnUrlEpub,
+                   ptnUrlTxt,
+                   ptnUrlSfb;
+   
+   private JButton btnAdd,
+                   btnRemove,
+                   btnStart,
+                   btnStop,
+                   btnSearch;
 
+   private JFrame frame;
+
+   private JTextField txtURL;
+   
+   private JTable tblBooksUrl;
+   
+   private ClipboardListener oClipboardListener;
+   private JTable tblBooksDwn;
+   private JScrollPane spBooksDwn;
+   
+   BookURLsTableModel oBookURLsTableModel;
+   
+   BookDownloadTableModel oBookDownloadTableModel;
+   
+   
    /**
     * Launch the application.
     */
@@ -120,8 +126,14 @@ public class JDownloaderX implements ActionListener
          {
             try
             {
+               Package p = this.getClass().getPackage();
+               sVersion = p.getImplementationVersion();
+
+               
                JDownloaderX window = new JDownloaderX();
                window.frame.setVisible(true);
+               
+               
             } catch(Exception e)
             {
                e.printStackTrace();
@@ -135,6 +147,8 @@ public class JDownloaderX implements ActionListener
     */
    public JDownloaderX()
    {
+//      super("JDownloaderX " + (sVersion != null ? sVersion : "" ));
+      
       initialize();
       
       Runnable checkContent = new Runnable()
@@ -167,49 +181,19 @@ public class JDownloaderX implements ActionListener
     */
    private void initialize()
    {
-      frame = new JFrame();
-      frame.setBounds(100, 100, 450, 300);
+      frame = new JFrame("JDownloaderX " + (sVersion != null ? sVersion : "" ));
+      frame.setBounds(100, 100, 348, 319);
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       
-      JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-      frame.getContentPane().add(tabbedPane, BorderLayout.NORTH);
-      
-      DefaultTableModel model = new DefaultTableModel(null,
-               new String[] {
-                  "Column1", "Column2"
-               }
-            );
-      
-      model.addRow(new Object []{"2", "3"});
-      model.setValueAt("5", 0, 1);
-       
-      JComponent panel2 = makeTextPanel("Panel #2");
-      tabbedPane.addTab("Tab 2", null, panel2,
-              "Does twice as much nothing");
-      tabbedPane.setMnemonicAt(0, KeyEvent.VK_2);      
-      
-      tabbedPane.setTabPlacement(JTabbedPane.TOP);
-      tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);      
-      
-      JPanel panel = new JPanel();
-      tabbedPane.addTab("New tab", null, panel, null);
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      
-      JPanel pnlAll = new JPanel();
-      panel.add(pnlAll);
-      pnlAll.setLayout(new BorderLayout(0, 0));
-      
       JPanel pnlButtons = new JPanel();
-      pnlButtons.setAlignmentY(Component.TOP_ALIGNMENT);
-      pnlAll.add(pnlButtons, BorderLayout.NORTH);
-      pnlButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
-      pnlButtons.setLayout(new BoxLayout(pnlButtons, BoxLayout.X_AXIS));
+      frame.getContentPane().add(pnlButtons, BorderLayout.NORTH);
       
       btnAdd = new JButton("");
       btnAdd.setAlignmentX(Component.CENTER_ALIGNMENT);
       btnAdd.setToolTipText("Add");
       btnAdd.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/1421707472_add.png")));
       btnAdd.addActionListener(this);
+      pnlButtons.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
       pnlButtons.add(btnAdd);
       
       btnStart = new JButton("");
@@ -230,45 +214,159 @@ public class JDownloaderX implements ActionListener
       btnRemove.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/1421707488_delete.png")));
       pnlButtons.add(btnRemove);
       
-      txtURL = new JTextField();
-      txtURL.setFont(new Font("Courier New", Font.PLAIN, 13));
-      pnlAll.add(txtURL, BorderLayout.SOUTH);
-      txtURL.setColumns(10);
+      JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+      frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
       
-      JScrollPane scrollPane = new JScrollPane(new JTable(new DefaultTableModel(
-         new Object[][] {
-         },
-         new String[] {
-            "Name", "URL", "Progress"
-         }
-      )));
-      panel.add(scrollPane);
-   }
-
-   protected JComponent makeTextPanel(String text) {
+//      DefaultTableModel model = new DefaultTableModel(null,
+//               new String[] {
+//                  "Column1", "Column2"
+//               }
+//            );
+//      
+//      model.addRow(new Object []{"2", "3"});
+//      model.setValueAt("5", 0, 1);
+       
+//      JComponent panel2 = makeTextPanel("Panel #2");
+      
       JPanel panel = new JPanel(false);
       panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
       
-//      table = new JTable();
-//      JTable table = new JTable(new DefaultTableModel(new Object[]{"Column1", "Column2"}, 0));
-//      panel.add(table);
-      JLabel filler = new JLabel(text);
-      filler.setHorizontalAlignment(JLabel.CENTER);
-      panel.add(filler);
-      return panel;
-  }
+      spBooksDwn = new JScrollPane();
+      panel.add(spBooksDwn);
+      
+      tblBooksDwn = new JTable();
+      Vector<Book> vBooksDwn = new Vector<Book>();
+      oBookDownloadTableModel = new BookDownloadTableModel(vBooksDwn);
+      tblBooksDwn.setModel(oBookDownloadTableModel);
+      
+      spBooksDwn.setViewportView(tblBooksDwn);
+      
+      tabbedPane.addTab("Downloads", null, panel, null);
+      tabbedPane.setMnemonicAt(0, KeyEvent.VK_2);      
+      
+      tabbedPane.setTabPlacement(JTabbedPane.TOP);
+      
+      panel = new JPanel();
+      tabbedPane.addTab("Link Grabber", null, panel, null);
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      
+      JPanel pnlSearch = new JPanel();
+      panel.add(pnlSearch);
+      pnlSearch.setLayout(new BorderLayout(0, 0));
+      
+      txtURL = new JTextField();
+      txtURL.setHorizontalAlignment(SwingConstants.LEFT);
+      pnlSearch.add(txtURL, BorderLayout.CENTER);
+      txtURL.setFont(new Font("Courier New", Font.PLAIN, 13));
+      txtURL.setColumns(10);
+      
+      btnSearch = new JButton("");
+      btnSearch.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/Search.png")));
+      btnSearch.setToolTipText("Search");
+      btnSearch.setAlignmentX(0.5f);
+      pnlSearch.add(btnSearch, BorderLayout.EAST);
+      
+  
+//      DefaultTableModel dtm = new DefaultTableModel(
+//               new Object[][] {
+//               },
+//               new String[] {
+//                  "Name", "URL", "Progress"
+//               }
+//            );
+//
+//      JTable tblBooksUrl = new JTable(dtm);
+      
+      tblBooksUrl = new JTable();
+      
+      Vector<Book> vBooks = new Vector<Book>();
+      oBookURLsTableModel = new BookURLsTableModel(vBooks);
+      tblBooksUrl.setModel(oBookURLsTableModel);
+      
+      JScrollPane spBooksUrl = new JScrollPane(tblBooksUrl);
+      
+//      JScrollPane scrollPane = new JScrollPane(new JTable(new DefaultTableModel(
+//               new Object[][] {
+//               },
+//               new String[] {
+//                  "Name", "URL", "Progress"
+//               }
+//            )));
+
+      
+      JScrollBar sb = spBooksUrl.getVerticalScrollBar();
+      sb.setPreferredSize(new Dimension(50, 0));
+
+      // Put it to the left.
+      spBooksUrl.remove(sb);
+      panel.add(spBooksUrl);
+   }
+
+//   protected JComponent makeTextPanel(String text) 
+//   {
+//      JPanel panel = new JPanel(false);
+//      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+//      
+//      spBooksDwn = new JScrollPane();
+//      panel.add(spBooksDwn);
+//      
+//      tblBooksDwn = new JTable();
+//      spBooksDwn.setViewportView(tblBooksDwn);
+//      return panel;
+//  }
 
    @Override
    public void actionPerformed(ActionEvent e)
    {
       Object oSource = e.getSource();
 
-      if(oSource == btnAdd)
+      if(oSource == btnSearch)
       {
+         
          try
          {
+            JAXBContext jaxbContext = JAXBContext.newInstance(Book.class);
+            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+            Book bkA = new Book("AAA", "BB");
+            StringWriter sw = new StringWriter();
+            jaxbMarshaller.marshal(bkA, sw);
+            String xmlString = sw.toString();
+            
+            JAXBContext jc = JAXBContext.newInstance(Book.class);
+            Unmarshaller unmarshaller = jc.createUnmarshaller();
+            
+            StringReader reader = new StringReader(xmlString);
+            Book BookNew = (Book) unmarshaller.unmarshal(reader);
+            
+            JABXList<Book> Books = new JABXList<Book>();
+            Books.add(bkA);
+            
+            Book bkB = new Book("asd", "asdad");
+            Books.add(bkB);
+            
+            JAXBContext jc1 = JAXBContext.newInstance(JABXList.class, Book.class);
+            Marshaller marshaller1 = jc1.createMarshaller();
+            marshaller1.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            StringWriter sw1 = new StringWriter();
+            marshaller1.marshal(Books, sw1);
+            xmlString = sw1.toString();
+            
+            unmarshaller = jc1.createUnmarshaller();
+            reader = new StringReader(xmlString);
+//            Str
+//            Object o = unmarshaller.unmarshal(reader, JABXList.class);
+//            unmarshaller.unmarshal();
+            JABXList<?> Books1 = (JABXList<?>)unmarshaller.unmarshal(new StreamSource(reader), JABXList.class).getValue();
+            
+            
+            Book c = (Book) Books1.getValues().get(0);
+            
             vParseURL(txtURL.getText());
          } catch(IOException e1)
+         {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+         } catch(JAXBException e1)
          {
             // TODO Auto-generated catch block
             e1.printStackTrace();
@@ -463,7 +561,7 @@ public class JDownloaderX implements ActionListener
 
             sAuthor = sFindString(sResponse, ptnAuthotBgn, AUTHOR_END);
             
-            sTitle = sFindString(sResponse, ptnAuthotBgn, TITLE_END);
+            sTitle = sFindString(sResponse, ptnTitleBgn, TITLE_END);
             
             sVolume = sFindString(sResponse, VOLUME_BGN, VOLUME_END);
             
@@ -475,8 +573,25 @@ public class JDownloaderX implements ActionListener
             
             sUrlSfb = sFindString(sResponse, ptnUrlSfb, URL_BGN, URL_END); 
             
-            DownloadFile oDownloadFile = new DownloadFile(sUrlFb2, DOWNLOAD_FLD);
-            oDownloadFile.execute();
+//            DownloadFile oDownloadFile = new DownloadFile(sUrlFb2, DOWNLOAD_FLD);
+//            oDownloadFile.execute();
+            
+            Book bkFb2 = new Book(sTitle, sUrlFb2);
+            Book bkEpub = new Book(sTitle, sUrlEpub);
+            Book bkTxt = new  Book(sTitle, sUrlTxt);
+            Book bkSfb = new  Book(sTitle, sUrlSfb);
+            
+            Vector<Book> vBooks = new Vector<Book>();
+            vBooks.add(bkFb2);
+            vBooks.add(bkEpub);
+            
+            BookURLsTableModel oBookURLsTableModel = new BookURLsTableModel(vBooks);
+            tblBooksUrl.setModel(oBookURLsTableModel);
+            
+            vBooks.add(bkTxt);
+            vBooks.add(bkSfb);
+            oBookURLsTableModel.setValues(vBooks);
+            oBookURLsTableModel.fireTableDataChanged();
             
          } 
          catch(InterruptedException e)
