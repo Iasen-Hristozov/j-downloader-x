@@ -9,10 +9,18 @@ import javax.xml.bind.annotation.*;
 
 public class Book
 {
+   @Override
+   public boolean equals(Object obj)
+   {
+      return ((Book) obj).getName().equals(sName) && ((Book) obj).getURL().equals(sURL);
+   }
+
    @XmlElement(name = "name", required = true)
    private String sName;
    @XmlElement(name = "url", required = true)
    private String sURL;
+   @XmlTransient
+   private int iStatus;
    
    public Book()
    {
@@ -44,6 +52,16 @@ public class Book
    public void setURL(String sURL)
    {
       this.sURL = sURL;
+   }
+
+   public void setStatus(int iStatus)
+   {
+      this.iStatus = iStatus;
+   }
+   
+   public int getStatus()
+   {
+      return iStatus;
    }
 
 }

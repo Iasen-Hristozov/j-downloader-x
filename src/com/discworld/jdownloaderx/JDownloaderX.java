@@ -9,6 +9,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -22,6 +23,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.BoxLayout;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
@@ -45,9 +47,13 @@ import com.discworld.jdownloaderx.dto.BookURLsTableModel;
 import com.discworld.jdownloaderx.dto.JABXList;
 
 import java.awt.Font;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -55,6 +61,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -62,13 +71,10 @@ import java.util.regex.Pattern;
 
 public class JDownloaderX implements ActionListener
 {
-   private String sAuthor,
-                  sTitle,
-                  sVolume,
-                  sUrlFb2,
-                  sUrlEpub,
-                  sUrlTxt,
-                  sUrlSfb;
+   private final static int    PNL_NDX_DWN = 0,
+                               PNL_NDX_FND = 1,
+                               MAX_DWN = 2;
+   
    private final static String DOMAIN = "chitanka.info",
                                AUTHOR_BGN = "<span itemscope itemtype=\"http://schema\\.org/Person\"><a href=\"/person/[\\w\\-]+\" itemprop=\"name\" data-edit=\"/admin/person/\\d+/edit\">",
                                AUTHOR_END = "</a></span>",
@@ -76,6 +82,7 @@ public class JDownloaderX implements ActionListener
                                TITLE_END = "</a>",
                                VOLUME_BGN = "<h2><span>",
                                VOLUME_END = "</span></h2>",
+                               URL_DWN_BGN = "http://" + DOMAIN,
                                URL_FB2 = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 fb2.zip\" class=\"dl dl-fb2 action\"><span>fb2.zip</span>",
                                URL_EPUB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 epub\" class=\"dl dl-epub action\"><span>epub</span>",
                                URL_TXT = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 txt.zip\" class=\"dl dl-txt action\"><span>txt.zip</span>",
@@ -83,9 +90,25 @@ public class JDownloaderX implements ActionListener
                                URL_BGN = "<a href=\"",
                                URL_END = "\"",
                                BOOK = "/book/",
-                               DOWNLOAD_FLD = "D://";
+                               DOWNLOAD_FLD = "Download",
+                               EXT_FB2 = ".fb2",
+                               EXT_EPUB = ".epub",
+                               EXT_SFB = ".sfb",
+                               EXT_TXT = ".txt";
    
    private static String sVersion;
+   
+   private boolean bIsStarted = false;
+
+   private String sAuthor,
+                  sTitle,
+                  sVolume,
+                  sUrlFb2,
+                  sUrlEpub,
+                  sUrlTxt,
+                  sUrlSfb;
+   
+   private int iDwns = MAX_DWN;
    
    private Pattern ptnAuthotBgn,
                    ptnTitleBgn,
@@ -101,19 +124,27 @@ public class JDownloaderX implements ActionListener
                    btnSearch;
 
    private JFrame frame;
+   
+   JTabbedPane tabbedPane;
 
    private JTextField txtURL;
    
    private JTable tblBooksUrl;
    
    private ClipboardListener oClipboardListener;
+   
    private JTable tblBooksDwn;
+   
    private JScrollPane spBooksDwn;
    
    BookURLsTableModel oBookURLsTableModel;
    
    BookDownloadTableModel oBookDownloadTableModel;
    
+   Vector<Book> vBooksDwn,
+                vBooksFnd;
+   
+   private downloadThread download;
    
    /**
     * Launch the application.
@@ -141,6 +172,30 @@ public class JDownloaderX implements ActionListener
          }
       });
    }
+   
+   public class ProgressCellRender extends JProgressBar implements TableCellRenderer 
+   {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = -2555436479986175987L;
+
+      @Override
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+      {
+          int progress = 0;
+          if (value instanceof Float) 
+          {
+              progress = Math.round(((Float) value) * 100f);
+          } 
+          else if (value instanceof Integer) 
+          {
+              progress = (Integer) value;
+          }
+          setValue(progress);
+          return this;
+      }
+  }   
 
    /**
     * Create the application.
@@ -160,7 +215,19 @@ public class JDownloaderX implements ActionListener
             String sContent = oClipboardListener.getContent();
             
             if(sContent.contains(DOMAIN))
-               txtURL.setText(sContent);                  
+            {
+               txtURL.setText(sContent);
+               try
+               {
+                  vParseURL(sContent);
+               } catch(IOException e)
+               {
+                  // TODO Auto-generated catch block
+                  e.printStackTrace();
+               }
+            }
+            
+            
          }
       };      
       
@@ -174,6 +241,12 @@ public class JDownloaderX implements ActionListener
       ptnUrlEpub = Pattern.compile(URL_EPUB);
       ptnUrlTxt = Pattern.compile(URL_TXT);
       ptnUrlSfb = Pattern.compile(URL_SFB);
+      
+      loadBooks();
+      oBookDownloadTableModel.setValues(vBooksDwn);
+      oBookDownloadTableModel.fireTableDataChanged();
+      
+      download = new downloadThread();
    }
 
    /**
@@ -200,33 +273,25 @@ public class JDownloaderX implements ActionListener
       btnStart.setAlignmentX(Component.CENTER_ALIGNMENT);
       btnStart.setToolTipText("Start");
       btnStart.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/play.png")));
+      btnStart.addActionListener(this);
       pnlButtons.add(btnStart);
       
-      btnStop = new JButton("");
-      btnStop.setAlignmentX(Component.CENTER_ALIGNMENT);
-      btnStop.setToolTipText("Stop");
-      btnStop.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/stop.png")));
-      pnlButtons.add(btnStop);
+//      btnStop = new JButton("");
+//      btnStop.setAlignmentX(Component.CENTER_ALIGNMENT);
+//      btnStop.setToolTipText("Stop");
+//      btnStop.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/stop.png")));
+//      btnStop.addActionListener(this);
+//      pnlButtons.add(btnStop);
       
       btnRemove = new JButton("");
       btnRemove.setAlignmentX(Component.CENTER_ALIGNMENT);
       btnRemove.setToolTipText("Remove");
       btnRemove.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/1421707488_delete.png")));
+      btnRemove.addActionListener(this);
       pnlButtons.add(btnRemove);
       
-      JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+      tabbedPane = new JTabbedPane(JTabbedPane.TOP);
       frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
-      
-//      DefaultTableModel model = new DefaultTableModel(null,
-//               new String[] {
-//                  "Column1", "Column2"
-//               }
-//            );
-//      
-//      model.addRow(new Object []{"2", "3"});
-//      model.setValueAt("5", 0, 1);
-       
-//      JComponent panel2 = makeTextPanel("Panel #2");
       
       JPanel panel = new JPanel(false);
       panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
@@ -235,9 +300,10 @@ public class JDownloaderX implements ActionListener
       panel.add(spBooksDwn);
       
       tblBooksDwn = new JTable();
-      Vector<Book> vBooksDwn = new Vector<Book>();
+      vBooksDwn = new Vector<Book>();
       oBookDownloadTableModel = new BookDownloadTableModel(vBooksDwn);
       tblBooksDwn.setModel(oBookDownloadTableModel);
+      tblBooksDwn.getColumn("Progress").setCellRenderer(new ProgressCellRender());
       
       spBooksDwn.setViewportView(tblBooksDwn);
       
@@ -264,35 +330,16 @@ public class JDownloaderX implements ActionListener
       btnSearch.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/Search.png")));
       btnSearch.setToolTipText("Search");
       btnSearch.setAlignmentX(0.5f);
+      btnSearch.addActionListener(this);
       pnlSearch.add(btnSearch, BorderLayout.EAST);
-      
-  
-//      DefaultTableModel dtm = new DefaultTableModel(
-//               new Object[][] {
-//               },
-//               new String[] {
-//                  "Name", "URL", "Progress"
-//               }
-//            );
-//
-//      JTable tblBooksUrl = new JTable(dtm);
       
       tblBooksUrl = new JTable();
       
-      Vector<Book> vBooks = new Vector<Book>();
-      oBookURLsTableModel = new BookURLsTableModel(vBooks);
+      vBooksFnd = new Vector<Book>();
+      oBookURLsTableModel = new BookURLsTableModel(vBooksFnd);
       tblBooksUrl.setModel(oBookURLsTableModel);
       
       JScrollPane spBooksUrl = new JScrollPane(tblBooksUrl);
-      
-//      JScrollPane scrollPane = new JScrollPane(new JTable(new DefaultTableModel(
-//               new Object[][] {
-//               },
-//               new String[] {
-//                  "Name", "URL", "Progress"
-//               }
-//            )));
-
       
       JScrollBar sb = spBooksUrl.getVerticalScrollBar();
       sb.setPreferredSize(new Dimension(50, 0));
@@ -302,76 +349,138 @@ public class JDownloaderX implements ActionListener
       panel.add(spBooksUrl);
    }
 
-//   protected JComponent makeTextPanel(String text) 
-//   {
-//      JPanel panel = new JPanel(false);
-//      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
-//      
-//      spBooksDwn = new JScrollPane();
-//      panel.add(spBooksDwn);
-//      
-//      tblBooksDwn = new JTable();
-//      spBooksDwn.setViewportView(tblBooksDwn);
-//      return panel;
-//  }
-
    @Override
    public void actionPerformed(ActionEvent e)
    {
       Object oSource = e.getSource();
 
       if(oSource == btnSearch)
+         vSearch();
+      else if(oSource == btnAdd)
+         vAdd();
+      else if(oSource == btnRemove)
+         vRemove();
+      else if(oSource == btnStart)
+         vStartStop();
+   }
+   
+   private void vSearch()
+   {
+      try
       {
+         JAXBContext jaxbContext = JAXBContext.newInstance(Book.class);
+         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+         Book bkA = new Book("AAA", "BB");
+         StringWriter sw = new StringWriter();
+         jaxbMarshaller.marshal(bkA, sw);
+         String xmlString = sw.toString();
          
-         try
-         {
-            JAXBContext jaxbContext = JAXBContext.newInstance(Book.class);
-            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-            Book bkA = new Book("AAA", "BB");
-            StringWriter sw = new StringWriter();
-            jaxbMarshaller.marshal(bkA, sw);
-            String xmlString = sw.toString();
-            
-            JAXBContext jc = JAXBContext.newInstance(Book.class);
-            Unmarshaller unmarshaller = jc.createUnmarshaller();
-            
-            StringReader reader = new StringReader(xmlString);
-            Book BookNew = (Book) unmarshaller.unmarshal(reader);
-            
-            JABXList<Book> Books = new JABXList<Book>();
-            Books.add(bkA);
-            
-            Book bkB = new Book("asd", "asdad");
-            Books.add(bkB);
-            
-            JAXBContext jc1 = JAXBContext.newInstance(JABXList.class, Book.class);
-            Marshaller marshaller1 = jc1.createMarshaller();
-            marshaller1.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            StringWriter sw1 = new StringWriter();
-            marshaller1.marshal(Books, sw1);
-            xmlString = sw1.toString();
-            
-            unmarshaller = jc1.createUnmarshaller();
-            reader = new StringReader(xmlString);
-//            Str
-//            Object o = unmarshaller.unmarshal(reader, JABXList.class);
-//            unmarshaller.unmarshal();
-            JABXList<?> Books1 = (JABXList<?>)unmarshaller.unmarshal(new StreamSource(reader), JABXList.class).getValue();
-            
-            
-            Book c = (Book) Books1.getValues().get(0);
-            
-            vParseURL(txtURL.getText());
-         } catch(IOException e1)
-         {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-         } catch(JAXBException e1)
-         {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-         }
+         JAXBContext jc = JAXBContext.newInstance(Book.class);
+         Unmarshaller unmarshaller = jc.createUnmarshaller();
+         
+         StringReader reader = new StringReader(xmlString);
+         Book BookNew = (Book) unmarshaller.unmarshal(reader);
+         
+         JABXList<Book> Books = new JABXList<Book>();
+         Books.add(bkA);
+         
+         Book bkB = new Book("asd", "asdad");
+         Books.add(bkB);
+         
+         JAXBContext jc1 = JAXBContext.newInstance(JABXList.class, Book.class);
+         Marshaller marshaller1 = jc1.createMarshaller();
+         marshaller1.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+         StringWriter sw1 = new StringWriter();
+         marshaller1.marshal(Books, sw1);
+         xmlString = sw1.toString();
+         
+         unmarshaller = jc1.createUnmarshaller();
+         reader = new StringReader(xmlString);
+//         Str
+//         Object o = unmarshaller.unmarshal(reader, JABXList.class);
+//         unmarshaller.unmarshal();
+         JABXList<?> Books1 = (JABXList<?>)unmarshaller.unmarshal(new StreamSource(reader), JABXList.class).getValue();
+         
+         
+         Book c = (Book) Books1.getValues().get(0);
+         
+         vParseURL(txtURL.getText());
+      } catch(IOException e1)
+      {
+         // TODO Auto-generated catch block
+         e1.printStackTrace();
+      } catch(JAXBException e1)
+      {
+         // TODO Auto-generated catch block
+         e1.printStackTrace();
+      }      
+   }
+   
+   private void vAdd()
+   {
+//    vBooksDwn.addAll(vBooksFnd);
+      for(Book oBook : vBooksFnd)
+      {
+         if(!vBooksDwn.contains(oBook))
+            vBooksDwn.add(oBook);
       }
+      
+      saveBooks();
+    
+      oBookDownloadTableModel.fireTableDataChanged();
+      tabbedPane.setSelectedIndex(PNL_NDX_DWN);
+      vBooksFnd.removeAllElements();
+      oBookURLsTableModel.fireTableDataChanged();
+   }
+   
+   private void vRemove()
+   {
+      int[] tiRowNdxs;
+      switch(tabbedPane.getSelectedIndex())
+      {
+         case PNL_NDX_DWN:
+            tiRowNdxs = tblBooksDwn.getSelectedRows();
+            
+            if(tiRowNdxs.length == 0)
+               break;
+            
+            for(int i = 0; i < tiRowNdxs.length; i++)
+               vBooksDwn.remove(tiRowNdxs[i]);
+            oBookDownloadTableModel.fireTableDataChanged();
+            
+            saveBooks();
+         break;
+         
+         case PNL_NDX_FND:
+            tiRowNdxs = tblBooksUrl.getSelectedRows();
+            
+            if(tiRowNdxs.length == 0)
+               break;
+            
+            for(int i = 0; i < tiRowNdxs.length; i++)
+               vBooksFnd.remove(tiRowNdxs[i]);
+            oBookURLsTableModel.fireTableDataChanged();
+         break;
+      }      
+   }
+   
+   private void vStartStop()
+   {
+      vToggleButton();
+      
+      if(bIsStarted)
+      {
+//         DownloadFileA oDownloadFileA = new DownloadFileA(vBooksDwn.get(0), oBookDownloadTableModel);         
+//         oDownloadFileA.execute();
+         
+         download.execute();
+      }
+   }
+   
+   private void vToggleButton()
+   {
+      bIsStarted = !bIsStarted;
+      btnStart.setIcon(new ImageIcon(JDownloaderX.class.getResource(bIsStarted ? "/icons/stop.png" : "/icons/play.png")));
    }
    
    private void vParseURL(String sURL) throws IOException
@@ -379,49 +488,6 @@ public class JDownloaderX implements ActionListener
       
       GetFromURL oGetFromURL = new GetFromURL(sURL);
       oGetFromURL.execute();
-//      String sResponse = getFromURL(sURL);
-//      
-//      sAuthor = sFindString(sResponse, ptnAuthotBgn, AUTHOR_END);
-//      
-//      sTitle = sFindString(sResponse, ptnAuthotBgn, TITLE_END);
-//      
-//      sVolume = sFindString(sResponse, VOLUME_BGN, VOLUME_END);
-//      
-//      sUrlFb2 = sFindString(sResponse, ptnUrlFb2, URL_BGN, URL_END);
-//
-//      sUrlEpub = sFindString(sResponse, ptnUrlEpub, URL_BGN, URL_END);
-//      
-//      sUrlTxt = sFindString(sResponse, ptnUrlTxt, URL_BGN, URL_END);
-//      
-//      sUrlSfb = sFindString(sResponse, ptnUrlSfb, URL_BGN, URL_END);
-//      
-//      String sFileName = sUrlFb2.substring(BOOK.length());
-//      String sName = sFileName.substring(0, sFileName.indexOf("."));
-//      String sExt = sFileName.substring(sFileName.lastIndexOf("."));
-//
-//      DownloadFile oDownloadFile = new DownloadFile("http://" + DOMAIN + sUrlFb2, DOWNLOAD_FLD);
-//      oDownloadFile.execute();
-      
-//      HttpDownloadUtility h = new HttpDownloadUtility("http://" + DOMAIN + sUrlFb2, DOWNLOAD_FLD);
-//      h.execute();
-      
-//      SwingWorker<T, V>
-//      
-////         HttpDownloadUtility.downloadFile("http://" + DOMAIN + sUrlFb2, DOWNLOAD_FLD);
-//      HttpDownloadUtility oHttpDownloadUtility = new HttpDownloadUtility("http://" + DOMAIN + sUrlFb2, DOWNLOAD_FLD);
-//      try
-//      {
-//         oHttpDownloadUtility.start();
-////         synchronized(oHttpDownloadUtility)
-////         {
-//            oHttpDownloadUtility.wait();            
-////         }
-//         
-//      } catch(InterruptedException e)
-//      {
-//         // TODO Auto-generated catch block
-//         e.printStackTrace();
-//      }
    }
    
    private String sFindString(String sSource, Pattern oPattern, String sEnd)
@@ -475,8 +541,6 @@ public class JDownloaderX implements ActionListener
       
       return sResult;
    }
-   
-   
    
    private String getFromURL(String sURL)
    {
@@ -576,22 +640,52 @@ public class JDownloaderX implements ActionListener
 //            DownloadFile oDownloadFile = new DownloadFile(sUrlFb2, DOWNLOAD_FLD);
 //            oDownloadFile.execute();
             
-            Book bkFb2 = new Book(sTitle, sUrlFb2);
-            Book bkEpub = new Book(sTitle, sUrlEpub);
-            Book bkTxt = new  Book(sTitle, sUrlTxt);
-            Book bkSfb = new  Book(sTitle, sUrlSfb);
+            String sFileName = DOWNLOAD_FLD + "/" + (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle;
             
-            Vector<Book> vBooks = new Vector<Book>();
-            vBooks.add(bkFb2);
-            vBooks.add(bkEpub);
+            Book bkFb2 = null,
+                 bkEpub = null,
+                 bkTxt = null,
+                 bkSfb = null;
             
-            BookURLsTableModel oBookURLsTableModel = new BookURLsTableModel(vBooks);
-            tblBooksUrl.setModel(oBookURLsTableModel);
+            if(sUrlFb2 != null && !sUrlFb2.trim().isEmpty())
+            {
+               bkFb2 = new Book(sFileName + EXT_FB2, URL_DWN_BGN + sUrlFb2);
+               vBooksFnd.add(bkFb2);
+            }
+            if(sUrlEpub != null && !sUrlEpub.trim().isEmpty())
+            {
+               bkEpub = new Book(sFileName + EXT_EPUB, URL_DWN_BGN + sUrlEpub);
+               vBooksFnd.add(bkEpub);
+            }
+            if(sUrlTxt != null && !sUrlTxt.trim().isEmpty())
+            {
+               bkTxt = new Book(sFileName + EXT_TXT, URL_DWN_BGN + sUrlTxt);
+               vBooksFnd.add(bkTxt);
+            }
+            if(sUrlSfb != null && !sUrlSfb.trim().isEmpty())
+            {
+               bkSfb = new Book(sFileName + EXT_SFB, URL_DWN_BGN + sUrlSfb);
+               vBooksFnd.add(bkSfb);
+            }
             
-            vBooks.add(bkTxt);
-            vBooks.add(bkSfb);
-            oBookURLsTableModel.setValues(vBooks);
+//            Vector<Book> vBooks = new Vector<Book>();
+//            vBooks.add(bkFb2);
+//            vBooks.add(bkEpub);
+            
+//            BookURLsTableModel oBookURLsTableModel = new BookURLsTableModel(vBooks);
+//            tblBooksUrl.setModel(oBookURLsTableModel);
+            
+//            vBooks.add(bkTxt);
+//            vBooks.add(bkSfb);
+//            oBookURLsTableModel.setValues(vBooksFnd);
+
+//            Collections.rotate(vBooksFnd.subList(0, 4), -1);
+            
+//            vMoveUp(vBooksFnd, 0);
+            
             oBookURLsTableModel.fireTableDataChanged();
+            
+            tabbedPane.setSelectedIndex(PNL_NDX_FND);
             
          } 
          catch(InterruptedException e)
@@ -606,6 +700,21 @@ public class JDownloaderX implements ActionListener
          }
       }
    }
+   
+   private void vMoveUp(Vector<Book> vBook, int index)
+   {
+      if(index == 0)
+         return;
+      Collections.rotate(vBook.subList(index-1, index+1), -1);
+   }
+   
+   private void vMoveDown(Vector<Book> vBook, int index)
+   {
+      if(index == vBook.size()-1)
+         return;
+      Collections.rotate(vBook.subList(index, index+2), -1);
+   }
+   
 
    private class DownloadFile extends SwingWorker<Void, Object> 
    {
@@ -636,6 +745,164 @@ public class JDownloaderX implements ActionListener
          
       }
    }   
+
+   private class DownloadFileA extends SwingWorker<Book, Integer> 
+   {
+      private static final int BUFFER_SIZE = 4096;
+      
+      private Book oBook = null;
+      BookDownloadTableModel oBookDownloadTableModel = null;
+      
+      public DownloadFileA(Book aBook, BookDownloadTableModel aBookDownloadTableModel)
+      {
+         this.oBook = aBook; 
+         this.oBookDownloadTableModel = aBookDownloadTableModel;
+         
+//         addPropertyChangeListener(new PropertyChangeListener() 
+//         {
+//            @Override
+//            public void propertyChange(PropertyChangeEvent evt) 
+//            {
+//                if (evt.getPropertyName().equals("progress")) 
+//                {
+//                   oBookDownloadTableModel.updateStatus(oBook, (Integer) evt.getNewValue());
+//                   System.out.println("**: " + evt.getNewValue());
+//                }
+//            }
+//        });         
+      }
+
+      @Override
+      protected Book doInBackground() throws Exception
+      {
+         String sURL = oBook.getURL();
+         URL url;
+         try
+         {
+            url = new URL(sURL);
+
+            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+            int responseCode = httpConn.getResponseCode();
+
+            // always check HTTP response code first
+            if (responseCode == HttpURLConnection.HTTP_OK) 
+            {
+               String fileName = "";
+               String disposition = httpConn.getHeaderField("Content-Disposition");
+               String contentType = httpConn.getContentType();
+               int contentLength = httpConn.getContentLength();
+
+               if (disposition != null) 
+               {
+                  // extracts file name from header field
+                  int index = disposition.indexOf("filename=");
+                  if (index > 0) 
+                  {
+                     fileName = disposition.substring(index + 10, disposition.length() - 1);
+                  }
+               } 
+               else 
+               {
+                  // extracts file name from URL
+                  fileName = sURL.substring(sURL.lastIndexOf("/") + 1, sURL.length());
+               }
+
+               System.out.println("Content-Type = " + contentType);
+               System.out.println("Content-Disposition = " + disposition);
+               System.out.println("Content-Length = " + contentLength);
+               System.out.println("fileName = " + fileName);
+
+               // opens input stream from the HTTP connection
+               InputStream inputStream = httpConn.getInputStream();
+               File flDwnFolder = new File(DOWNLOAD_FLD);
+               if(!flDwnFolder.exists())
+                  flDwnFolder.mkdir();
+//               String saveFilePath = DOWNLOAD_FLD + fileName;
+               String saveFilePath = DOWNLOAD_FLD + File.separator + fileName;
+               
+               // opens an output stream to save into file
+               FileOutputStream outputStream = new FileOutputStream(saveFilePath);
+   
+               int bytesRead = -1;
+               int iTotalBytesRead = 0;
+               publish(iTotalBytesRead);
+               byte[] buffer = new byte[BUFFER_SIZE];
+               while ((bytesRead = inputStream.read(buffer)) != -1 && bIsStarted) 
+               {
+//                  System.out.println("bIsStarted = " + String.valueOf(bIsStarted));
+                  outputStream.write(buffer, 0, bytesRead);
+                  iTotalBytesRead += bytesRead;
+//                  float fProgress =((float)iTotalBytesRead / (float)contentLength); 
+//                  publish(fProgress);
+                  
+                  int progress = (int) Math.round(((float)iTotalBytesRead / (float)contentLength) * 100f);
+                  
+//                  setProgress(progress);
+                  publish(progress);
+               }
+   
+               outputStream.close();
+               inputStream.close();
+   
+               System.out.println("File downloaded");
+            } 
+            else 
+            {
+               System.out.println("No file to download. Server replied HTTP code: " + responseCode);
+            }
+            
+            httpConn.disconnect();
+         } 
+         catch(MalformedURLException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         } 
+         catch(IOException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }               
+         
+         return oBook;
+      }
+      
+      @Override
+//      protected void process(List<Float> chunks) 
+      protected void process(List<Integer> chunks)
+      {
+//         float fProgeress = chunks.get(0);
+//         
+//         int progress = (int) Math.round(fProgeress * 100f);
+
+         int progress = chunks.get(0);
+         oBookDownloadTableModel.updateStatus(oBook, progress);
+      }      
+
+      @Override
+      protected void done()
+      {
+         super.done();
+         
+         int i = vBooksDwn.indexOf(oBook);
+         if(i >=0 )
+            vBooksDwn.remove(i);
+         
+         oBookDownloadTableModel.setValues(vBooksDwn);
+         oBookDownloadTableModel.fireTableDataChanged();
+         
+         iDwns++;
+//         
+//         String sFileName = sUrlFb2.substring(BOOK.length());
+//         String sName = sFileName.substring(0, sFileName.indexOf("."));
+//         String sExt = sFileName.substring(sFileName.lastIndexOf("."));         
+//         
+//         ExtractFile oExtractFile = new ExtractFile(DOWNLOAD_FLD + "/" + sFileName, DOWNLOAD_FLD);
+//         oExtractFile.execute();
+         
+      }
+   }   
+   
    
    private class ExtractFile extends SwingWorker<Void, Void>
    {
@@ -656,6 +923,148 @@ public class JDownloaderX implements ActionListener
          oUnzipUtility.unzip(zipFilePath, destDirectory);
          return null;
       }
+   }
+   
+   private void saveBooks()
+   {
+      try 
+      {
+         File file = new File("file.xml");
+         JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, Book.class);
+         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+    
+//         JABXList<Book> Books = new JABXList<Book>();
+//         for(Book oBook: vBooksDwn)
+//            Books.add(oBook);
+         
+         JABXList<Book> Books = new JABXList<Book>(vBooksDwn);
+         
+         // output pretty printed
+         jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+
+         jaxbMarshaller.marshal(Books, file);
+         jaxbMarshaller.marshal(Books, System.out);
+         
+         
+//         jaxbMarshaller.marshal(vBooksDwn, file);
+//         jaxbMarshaller.marshal(vBooksDwn, System.out);
+    
+      } 
+      catch (JAXBException e) 
+      {
+         e.printStackTrace();
+      }      
+   }
+   
+   private void loadBooks()
+   {
+      try 
+      {
+         File file = new File("file.xml");
+         JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, Book.class);
+         Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+//         JABXList<?> Books = (JABXList<?>)jaxbUnmarshaller.unmarshal(file);
+         JABXList<Book> Books = (JABXList<Book>)jaxbUnmarshaller.unmarshal(file);
+//         System.out.println(Books);
+
+         vBooksDwn.clear();
+         
+         vBooksDwn = new Vector<Book>(Books.getValues());
+         
+//         for(int i = 0; i < Books.getValues().size(); i++)
+//            vBooksDwn.add((Book)Books.getValues().get(i));
+      } 
+      catch (JAXBException e) 
+      {
+         e.printStackTrace();
+      }
+   }
+
+   private class downloadThread extends SwingWorker<Void, Void> 
+   {
+//      private boolean bIsRunning = false;
       
+//      @Override
+//      public void run()
+//      {
+//         Book oBook;
+//         
+//         Vector<Book> vBooksCur = new Vector<Book>(vBooksDwn);
+//         
+//         int j = 0;
+//         
+//         try
+//         {
+//            while(bIsStarted)
+//            {
+//               if(iDwns > 0)
+//               {
+//                  oBook = vBooksCur.get(j);
+//                  if(j < vBooksCur.size()-1)
+//                     j++;
+//                  
+//                  new DownloadFileA(oBook, oBookDownloadTableModel).execute();
+//                  iDwns--;
+//               }
+//               Thread.sleep(100);
+//            }
+//         } 
+//         catch(InterruptedException e)
+//         {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//         }
+//      }
+      
+//      @Override
+//      public void start()
+//      {
+////         bIsRunning = true;
+//         super.start();
+//      }
+//      
+//      public void vStop()
+//      {
+////         bIsRunning = false;
+//      }
+
+      @Override
+      protected Void doInBackground() throws Exception
+      {
+         Book oBook;
+            
+         Vector<Book> vBooksCur = new Vector<Book>(vBooksDwn);
+            
+         int j = 0;
+         
+         try
+         {
+            while(bIsStarted)
+            {
+               if(iDwns > 0)
+               {
+                  if(vBooksDwn.size() == 0)
+                  {
+                     vToggleButton();
+                     bIsStarted = false;
+                     break;
+                  }
+                  oBook = vBooksCur.get(j);
+                  if(j < vBooksCur.size()-1)
+                     j++;
+                  
+                  new DownloadFileA(oBook, oBookDownloadTableModel).execute();
+                  iDwns--;
+               }
+               Thread.sleep(100);
+            }
+         } 
+         catch(InterruptedException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
+         return null;
+      }
    }
 }

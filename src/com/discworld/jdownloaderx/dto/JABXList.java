@@ -18,8 +18,19 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 
 public class JABXList<VALUE>
 {
-   private List<VALUE> values = new ArrayList<VALUE>();
+   private List<VALUE> values;
 
+   public JABXList()
+   {
+      values = new ArrayList<VALUE>();
+   }
+   
+   public JABXList(List<VALUE> values)
+   {
+//      super();
+      this.values = values;
+   }
+   
    @XmlAnyElement(lax=true)
 //   @XmlSchemaType(name = "atomInlineOtherContent")
 //   @XmlElement(name="item")

@@ -41,7 +41,8 @@ public class BookDownloadTableModel extends AbstractTableModel
             return vBooks.get(rowIndex).getName();
          case 1:
             return vBooks.get(rowIndex).getURL();
-//         case 2:
+         case 2:
+            return vBooks.get(rowIndex).getStatus();
          default:
             return "";
        }   
@@ -56,5 +57,36 @@ public class BookDownloadTableModel extends AbstractTableModel
    {
       this.vBooks = vBooks;
    }
-   
+
+   @Override
+   public void setValueAt(Object oValue, int rowIndex, int columnIndex)
+   {
+      Book oBook = vBooks.get(rowIndex);
+      switch (columnIndex) 
+      {
+         case 2:
+            if (oValue instanceof Integer) 
+            {
+               oBook.setStatus((Integer) oValue);
+            }
+          break;
+      }
+   }
+
+   public void updateStatus(Book oBook, int progress) 
+   {
+      int i = vBooks.indexOf(oBook);
+      if(i < 0)
+         return;
+      Book rowData = vBooks.get(i);
+               
+      if (rowData != null) 
+      {
+//          int row = rows.indexOf(rowData);
+//          float p = (float) progress / 100f;
+//          setValueAt(p, i, 2);
+          setValueAt(progress, i, 2);
+          fireTableCellUpdated(i, 2);
+      }
+  }      
 }
