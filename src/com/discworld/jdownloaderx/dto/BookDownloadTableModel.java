@@ -88,5 +88,8 @@ public class BookDownloadTableModel extends AbstractTableModel
           setValueAt(progress, i, 2);
           fireTableCellUpdated(i, 2);
       }
+      
+      if(progress == 0)
+         System.out.println(oBook.getName() + " :"+ progress);
   }      
 }

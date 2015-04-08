@@ -49,8 +49,10 @@ import com.discworld.jdownloaderx.dto.JABXList;
 import java.awt.Font;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,9 +67,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class JDownloaderX implements ActionListener
 {
@@ -246,7 +251,7 @@ public class JDownloaderX implements ActionListener
       oBookDownloadTableModel.setValues(vBooksDwn);
       oBookDownloadTableModel.fireTableDataChanged();
       
-      download = new downloadThread();
+//      download = new downloadThread();
    }
 
    /**
@@ -468,19 +473,20 @@ public class JDownloaderX implements ActionListener
    {
       vToggleButton();
       
-      if(bIsStarted)
+      if(isStarted())
       {
 //         DownloadFileA oDownloadFileA = new DownloadFileA(vBooksDwn.get(0), oBookDownloadTableModel);         
 //         oDownloadFileA.execute();
-         
+         download = new downloadThread();   
          download.execute();
       }
    }
    
-   private void vToggleButton()
+   private synchronized void vToggleButton()
    {
-      bIsStarted = !bIsStarted;
-      btnStart.setIcon(new ImageIcon(JDownloaderX.class.getResource(bIsStarted ? "/icons/stop.png" : "/icons/play.png")));
+//      bIsStarted = !bIsStarted;
+      setIsStarted(!isStarted());
+      btnStart.setIcon(new ImageIcon(JDownloaderX.class.getResource(isStarted() ? "/icons/stop.png" : "/icons/play.png")));
    }
    
    private void vParseURL(String sURL) throws IOException
@@ -746,7 +752,7 @@ public class JDownloaderX implements ActionListener
       }
    }   
 
-   private class DownloadFileA extends SwingWorker<Book, Integer> 
+   private class DownloadFileA extends SwingWorker<Boolean, Integer> 
    {
       private static final int BUFFER_SIZE = 4096;
       
@@ -757,24 +763,12 @@ public class JDownloaderX implements ActionListener
       {
          this.oBook = aBook; 
          this.oBookDownloadTableModel = aBookDownloadTableModel;
-         
-//         addPropertyChangeListener(new PropertyChangeListener() 
-//         {
-//            @Override
-//            public void propertyChange(PropertyChangeEvent evt) 
-//            {
-//                if (evt.getPropertyName().equals("progress")) 
-//                {
-//                   oBookDownloadTableModel.updateStatus(oBook, (Integer) evt.getNewValue());
-//                   System.out.println("**: " + evt.getNewValue());
-//                }
-//            }
-//        });         
       }
 
       @Override
-      protected Book doInBackground() throws Exception
+      protected Boolean doInBackground()
       {
+         boolean bResult = true;
          String sURL = oBook.getURL();
          URL url;
          try
@@ -825,9 +819,10 @@ public class JDownloaderX implements ActionListener
    
                int bytesRead = -1;
                int iTotalBytesRead = 0;
+               int progress;
                publish(iTotalBytesRead);
                byte[] buffer = new byte[BUFFER_SIZE];
-               while ((bytesRead = inputStream.read(buffer)) != -1 && bIsStarted) 
+               while ((bytesRead = inputStream.read(buffer)) != -1) 
                {
 //                  System.out.println("bIsStarted = " + String.valueOf(bIsStarted));
                   outputStream.write(buffer, 0, bytesRead);
@@ -835,48 +830,64 @@ public class JDownloaderX implements ActionListener
 //                  float fProgress =((float)iTotalBytesRead / (float)contentLength); 
 //                  publish(fProgress);
                   
-                  int progress = (int) Math.round(((float)iTotalBytesRead / (float)contentLength) * 100f);
+                  if(isStarted())
+                  {
+                     progress = (int) Math.round(((float)iTotalBytesRead / (float)contentLength) * 100f);
+                     publish(progress);
+                  }
+                  else
+                  {
+//                     publish(0);
+//                        System.out.println(fileName +": " + 0);
+                     
+                     bResult = false;
+                     break;
+                     
+//                     throw new CException();
+                  }
+                  
                   
 //                  setProgress(progress);
-                  publish(progress);
+                  
                }
    
                outputStream.close();
                inputStream.close();
    
-               System.out.println("File downloaded");
+               if(bResult)
+                  System.out.println("File downloaded");
             } 
             else 
             {
                System.out.println("No file to download. Server replied HTTP code: " + responseCode);
+               bResult = false;
             }
             
             httpConn.disconnect();
          } 
          catch(MalformedURLException e)
          {
-            // TODO Auto-generated catch block
             e.printStackTrace();
+            bResult = false;
          } 
          catch(IOException e)
          {
-            // TODO Auto-generated catch block
             e.printStackTrace();
-         }               
+            bResult = false;
+         } 
          
-         return oBook;
+         return bResult;
       }
       
       @Override
-//      protected void process(List<Float> chunks) 
       protected void process(List<Integer> chunks)
       {
-//         float fProgeress = chunks.get(0);
-//         
-//         int progress = (int) Math.round(fProgeress * 100f);
-
          int progress = chunks.get(0);
-         oBookDownloadTableModel.updateStatus(oBook, progress);
+//         oBookDownloadTableModel.updateStatus(oBook, progress);
+         setBookProgress(oBook, progress);
+         
+//         if(progress == 0)
+//            System.out.println("Progress: " + progress);
       }      
 
       @Override
@@ -884,14 +895,36 @@ public class JDownloaderX implements ActionListener
       {
          super.done();
          
-         int i = vBooksDwn.indexOf(oBook);
-         if(i >=0 )
-            vBooksDwn.remove(i);
+         try
+         {
+            boolean status = get();
+            
+            if(status)
+            {
+               int i = vBooksDwn.indexOf(oBook);
+               if(i >=0 )
+                  vBooksDwn.remove(i);
+               
+               oBookDownloadTableModel.setValues(vBooksDwn);
+               oBookDownloadTableModel.fireTableDataChanged();
+               
+               iDwns++;
+            }
+            else
+            {
+               iDwns = MAX_DWN;
+               setBookProgress(oBook, 0);
+            }
+         } catch(InterruptedException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         } catch(ExecutionException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
          
-         oBookDownloadTableModel.setValues(vBooksDwn);
-         oBookDownloadTableModel.fireTableDataChanged();
-         
-         iDwns++;
 //         
 //         String sFileName = sUrlFb2.substring(BOOK.length());
 //         String sName = sFileName.substring(0, sFileName.indexOf("."));
@@ -924,6 +957,73 @@ public class JDownloaderX implements ActionListener
          return null;
       }
    }
+
+   private class ExtractFileA extends SwingWorker<Void, Integer>
+   {
+      private static final int BUFFER_SIZE = 4096;
+      
+      private int iTotalBytesRead = 0;
+      
+      private String zipFilePath, destDirectory;
+      
+      public ExtractFileA(String zipFilePath, String destDirectory)
+      {
+         this.zipFilePath = zipFilePath;
+         this.destDirectory = destDirectory;
+      }
+      
+      @Override
+      protected Void doInBackground() throws Exception
+      {
+         File destDir = new File(destDirectory);
+         if (!destDir.exists()) 
+         {
+             destDir.mkdir();
+         }
+         ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath));
+         ZipEntry entry = zipIn.getNextEntry();
+         // iterates over entries in the zip file
+         while(entry != null) 
+         {
+             String filePath = destDirectory + File.separator + entry.getName();
+             if(!entry.isDirectory()) 
+             {
+                 // if the entry is a file, extracts it
+                 extractFile(zipIn, filePath);
+             } 
+             else 
+             {
+                 // if the entry is a directory, make the directory
+                 File dir = new File(filePath);
+                 dir.mkdir();
+             }
+             zipIn.closeEntry();
+             entry = zipIn.getNextEntry();
+         }
+         zipIn.close();         return null;
+      }
+      
+      @Override
+      protected void process(List<Integer> chunks)
+      {
+
+         int progress = chunks.get(0);
+//         oBookDownloadTableModel.updateStatus(oBook, progress);
+      }            
+      
+      private void extractFile(ZipInputStream zipIn, String filePath) throws IOException 
+      {
+          BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
+          byte[] bytesIn = new byte[BUFFER_SIZE];
+          int read = 0;
+          while ((read = zipIn.read(bytesIn)) != -1) 
+          {
+             bos.write(bytesIn, 0, read);
+          }
+          bos.close();
+      }
+   }
+   
    
    private void saveBooks()
    {
@@ -1039,14 +1139,15 @@ public class JDownloaderX implements ActionListener
          
          try
          {
-            while(bIsStarted)
+            while(isStarted())
             {
                if(iDwns > 0)
                {
                   if(vBooksDwn.size() == 0)
                   {
                      vToggleButton();
-                     bIsStarted = false;
+                     setIsStarted(false);
+//                     bIsStarted = false;
                      break;
                   }
                   oBook = vBooksCur.get(j);
@@ -1066,5 +1167,25 @@ public class JDownloaderX implements ActionListener
          }
          return null;
       }
+   }
+   
+   private synchronized boolean isStarted()
+   {
+      return bIsStarted;
+   }
+   
+   private synchronized void setIsStarted(boolean bIsStarted)
+   {
+      this.bIsStarted = bIsStarted; 
+   }
+   
+   private synchronized void setBookProgress(Book oBook, int progress)
+   {
+      oBookDownloadTableModel.updateStatus(oBook, progress);
+   }
+   
+   private class CException extends Exception 
+   {
+      
    }
 }
