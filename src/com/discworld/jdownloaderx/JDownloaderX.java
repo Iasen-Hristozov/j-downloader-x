@@ -52,6 +52,7 @@ import java.beans.PropertyChangeListener;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -88,10 +89,14 @@ public class JDownloaderX implements ActionListener
                                VOLUME_BGN = "<h2><span>",
                                VOLUME_END = "</span></h2>",
                                URL_DWN_BGN = "http://" + DOMAIN,
-                               URL_FB2 = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 fb2.zip\" class=\"dl dl-fb2 action\"><span>fb2.zip</span>",
-                               URL_EPUB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 epub\" class=\"dl dl-epub action\"><span>epub</span>",
-                               URL_TXT = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 txt.zip\" class=\"dl dl-txt action\"><span>txt.zip</span>",
-                               URL_SFB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 sfb.zip\" class=\"dl dl-sfb action\"><span>sfb.zip</span>",
+                               URL_FB2 = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 fb2.zip\" class=\"btn btn-default dl dl-fb2 action\"><span class=\"sr-only\">fb2.zip</span>",
+                               URL_EPUB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 epub\" class=\"btn btn-default dl dl-epub action\"><span class=\"sr-only\">epub</span>",
+                               URL_TXT = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 txt.zip\" class=\"btn btn-default dl dl-txt action\"><span class=\"sr-only\">txt.zip</span>",
+                               URL_SFB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 sfb.zip\" class=\"btn btn-default dl dl-sfb action\"><span class=\"sr-only\">sfb.zip</span>",
+//                               URL_FB2 = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 fb2.zip\" class=\"dl dl-fb2 action\"><span>fb2.zip</span>",
+//                               URL_EPUB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 epub\" class=\"dl dl-epub action\"><span>epub</span>",
+//                               URL_TXT = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 txt.zip\" class=\"dl dl-txt action\"><span>txt.zip</span>",
+//                               URL_SFB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 sfb.zip\" class=\"dl dl-sfb action\"><span>sfb.zip</span>",
                                URL_BGN = "<a href=\"",
                                URL_END = "\"",
                                BOOK = "/book/",
@@ -646,7 +651,7 @@ public class JDownloaderX implements ActionListener
 //            DownloadFile oDownloadFile = new DownloadFile(sUrlFb2, DOWNLOAD_FLD);
 //            oDownloadFile.execute();
             
-            String sFileName = DOWNLOAD_FLD + "/" + (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle;
+            String sFileName = DOWNLOAD_FLD + "/" + (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
             
             Book bkFb2 = null,
                  bkEpub = null,
@@ -721,7 +726,6 @@ public class JDownloaderX implements ActionListener
       Collections.rotate(vBook.subList(index, index+2), -1);
    }
    
-
    private class DownloadFile extends SwingWorker<Void, Object> 
    {
       HttpDownloadUtility oHttpDownloadUtility;
@@ -756,7 +760,10 @@ public class JDownloaderX implements ActionListener
    {
       private static final int BUFFER_SIZE = 4096;
       
+      String saveFilePath;
+      
       private Book oBook = null;
+
       BookDownloadTableModel oBookDownloadTableModel = null;
       
       public DownloadFileA(Book aBook, BookDownloadTableModel aBookDownloadTableModel)
@@ -812,7 +819,7 @@ public class JDownloaderX implements ActionListener
                if(!flDwnFolder.exists())
                   flDwnFolder.mkdir();
 //               String saveFilePath = DOWNLOAD_FLD + fileName;
-               String saveFilePath = DOWNLOAD_FLD + File.separator + fileName;
+               saveFilePath = DOWNLOAD_FLD + File.separator + fileName;
                
                // opens an output stream to save into file
                FileOutputStream outputStream = new FileOutputStream(saveFilePath);
@@ -915,7 +922,63 @@ public class JDownloaderX implements ActionListener
                iDwns = MAX_DWN;
                setBookProgress(oBook, 0);
             }
-         } catch(InterruptedException e)
+            
+            if(oBook.getURL().endsWith(".zip"))
+            {
+               File oFolder = new File(saveFilePath.substring(0, saveFilePath.lastIndexOf(".zip")));
+               ExtractFile oExtractFile = new ExtractFile(saveFilePath, oFolder.getPath());
+               oExtractFile.execute();
+               oExtractFile.get();
+//               File oFolder = new File(oBook.getName());
+               if(oFolder.listFiles().length == 1)
+               {
+                  File file = oFolder.listFiles()[0];
+                  file.renameTo(new File(oBook.getName()));
+                  oFolder.delete();
+               }
+               else
+               {
+                  FileFilter filter = new FileFilter() 
+                  {
+                     @Override
+                     public boolean accept(File pathname) 
+                     {
+                        return pathname.getName().endsWith("*.sfb")|| pathname.getName().endsWith("*.fb2") || pathname.getName().endsWith("*.txt") || pathname.getName().endsWith("*.epub");
+                     }
+                  };                  
+                  for(int i = 0; i < oFolder.listFiles(filter).length; i++)
+                  {
+                     File file = oFolder.listFiles(filter)[0];
+                     file.renameTo(new File(oBook.getName()));
+                  }
+                  oFolder.renameTo(new File(oBook.getName()));
+               }
+               
+               if(oBook.getName().endsWith(".fb2") || oBook.getName().endsWith(".txt"))
+               {
+                  
+//                  int a  = 2;
+//                  int b = a;
+                  
+               }
+               else // ".sfb" Zip can have more than one file 
+               {
+                  
+               }
+            }
+            else
+            {
+               try
+               {
+                  vRenameFile(saveFilePath, oBook.getName());
+               } catch(IOException e)
+               {
+                  // TODO Auto-generated catch block
+                  e.printStackTrace();
+               }
+            }
+         } 
+         catch(InterruptedException e)
          {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -936,7 +999,6 @@ public class JDownloaderX implements ActionListener
       }
    }   
    
-   
    private class ExtractFile extends SwingWorker<Void, Void>
    {
       String zipFilePath, destDirectory;
@@ -955,6 +1017,13 @@ public class JDownloaderX implements ActionListener
       {
          oUnzipUtility.unzip(zipFilePath, destDirectory);
          return null;
+      }
+      
+      @Override
+      protected void done()
+      {
+         // TODO Auto-generated method stub
+         super.done();
       }
    }
 
@@ -1023,7 +1092,6 @@ public class JDownloaderX implements ActionListener
           bos.close();
       }
    }
-   
    
    private void saveBooks()
    {
@@ -1187,5 +1255,24 @@ public class JDownloaderX implements ActionListener
    private class CException extends Exception 
    {
       
+   }
+   
+   private void vRenameFile(String sOldName, String sNewName) throws IOException
+   {
+   // File (or directory) with old name
+      File file = new File(sOldName);
+
+      // File (or directory) with new name
+      File file2 = new File(sNewName);
+
+      if (file2.exists())
+         throw new java.io.IOException("file exists");
+
+      // Rename file (or directory)
+      boolean success = file.renameTo(file2);
+
+      if (!success) {
+         // File was not successfully renamed
+      }
    }
 }
