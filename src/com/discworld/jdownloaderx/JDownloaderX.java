@@ -1,5 +1,7 @@
 package com.discworld.jdownloaderx;
 
+import static java.nio.file.StandardCopyOption.*;
+
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.GridLayout;
@@ -22,6 +24,7 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.BoxLayout;
 import javax.swing.JTable;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.ListSelectionModel;
@@ -64,6 +67,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -82,6 +86,8 @@ public class JDownloaderX implements ActionListener
                                MAX_DWN = 2;
    
    private final static String DOMAIN = "chitanka.info",
+//                               DOMAIN = "chitanka.it-tali.net",
+//                               
                                AUTHOR_BGN = "<span itemscope itemtype=\"http://schema\\.org/Person\"><a href=\"/person/[\\w\\-]+\" itemprop=\"name\" data-edit=\"/admin/person/\\d+/edit\">",
                                AUTHOR_END = "</a></span>",
                                TITLE_BGN = "<a class=\"selflink\" itemprop=\"name\" data-edit=\"/admin/book/\\d+/edit\">",
@@ -108,7 +114,8 @@ public class JDownloaderX implements ActionListener
    
    private static String sVersion;
    
-   private boolean bIsStarted = false;
+   private boolean bIsStarted = false,
+                   bOverride = true;
 
    private String sAuthor,
                   sTitle,
@@ -651,7 +658,8 @@ public class JDownloaderX implements ActionListener
 //            DownloadFile oDownloadFile = new DownloadFile(sUrlFb2, DOWNLOAD_FLD);
 //            oDownloadFile.execute();
             
-            String sFileName = DOWNLOAD_FLD + "/" + (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
+//            String sFileName = DOWNLOAD_FLD + File.separator + (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
+            String sFileName = (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
             
             Book bkFb2 = null,
                  bkEpub = null,
@@ -908,74 +916,82 @@ public class JDownloaderX implements ActionListener
             
             if(status)
             {
-               int i = vBooksDwn.indexOf(oBook);
-               if(i >=0 )
-                  vBooksDwn.remove(i);
+               int iBookNdx = vBooksDwn.indexOf(oBook);
+               if(iBookNdx >= 0 )
+                  vBooksDwn.remove(iBookNdx);
+               
+//               saveBooks();
                
                oBookDownloadTableModel.setValues(vBooksDwn);
                oBookDownloadTableModel.fireTableDataChanged();
                
                iDwns++;
+               
+               if(oBook.getURL().endsWith(".zip"))
+               {
+                  File oFolder = new File(saveFilePath.substring(0, saveFilePath.lastIndexOf(".zip")));
+                  ExtractFile oExtractFile = new ExtractFile(saveFilePath, oFolder.getPath());
+                  oExtractFile.execute();
+                  oExtractFile.get();
+                  new File(saveFilePath).delete();
+//                  File oFolder = new File(oBook.getName());
+                  if(oFolder.listFiles().length == 1)
+                  {
+                     File file = oFolder.listFiles()[0];
+//                     file.renameTo(new File(DOWNLOAD_FLD + File.separator + oBook.getName()));
+                     
+                     Files.move(file.toPath(), new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
+//                     oFolder.delete();
+                     deleteFile(oFolder);
+                  }
+                  else
+                  {
+                     FileFilter filter = new FileFilter() 
+                     {
+                        @Override
+                        public boolean accept(File pathname) 
+                        {
+                           return pathname.getName().endsWith(".sfb")|| pathname.getName().endsWith(".fb2") || pathname.getName().endsWith(".txt") || pathname.getName().endsWith(".epub");
+                        }
+                     };                  
+                     for(int i = 0; i < oFolder.listFiles(filter).length; i++)
+                     {
+                        File file = oFolder.listFiles(filter)[i];
+//                        file.renameTo(new File(oFolder.getPath() + File.separator + oBook.getName()));
+                        Files.move(file.toPath(), new File(oFolder.getPath() + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
+                     }
+                     
+                     //oFolder.renameTo(new File(DOWNLOAD_FLD + File.separator + oBook.getName()));
+                     renameFile(oFolder.getPath(), DOWNLOAD_FLD + File.separator + oBook.getName());
+//                     Files.deleteIfExists(new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath());
+//                     deleteFile(new File(DOWNLOAD_FLD + File.separator + oBook.getName()));
+//                     Files.move(oFolder.toPath(), new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
+                  }
+               }
+               else
+               {
+//                  String s = DOWNLOAD_FLD + File.separator + oBook.getName();
+//                  renameFile(saveFilePath, s);
+                  renameFile(saveFilePath, DOWNLOAD_FLD + File.separator + oBook.getName());
+                  
+//                  Files.deleteIfExists(new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath());
+//                  Files.move(new File(saveFilePath).toPath(), new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
+                  
+//                  try
+//                  {
+//                     String s = DOWNLOAD_FLD + File.separator + oBook.getName();
+//                     vRenameFile(saveFilePath, s);
+//                  } catch(IOException e)
+//                  {
+//                     // TODO Auto-generated catch block
+//                     e.printStackTrace();
+//                  }
+               }               
             }
             else
             {
                iDwns = MAX_DWN;
                setBookProgress(oBook, 0);
-            }
-            
-            if(oBook.getURL().endsWith(".zip"))
-            {
-               File oFolder = new File(saveFilePath.substring(0, saveFilePath.lastIndexOf(".zip")));
-               ExtractFile oExtractFile = new ExtractFile(saveFilePath, oFolder.getPath());
-               oExtractFile.execute();
-               oExtractFile.get();
-//               File oFolder = new File(oBook.getName());
-               if(oFolder.listFiles().length == 1)
-               {
-                  File file = oFolder.listFiles()[0];
-                  file.renameTo(new File(oBook.getName()));
-                  oFolder.delete();
-               }
-               else
-               {
-                  FileFilter filter = new FileFilter() 
-                  {
-                     @Override
-                     public boolean accept(File pathname) 
-                     {
-                        return pathname.getName().endsWith("*.sfb")|| pathname.getName().endsWith("*.fb2") || pathname.getName().endsWith("*.txt") || pathname.getName().endsWith("*.epub");
-                     }
-                  };                  
-                  for(int i = 0; i < oFolder.listFiles(filter).length; i++)
-                  {
-                     File file = oFolder.listFiles(filter)[0];
-                     file.renameTo(new File(oBook.getName()));
-                  }
-                  oFolder.renameTo(new File(oBook.getName()));
-               }
-               
-               if(oBook.getName().endsWith(".fb2") || oBook.getName().endsWith(".txt"))
-               {
-                  
-//                  int a  = 2;
-//                  int b = a;
-                  
-               }
-               else // ".sfb" Zip can have more than one file 
-               {
-                  
-               }
-            }
-            else
-            {
-               try
-               {
-                  vRenameFile(saveFilePath, oBook.getName());
-               } catch(IOException e)
-               {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
-               }
             }
          } 
          catch(InterruptedException e)
@@ -983,6 +999,10 @@ public class JDownloaderX implements ActionListener
             // TODO Auto-generated catch block
             e.printStackTrace();
          } catch(ExecutionException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         } catch(IOException e)
          {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -1209,6 +1229,12 @@ public class JDownloaderX implements ActionListener
          {
             while(isStarted())
             {
+               for(Book oBookTmp: vBooksDwn)
+               {
+                  if(!vBooksCur.contains(oBookTmp))
+                  vBooksCur.add(oBookTmp);
+               }
+               
                if(iDwns > 0)
                {
                   if(vBooksDwn.size() == 0)
@@ -1218,12 +1244,13 @@ public class JDownloaderX implements ActionListener
 //                     bIsStarted = false;
                      break;
                   }
-                  oBook = vBooksCur.get(j);
-                  if(j < vBooksCur.size()-1)
+                  if(j < vBooksCur.size())
+                  {
+                     oBook = vBooksCur.get(j);
                      j++;
-                  
-                  new DownloadFileA(oBook, oBookDownloadTableModel).execute();
-                  iDwns--;
+                     new DownloadFileA(oBook, oBookDownloadTableModel).execute();
+                     iDwns--;
+                  }
                }
                Thread.sleep(100);
             }
@@ -1257,22 +1284,56 @@ public class JDownloaderX implements ActionListener
       
    }
    
-   private void vRenameFile(String sOldName, String sNewName) throws IOException
+//   private void vRenameFile(String sOldName, String sNewName) throws IOException
+   private void renameFile(String sOldName, String sNewName)
    {
    // File (or directory) with old name
       File file = new File(sOldName);
 
       // File (or directory) with new name
       File file2 = new File(sNewName);
-
-      if (file2.exists())
-         throw new java.io.IOException("file exists");
+      
+      renameFile(file, file2);
+   }
+   
+   private void renameFile(File flOld, File flNew)
+   {
+      boolean success;
+      
+      if (flNew.exists())
+      {
+         if(bOverride)
+         {
+            deleteFile(flNew);
+//            if(file2.isDirectory())
+//            {
+//               for(File f: file2.listFiles())
+//               {
+//                  success = f.delete();
+//                  int a  =1;
+//               }
+//            }
+//            success = file2.delete();
+         }
+         else
+            return;
+//         throw new java.io.IOException("file exists");
+      }
 
       // Rename file (or directory)
-      boolean success = file.renameTo(file2);
+      success = flOld.renameTo(flNew);
 
       if (!success) {
          // File was not successfully renamed
-      }
+      }      
    }
+
+   private void deleteFile(File file) 
+   {
+      if (file.isDirectory()) 
+         for (File sub : file.listFiles()) 
+             deleteFile(sub);
+      
+      file.delete();
+  }
 }
