@@ -4,12 +4,8 @@ import static java.nio.file.StandardCopyOption.*;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.GridLayout;
 
-import javax.jws.Oneway;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollBar;
@@ -24,17 +20,13 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.BoxLayout;
 import javax.swing.JTable;
-import javax.swing.filechooser.FileSystemView;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.ListSelectionModel;
 import javax.swing.JButton;
 import javax.swing.SwingConstants;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.transform.stream.StreamSource;
 
 import java.awt.Component;
 
@@ -50,34 +42,23 @@ import com.discworld.jdownloaderx.dto.BookURLsTableModel;
 import com.discworld.jdownloaderx.dto.JABXList;
 
 import java.awt.Font;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class JDownloaderX implements ActionListener
 {
@@ -110,7 +91,8 @@ public class JDownloaderX implements ActionListener
                                EXT_FB2 = ".fb2",
                                EXT_EPUB = ".epub",
                                EXT_SFB = ".sfb",
-                               EXT_TXT = ".txt";
+                               EXT_TXT = ".txt",
+                               BOOKS_FILE = "file.xml";
    
    private static String sVersion;
    
@@ -383,54 +365,63 @@ public class JDownloaderX implements ActionListener
    
    private void vSearch()
    {
+//      try
+//      {
+//         JAXBContext jaxbContext = JAXBContext.newInstance(Book.class);
+//         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+//         Book bkA = new Book("AAA", "BB");
+//         StringWriter sw = new StringWriter();
+//         jaxbMarshaller.marshal(bkA, sw);
+//         String xmlString = sw.toString();
+//         
+//         JAXBContext jc = JAXBContext.newInstance(Book.class);
+//         Unmarshaller unmarshaller = jc.createUnmarshaller();
+//         
+//         StringReader reader = new StringReader(xmlString);
+//         Book BookNew = (Book) unmarshaller.unmarshal(reader);
+//         
+//         JABXList<Book> Books = new JABXList<Book>();
+//         Books.add(bkA);
+//         
+//         Book bkB = new Book("asd", "asdad");
+//         Books.add(bkB);
+//         
+//         JAXBContext jc1 = JAXBContext.newInstance(JABXList.class, Book.class);
+//         Marshaller marshaller1 = jc1.createMarshaller();
+//         marshaller1.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+//         StringWriter sw1 = new StringWriter();
+//         marshaller1.marshal(Books, sw1);
+//         xmlString = sw1.toString();
+//         
+//         unmarshaller = jc1.createUnmarshaller();
+//         reader = new StringReader(xmlString);
+////         Str
+////         Object o = unmarshaller.unmarshal(reader, JABXList.class);
+////         unmarshaller.unmarshal();
+//         JABXList<?> Books1 = (JABXList<?>)unmarshaller.unmarshal(new StreamSource(reader), JABXList.class).getValue();
+//         
+//         
+//         Book c = (Book) Books1.getValues().get(0);
+//         
+//         vParseURL(txtURL.getText());
+//      } catch(IOException e1)
+//      {
+//         // TODO Auto-generated catch block
+//         e1.printStackTrace();
+//      } catch(JAXBException e1)
+//      {
+//         // TODO Auto-generated catch block
+//         e1.printStackTrace();
+//      }
+      
       try
       {
-         JAXBContext jaxbContext = JAXBContext.newInstance(Book.class);
-         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-         Book bkA = new Book("AAA", "BB");
-         StringWriter sw = new StringWriter();
-         jaxbMarshaller.marshal(bkA, sw);
-         String xmlString = sw.toString();
-         
-         JAXBContext jc = JAXBContext.newInstance(Book.class);
-         Unmarshaller unmarshaller = jc.createUnmarshaller();
-         
-         StringReader reader = new StringReader(xmlString);
-         Book BookNew = (Book) unmarshaller.unmarshal(reader);
-         
-         JABXList<Book> Books = new JABXList<Book>();
-         Books.add(bkA);
-         
-         Book bkB = new Book("asd", "asdad");
-         Books.add(bkB);
-         
-         JAXBContext jc1 = JAXBContext.newInstance(JABXList.class, Book.class);
-         Marshaller marshaller1 = jc1.createMarshaller();
-         marshaller1.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-         StringWriter sw1 = new StringWriter();
-         marshaller1.marshal(Books, sw1);
-         xmlString = sw1.toString();
-         
-         unmarshaller = jc1.createUnmarshaller();
-         reader = new StringReader(xmlString);
-//         Str
-//         Object o = unmarshaller.unmarshal(reader, JABXList.class);
-//         unmarshaller.unmarshal();
-         JABXList<?> Books1 = (JABXList<?>)unmarshaller.unmarshal(new StreamSource(reader), JABXList.class).getValue();
-         
-         
-         Book c = (Book) Books1.getValues().get(0);
-         
          vParseURL(txtURL.getText());
-      } catch(IOException e1)
+      } catch(IOException e)
       {
          // TODO Auto-generated catch block
-         e1.printStackTrace();
-      } catch(JAXBException e1)
-      {
-         // TODO Auto-generated catch block
-         e1.printStackTrace();
-      }      
+         e.printStackTrace();
+      }
    }
    
    private void vAdd()
@@ -687,21 +678,6 @@ public class JDownloaderX implements ActionListener
                vBooksFnd.add(bkSfb);
             }
             
-//            Vector<Book> vBooks = new Vector<Book>();
-//            vBooks.add(bkFb2);
-//            vBooks.add(bkEpub);
-            
-//            BookURLsTableModel oBookURLsTableModel = new BookURLsTableModel(vBooks);
-//            tblBooksUrl.setModel(oBookURLsTableModel);
-            
-//            vBooks.add(bkTxt);
-//            vBooks.add(bkSfb);
-//            oBookURLsTableModel.setValues(vBooksFnd);
-
-//            Collections.rotate(vBooksFnd.subList(0, 4), -1);
-            
-//            vMoveUp(vBooksFnd, 0);
-            
             oBookURLsTableModel.fireTableDataChanged();
             
             tabbedPane.setSelectedIndex(PNL_NDX_FND);
@@ -720,50 +696,6 @@ public class JDownloaderX implements ActionListener
       }
    }
    
-   private void vMoveUp(Vector<Book> vBook, int index)
-   {
-      if(index == 0)
-         return;
-      Collections.rotate(vBook.subList(index-1, index+1), -1);
-   }
-   
-   private void vMoveDown(Vector<Book> vBook, int index)
-   {
-      if(index == vBook.size()-1)
-         return;
-      Collections.rotate(vBook.subList(index, index+2), -1);
-   }
-   
-   private class DownloadFile extends SwingWorker<Void, Object> 
-   {
-      HttpDownloadUtility oHttpDownloadUtility;
-      public DownloadFile(String fileURL, String saveDir)
-      {
-         oHttpDownloadUtility = new HttpDownloadUtility("http://" + DOMAIN + fileURL, saveDir);
-      }
-
-      @Override
-      protected Void doInBackground() throws Exception
-      {
-         oHttpDownloadUtility.downloadFile();
-         return null;
-      }
-
-      @Override
-      protected void done()
-      {
-         super.done();
-         
-         String sFileName = sUrlFb2.substring(BOOK.length());
-         String sName = sFileName.substring(0, sFileName.indexOf("."));
-         String sExt = sFileName.substring(sFileName.lastIndexOf("."));         
-         
-         ExtractFile oExtractFile = new ExtractFile(DOWNLOAD_FLD + "/" + sFileName, DOWNLOAD_FLD);
-         oExtractFile.execute();
-         
-      }
-   }   
-
    private class DownloadFileA extends SwingWorker<Boolean, Integer> 
    {
       private static final int BUFFER_SIZE = 4096;
@@ -772,12 +704,13 @@ public class JDownloaderX implements ActionListener
       
       private Book oBook = null;
 
-      BookDownloadTableModel oBookDownloadTableModel = null;
+//      BookDownloadTableModel oBookDownloadTableModel = null;
       
-      public DownloadFileA(Book aBook, BookDownloadTableModel aBookDownloadTableModel)
+//      public DownloadFileA(Book aBook, BookDownloadTableModel aBookDownloadTableModel)
+      public DownloadFileA(Book aBook)
       {
          this.oBook = aBook; 
-         this.oBookDownloadTableModel = aBookDownloadTableModel;
+//         this.oBookDownloadTableModel = aBookDownloadTableModel;
       }
 
       @Override
@@ -870,7 +803,7 @@ public class JDownloaderX implements ActionListener
                inputStream.close();
    
                if(bResult)
-                  System.out.println("File downloaded");
+                  System.out.println("File " + fileName + " downloaded");
             } 
             else 
             {
@@ -916,16 +849,17 @@ public class JDownloaderX implements ActionListener
             
             if(status)
             {
-               int iBookNdx = vBooksDwn.indexOf(oBook);
-               if(iBookNdx >= 0 )
-                  vBooksDwn.remove(iBookNdx);
+//               int iBookNdx = vBooksDwn.indexOf(oBook);
+//               if(iBookNdx >= 0 )
+//                  vBooksDwn.remove(iBookNdx);
                
-//               saveBooks();
+               deleteBook(oBook);
                
-               oBookDownloadTableModel.setValues(vBooksDwn);
-               oBookDownloadTableModel.fireTableDataChanged();
+               saveBooks();
                
-               iDwns++;
+//               iDwns++;
+               
+               increaseDownloadSlotsNumber();
                
                if(oBook.getURL().endsWith(".zip"))
                {
@@ -938,10 +872,8 @@ public class JDownloaderX implements ActionListener
                   if(oFolder.listFiles().length == 1)
                   {
                      File file = oFolder.listFiles()[0];
-//                     file.renameTo(new File(DOWNLOAD_FLD + File.separator + oBook.getName()));
                      
                      Files.move(file.toPath(), new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
-//                     oFolder.delete();
                      deleteFile(oFolder);
                   }
                   else
@@ -958,39 +890,21 @@ public class JDownloaderX implements ActionListener
                      {
                         File file = oFolder.listFiles(filter)[i];
 //                        file.renameTo(new File(oFolder.getPath() + File.separator + oBook.getName()));
-                        Files.move(file.toPath(), new File(oFolder.getPath() + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
+//                        Files.move(file.toPath(), new File(oFolder.getPath() + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
+                        renameFile(file.getPath(), oFolder.getPath() + File.separator + oBook.getName());
                      }
                      
-                     //oFolder.renameTo(new File(DOWNLOAD_FLD + File.separator + oBook.getName()));
                      renameFile(oFolder.getPath(), DOWNLOAD_FLD + File.separator + oBook.getName());
-//                     Files.deleteIfExists(new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath());
-//                     deleteFile(new File(DOWNLOAD_FLD + File.separator + oBook.getName()));
-//                     Files.move(oFolder.toPath(), new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
                   }
                }
                else
                {
-//                  String s = DOWNLOAD_FLD + File.separator + oBook.getName();
-//                  renameFile(saveFilePath, s);
                   renameFile(saveFilePath, DOWNLOAD_FLD + File.separator + oBook.getName());
-                  
-//                  Files.deleteIfExists(new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath());
-//                  Files.move(new File(saveFilePath).toPath(), new File(DOWNLOAD_FLD + File.separator + oBook.getName()).toPath(), REPLACE_EXISTING);
-                  
-//                  try
-//                  {
-//                     String s = DOWNLOAD_FLD + File.separator + oBook.getName();
-//                     vRenameFile(saveFilePath, s);
-//                  } catch(IOException e)
-//                  {
-//                     // TODO Auto-generated catch block
-//                     e.printStackTrace();
-//                  }
                }               
             }
             else
             {
-               iDwns = MAX_DWN;
+//               iDwns = MAX_DWN;
                setBookProgress(oBook, 0);
             }
          } 
@@ -1007,15 +921,6 @@ public class JDownloaderX implements ActionListener
             // TODO Auto-generated catch block
             e.printStackTrace();
          }
-         
-//         
-//         String sFileName = sUrlFb2.substring(BOOK.length());
-//         String sName = sFileName.substring(0, sFileName.indexOf("."));
-//         String sExt = sFileName.substring(sFileName.lastIndexOf("."));         
-//         
-//         ExtractFile oExtractFile = new ExtractFile(DOWNLOAD_FLD + "/" + sFileName, DOWNLOAD_FLD);
-//         oExtractFile.execute();
-         
       }
    }   
    
@@ -1046,78 +951,12 @@ public class JDownloaderX implements ActionListener
          super.done();
       }
    }
-
-   private class ExtractFileA extends SwingWorker<Void, Integer>
-   {
-      private static final int BUFFER_SIZE = 4096;
-      
-      private int iTotalBytesRead = 0;
-      
-      private String zipFilePath, destDirectory;
-      
-      public ExtractFileA(String zipFilePath, String destDirectory)
-      {
-         this.zipFilePath = zipFilePath;
-         this.destDirectory = destDirectory;
-      }
-      
-      @Override
-      protected Void doInBackground() throws Exception
-      {
-         File destDir = new File(destDirectory);
-         if (!destDir.exists()) 
-         {
-             destDir.mkdir();
-         }
-         ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath));
-         ZipEntry entry = zipIn.getNextEntry();
-         // iterates over entries in the zip file
-         while(entry != null) 
-         {
-             String filePath = destDirectory + File.separator + entry.getName();
-             if(!entry.isDirectory()) 
-             {
-                 // if the entry is a file, extracts it
-                 extractFile(zipIn, filePath);
-             } 
-             else 
-             {
-                 // if the entry is a directory, make the directory
-                 File dir = new File(filePath);
-                 dir.mkdir();
-             }
-             zipIn.closeEntry();
-             entry = zipIn.getNextEntry();
-         }
-         zipIn.close();         return null;
-      }
-      
-      @Override
-      protected void process(List<Integer> chunks)
-      {
-
-         int progress = chunks.get(0);
-//         oBookDownloadTableModel.updateStatus(oBook, progress);
-      }            
-      
-      private void extractFile(ZipInputStream zipIn, String filePath) throws IOException 
-      {
-          BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
-          byte[] bytesIn = new byte[BUFFER_SIZE];
-          int read = 0;
-          while ((read = zipIn.read(bytesIn)) != -1) 
-          {
-             bos.write(bytesIn, 0, read);
-          }
-          bos.close();
-      }
-   }
    
-   private void saveBooks()
+   private synchronized void saveBooks()
    {
       try 
       {
-         File file = new File("file.xml");
+         File file = new File(BOOKS_FILE);
          JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, Book.class);
          Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
     
@@ -1148,12 +987,11 @@ public class JDownloaderX implements ActionListener
    {
       try 
       {
-         File file = new File("file.xml");
+         File file = new File(BOOKS_FILE);
          JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, Book.class);
          Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 //         JABXList<?> Books = (JABXList<?>)jaxbUnmarshaller.unmarshal(file);
          JABXList<Book> Books = (JABXList<Book>)jaxbUnmarshaller.unmarshal(file);
-//         System.out.println(Books);
 
          vBooksDwn.clear();
          
@@ -1170,52 +1008,6 @@ public class JDownloaderX implements ActionListener
 
    private class downloadThread extends SwingWorker<Void, Void> 
    {
-//      private boolean bIsRunning = false;
-      
-//      @Override
-//      public void run()
-//      {
-//         Book oBook;
-//         
-//         Vector<Book> vBooksCur = new Vector<Book>(vBooksDwn);
-//         
-//         int j = 0;
-//         
-//         try
-//         {
-//            while(bIsStarted)
-//            {
-//               if(iDwns > 0)
-//               {
-//                  oBook = vBooksCur.get(j);
-//                  if(j < vBooksCur.size()-1)
-//                     j++;
-//                  
-//                  new DownloadFileA(oBook, oBookDownloadTableModel).execute();
-//                  iDwns--;
-//               }
-//               Thread.sleep(100);
-//            }
-//         } 
-//         catch(InterruptedException e)
-//         {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//         }
-//      }
-      
-//      @Override
-//      public void start()
-//      {
-////         bIsRunning = true;
-//         super.start();
-//      }
-//      
-//      public void vStop()
-//      {
-////         bIsRunning = false;
-//      }
-
       @Override
       protected Void doInBackground() throws Exception
       {
@@ -1248,8 +1040,10 @@ public class JDownloaderX implements ActionListener
                   {
                      oBook = vBooksCur.get(j);
                      j++;
-                     new DownloadFileA(oBook, oBookDownloadTableModel).execute();
-                     iDwns--;
+//                     new DownloadFileA(oBook, oBookDownloadTableModel).execute();
+                     new DownloadFileA(oBook).execute();
+//                     iDwns--;
+                     decreaseDownloadSlotsNumber();
                   }
                }
                Thread.sleep(100);
@@ -1279,12 +1073,28 @@ public class JDownloaderX implements ActionListener
       oBookDownloadTableModel.updateStatus(oBook, progress);
    }
    
-   private class CException extends Exception 
+   private synchronized void deleteBook(Book oBook)
    {
-      
+      int iBookNdx = vBooksDwn.indexOf(oBook);
+      if(iBookNdx >= 0)
+      {
+         vBooksDwn.remove(iBookNdx);
+         
+         oBookDownloadTableModel.setValues(vBooksDwn);
+         oBookDownloadTableModel.fireTableDataChanged();
+      }
    }
    
-//   private void vRenameFile(String sOldName, String sNewName) throws IOException
+   private synchronized void increaseDownloadSlotsNumber()
+   {
+      iDwns++;
+   }
+
+   private synchronized void decreaseDownloadSlotsNumber()
+   {
+      iDwns--;
+   }
+   
    private void renameFile(String sOldName, String sNewName)
    {
    // File (or directory) with old name
@@ -1305,15 +1115,6 @@ public class JDownloaderX implements ActionListener
          if(bOverride)
          {
             deleteFile(flNew);
-//            if(file2.isDirectory())
-//            {
-//               for(File f: file2.listFiles())
-//               {
-//                  success = f.delete();
-//                  int a  =1;
-//               }
-//            }
-//            success = file2.delete();
          }
          else
             return;
