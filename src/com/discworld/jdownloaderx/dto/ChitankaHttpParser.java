@@ -4,10 +4,6 @@ import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
-import javax.swing.JTabbedPane;
-
-import com.discworld.jdownloaderx.JDownloaderX;
-
 public class ChitankaHttpParser extends HTTPParser
 {
 
