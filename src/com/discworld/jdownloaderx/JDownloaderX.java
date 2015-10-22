@@ -39,7 +39,10 @@ import javax.swing.JTextField;
 import com.discworld.jdownloaderx.dto.Book;
 import com.discworld.jdownloaderx.dto.BookDownloadTableModel;
 import com.discworld.jdownloaderx.dto.BookURLsTableModel;
+import com.discworld.jdownloaderx.dto.ChitankaHttpParser;
+import com.discworld.jdownloaderx.dto.HTTPParser;
 import com.discworld.jdownloaderx.dto.JABXList;
+import com.sun.tools.internal.ws.wsdl.document.http.HTTPAddress;
 
 import java.awt.Font;
 import java.io.BufferedReader;
@@ -62,7 +65,7 @@ import java.util.regex.Pattern;
 
 public class JDownloaderX implements ActionListener
 {
-   private final static int    PNL_NDX_DWN = 0,
+   public final static int     PNL_NDX_DWN = 0,
                                PNL_NDX_FND = 1,
                                MAX_DWN = 2;
    
@@ -497,9 +500,12 @@ public class JDownloaderX implements ActionListener
    
    private void vParseURL(String sURL) throws IOException
    {
-      
-      GetFromURL oGetFromURL = new GetFromURL(sURL);
-      oGetFromURL.execute();
+//      GetFromURL oGetFromURL = new GetFromURL(sURL);
+//      oGetFromURL.execute();
+      if(sURL.contains(ChitankaHttpParser.DOMAIN))
+      {
+         new ChitankaHttpParser(sURL, vBooksFnd, rnbUpdateTable).execute();
+      }
    }
    
    private String sFindString(String sSource, Pattern oPattern, String sEnd)
@@ -1203,4 +1209,15 @@ public class JDownloaderX implements ActionListener
       
       file.delete();
   }
+   Runnable rnbUpdateTable = new Runnable()
+   {
+      
+      @Override
+      public void run()
+      {
+         oBookURLsTableModel.fireTableDataChanged();
+         
+         tabbedPane.setSelectedIndex(PNL_NDX_FND);
+      }
+   };
 }
