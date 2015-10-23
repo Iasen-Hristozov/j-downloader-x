@@ -1,67 +1,60 @@
 package com.discworld.jdownloaderx.dto;
 
-import javax.xml.bind.annotation.*;
-
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {"sName","sURL"})
-@XmlRootElement(name = "book")
-
-
-public class Book
+public class Book extends CFile
 {
-   @Override
-   public boolean equals(Object obj)
-   {
-      return ((Book) obj).getName().equals(sName) && ((Book) obj).getURL().equals(sURL);
-   }
+   private  String sAuthor,
+                   sTitle,
+                   sVolume;
 
-   @XmlElement(name = "name", required = true)
-   private String sName;
-   @XmlElement(name = "url", required = true)
-   private String sURL;
-   @XmlTransient
-   private int iStatus;
+   
    
    public Book()
    {
-      sName = "";
-      sURL = "";
+      super();
+      // TODO Auto-generated constructor stub
    }
-   
+
    public Book(String sName, String sURL)
    {
-      this.sName = sName;
-      this.sURL = sURL;
-   }
+      super(sName, sURL);
+   }   
+
+   public Book(String sName, String sURL, String sAuthor, String sTitle, String sVolume)
+   {
+      super(sName, sURL);
+      this.sAuthor = sAuthor;
+      this.sTitle = sTitle;
+      this.sVolume = sVolume;
+   }   
    
-   public String getName()
-   {
-      return sName;
-   }
-
-   public void setName(String sName)
-   {
-      this.sName = sName;
-   }
-
-   public String getURL()
-   {
-      return sURL;
-   }
-
-   public void setURL(String sURL)
-   {
-      this.sURL = sURL;
-   }
-
-   public void setStatus(int iStatus)
-   {
-      this.iStatus = iStatus;
-   }
    
-   public int getStatus()
+   public String getAuthor()
    {
-      return iStatus;
+      return sAuthor;
    }
 
+   public void setAuthor(String sAuthor)
+   {
+      this.sAuthor = sAuthor;
+   }
+
+   public String getTitle()
+   {
+      return sTitle;
+   }
+
+   public void setTitle(String sTitle)
+   {
+      this.sTitle = sTitle;
+   }
+
+   public String getVolume()
+   {
+      return sVolume;
+   }
+
+   public void setVolume(String sVolume)
+   {
+      this.sVolume = sVolume;
+   }
 }

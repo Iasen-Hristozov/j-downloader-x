@@ -54,15 +54,15 @@ public class ChitankaHttpParser extends HTTPParser
                    ptnUrlSfb = Pattern.compile(URL_SFB);
 
 //   public ChitankaHttpParser(String sURL,
-//                             BookURLsTableModel oBookURLsTableModel, 
-//                             Vector<Book> vBooksFnd,
+//                             FileURLsTableModel oFileURLsTableModel, 
+//                             Vector<Book> vFilesFnd,
 //                             JTabbedPane tabbedPane)
 //   {
-//      super(sURL, oBookURLsTableModel, vBooksFnd, tabbedPane);
+//      super(sURL, oFileURLsTableModel, vFilesFnd, tabbedPane);
 //   }
    
    public ChitankaHttpParser(String sURL, 
-                             Vector<Book> vBooksFnd,
+                             Vector<CFile> vBooksFnd,
                              Runnable rnbOnDone)
    {
       super(sURL, vBooksFnd, rnbOnDone);
@@ -102,22 +102,22 @@ public class ChitankaHttpParser extends HTTPParser
       if(bDownloadFB2 && sUrlFb2 != null && !sUrlFb2.trim().isEmpty())
       {
          bkFb2 = new Book(sFileName + EXT_FB2, URL_DWN_BGN + sUrlFb2);
-         vBooksFnd.add(bkFb2);
+         vFilesFnd.add(bkFb2);
       }
       if(bDownloadEPUB && sUrlEpub != null && !sUrlEpub.trim().isEmpty())
       {
          bkEpub = new Book(sFileName + EXT_EPUB, URL_DWN_BGN + sUrlEpub);
-         vBooksFnd.add(bkEpub);
+         vFilesFnd.add(bkEpub);
       }
       if(bDownloadTXT && sUrlTxt != null && !sUrlTxt.trim().isEmpty())
       {
          bkTxt = new Book(sFileName + EXT_TXT, URL_DWN_BGN + sUrlTxt);
-         vBooksFnd.add(bkTxt);
+         vFilesFnd.add(bkTxt);
       }
       if(bDownloadSFB && sUrlSfb != null && !sUrlSfb.trim().isEmpty())
       {
          bkSfb = new Book(sFileName + EXT_SFB, URL_DWN_BGN + sUrlSfb);
-         vBooksFnd.add(bkSfb);
+         vFilesFnd.add(bkSfb);
       }
       
       return sFileName;
@@ -160,25 +160,25 @@ public class ChitankaHttpParser extends HTTPParser
 //         if(bDownloadFB2 && sUrlFb2 != null && !sUrlFb2.trim().isEmpty())
 //         {
 //            bkFb2 = new Book(sFileName + EXT_FB2, URL_DWN_BGN + sUrlFb2);
-//            vBooksFnd.add(bkFb2);
+//            vFilesFnd.add(bkFb2);
 //         }
 //         if(bDownloadEPUB && sUrlEpub != null && !sUrlEpub.trim().isEmpty())
 //         {
 //            bkEpub = new Book(sFileName + EXT_EPUB, URL_DWN_BGN + sUrlEpub);
-//            vBooksFnd.add(bkEpub);
+//            vFilesFnd.add(bkEpub);
 //         }
 //         if(bDownloadTXT && sUrlTxt != null && !sUrlTxt.trim().isEmpty())
 //         {
 //            bkTxt = new Book(sFileName + EXT_TXT, URL_DWN_BGN + sUrlTxt);
-//            vBooksFnd.add(bkTxt);
+//            vFilesFnd.add(bkTxt);
 //         }
 //         if(bDownloadSFB && sUrlSfb != null && !sUrlSfb.trim().isEmpty())
 //         {
 //            bkSfb = new Book(sFileName + EXT_SFB, URL_DWN_BGN + sUrlSfb);
-//            vBooksFnd.add(bkSfb);
+//            vFilesFnd.add(bkSfb);
 //         }
          
-//         oBookURLsTableModel.fireTableDataChanged();
+//         oFileURLsTableModel.fireTableDataChanged();
 //         
 //         tabbedPane.setSelectedIndex(JDownloaderX.PNL_NDX_FND);
          

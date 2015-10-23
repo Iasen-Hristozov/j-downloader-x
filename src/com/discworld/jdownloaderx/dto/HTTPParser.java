@@ -18,31 +18,31 @@ public class HTTPParser extends SwingWorker<String, Void>
 {
    private String sURL;
    
-   protected Vector<Book> vBooksFnd;
+   protected Vector<CFile> vFilesFnd;
    
-   protected BookURLsTableModel oBookURLsTableModel;
+   protected FileURLsTableModel oFileURLsTableModel;
    
    protected JTabbedPane tabbedPane;
    
    protected Runnable rnbOnDone;
   
    public HTTPParser(String sURL,
-                     BookURLsTableModel oBookURLsTableModel, 
-                     Vector<Book> vBooksFnd,
+                     FileURLsTableModel oFileURLsTableModel, 
+                     Vector<CFile> vFilesFnd,
                      JTabbedPane tabbedPane)
    {
       this.sURL = sURL;
-      this.oBookURLsTableModel = oBookURLsTableModel;
-      this.vBooksFnd = vBooksFnd;
+      this.oFileURLsTableModel = oFileURLsTableModel;
+      this.vFilesFnd = vFilesFnd;
       this.tabbedPane = tabbedPane;
    }
    
    public HTTPParser(String sURL,
-                     Vector<Book> vBooksFnd,
+                     Vector<CFile> vFilesFnd,
                      Runnable rnbOnDone)
    {
       this.sURL = sURL;
-      this.vBooksFnd = vBooksFnd;
+      this.vFilesFnd = vFilesFnd;
       this.rnbOnDone = rnbOnDone;
    }
    
