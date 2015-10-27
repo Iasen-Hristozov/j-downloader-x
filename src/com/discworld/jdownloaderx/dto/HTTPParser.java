@@ -156,4 +156,10 @@ public class HTTPParser extends SwingWorker<String, Void>
       
       return sResult;
    }
+
+   public static void OnDownloadDone()
+   {
+      
+   }
+   
 }

@@ -354,7 +354,8 @@ public class JDownloaderX extends JFrame implements ActionListener
             if(tiRowNdxs.length == 0)
                break;
             
-            for(int i = 0; i < tiRowNdxs.length; i++)
+//            for(int i = 0; i < tiRowNdxs.length; i++)
+            for(int i = tiRowNdxs.length-1; i >= 0; i--)
                vFilesDwn.remove(tiRowNdxs[i]);
             oFileDownloadTableModel.fireTableDataChanged();
             
@@ -610,7 +611,7 @@ public class JDownloaderX extends JFrame implements ActionListener
       }
    }   
    
-   private class ExtractFile extends SwingWorker<Void, Void>
+   public class ExtractFile extends SwingWorker<Void, Void>
    {
       String zipFilePath, destDirectory;
       
@@ -628,13 +629,6 @@ public class JDownloaderX extends JFrame implements ActionListener
       {
          oUnzipUtility.unzip(zipFilePath, destDirectory);
          return null;
-      }
-      
-      @Override
-      protected void done()
-      {
-         // TODO Auto-generated method stub
-         super.done();
       }
    }
    
@@ -669,6 +663,8 @@ public class JDownloaderX extends JFrame implements ActionListener
       try 
       {
          File file = new File(FILE_LIST);
+         if(!file.exists())
+            return;
          JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, CFile.class);
          Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 //         JABXList<?> Books = (JABXList<?>)jaxbUnmarshaller.unmarshal(file);
@@ -677,9 +673,6 @@ public class JDownloaderX extends JFrame implements ActionListener
          vFilesDwn.clear();
          
          vFilesDwn = new Vector<CFile>(Files.getValues());
-         
-//         for(int i = 0; i < Books.getValues().size(); i++)
-//            vFilesDwn.add((Book)Books.getValues().get(i));
       } 
       catch (JAXBException e) 
       {
