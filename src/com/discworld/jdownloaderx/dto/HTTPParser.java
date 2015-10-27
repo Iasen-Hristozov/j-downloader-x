@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -122,6 +123,36 @@ public class HTTPParser extends SwingWorker<String, Void>
       
       return sResult;
    }
+   
+   protected ArrayList<String> sFindStrings(String sSource, Pattern oPattern, String sEnd)
+   {
+      int iBgn = 0,
+          iEnd = 0;
+      
+      ArrayList<String> alResult = new ArrayList<String>();
+      
+      String sResult = null,
+             sSubSource = sSource;
+      
+      while(true)
+      {
+         sSubSource = sSubSource.substring(iEnd);
+         Matcher oMatcher = oPattern.matcher(sSubSource);
+         if(oMatcher.find())
+         {
+            iBgn = oMatcher.end();
+            iEnd = sSubSource.indexOf(sEnd, iBgn);
+            sResult = sSubSource.substring(iBgn, iEnd);
+            alResult.add(sResult);
+         }
+         else 
+            break;
+      }
+      
+      
+      return alResult;
+   }
+   
 
    protected String sFindString(String sSource, String sBegin, String sEnd)
    {

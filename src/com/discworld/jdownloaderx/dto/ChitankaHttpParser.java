@@ -1,5 +1,6 @@
 package com.discworld.jdownloaderx.dto;
 
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
@@ -77,10 +78,12 @@ public class ChitankaHttpParser extends HTTPParser
    @Override
    protected String doInBackground() throws Exception
    {
-      // TODO Auto-generated method stub
       String sResponse = super.doInBackground();
       
-      sAuthor = sFindString(sResponse, ptnAuthotBgn, AUTHOR_END);
+//      sAuthor = sFindString(sResponse, ptnAuthotBgn, AUTHOR_END);
+      
+      ArrayList<String> alAuthors = sFindStrings(sResponse, ptnAuthotBgn, AUTHOR_END);
+      sAuthor = String.join(", ", alAuthors);
       
       sTitle = sFindString(sResponse, ptnTitleBgn, TITLE_END);
       
