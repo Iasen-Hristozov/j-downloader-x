@@ -56,6 +56,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
+import javax.swing.ScrollPaneConstants;
 
 public class JDownloaderX extends JFrame implements ActionListener
 {
@@ -248,6 +249,7 @@ public class JDownloaderX extends JFrame implements ActionListener
       panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
       
       spFilesDwn = new JScrollPane();
+      spFilesDwn.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
       panel.add(spFilesDwn);
       
       tblFilesDwn = new JTable();
@@ -291,12 +293,13 @@ public class JDownloaderX extends JFrame implements ActionListener
       tblFilesUrl.setModel(oFileURLsTableModel);
       
       JScrollPane spFilesUrl = new JScrollPane(tblFilesUrl);
+      spFilesUrl.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
       
-      JScrollBar sb = spFilesUrl.getVerticalScrollBar();
-      sb.setPreferredSize(new Dimension(50, 0));
+//      JScrollBar sb = spFilesUrl.getVerticalScrollBar();
+//      sb.setPreferredSize(new Dimension(50, 0));
 
       // Put it to the left.
-      spFilesUrl.remove(sb);
+//      spFilesUrl.remove(sb);
       panel.add(spFilesUrl);
    }
 

@@ -17,14 +17,18 @@ public class ChitankaHttpParser extends HTTPParser
           TITLE_BGN = "<a class=\"selflink\" itemprop=\"name\" data-edit=\"/admin/((\\bbook\\b)|(\\btext\\b))/\\d+/edit\">",
 //          TITLE_BGN = "<a class=\"selflink\" itemprop=\"name\" data-edit=\"/admin/book/\\d+/edit\">",
           TITLE_END = "</a>",
+          BOOK_BGN = "<i itemprop=\"name\">",
+          BOOK_END = "</i>",
           VOLUME_BGN = "<h2><span>",
           VOLUME_END = "</span></h2>",
           URL_DWN_BGN = "http://" + DOMAIN,
+          LNKS_BGN = "<div class=\"tab-pane expanded-links text-links\" id=\"text-links\">",
           URL_FB2 = "<a href=\"/((\\bbook\\b)|(\\btext\\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 fb2.zip\" class=\"(btn btn-default )?dl dl-fb2 action\"><span( class=\"sr-only\")?>fb2.zip</span>",
           URL_EPUB = "<a href=\"/((\\bbook\\b)|(\\btext\\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 epub\" class=\"(btn btn-default )?dl dl-epub action\"><span( class=\"sr-only\")?>epub</span>",
           URL_TXT = "<a href=\"/((\\bbook\\b)|(\\btext\\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 txt.zip( \\(.*\\))?\" class=\"(btn btn-default )?dl dl-txt action\"><span( class=\"sr-only\")?>txt.zip</span>",
           URL_SFB = "<a href=\"/((\\bbook\\b)|(\\btext\\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 sfb.zip\" class=\"(btn btn-default )?dl dl-sfb action\"><span( class=\"sr-only\")?>sfb.zip</span>",
-//          URL_FB2 = "<a href=\"/((\bbook\b)|(\btext\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 fb2.zip\" class=\"btn btn-default dl dl-fb2 action\"><span class=\"sr-only\">fb2.zip</span>",
+          URL_PDF = "<a href=\"/((\\bbook\\b)|(\\btext\\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 pdf\" class=\"(btn btn-default )?dl dl-pdf action\"><span( class=\"sr-only\")?>pdf</span>",
+          URL_DJVU = "<a href=\"/((\\bbook\\b)|(\\btext\\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 djvu\" class=\"(btn btn-default )?dl dl-djvu action\"><span( class=\"sr-only\")?>djvu</span>",
 //          URL_EPUB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 epub\" class=\"btn btn-default dl dl-epub action\"><span class=\"sr-only\">epub</span>",
 //          URL_TXT = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 txt.zip\" class=\"btn btn-default dl dl-txt action\"><span class=\"sr-only\">txt.zip</span>",
 //          URL_SFB = "<a href=\"/book/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 sfb.zip\" class=\"btn btn-default dl dl-sfb action\"><span class=\"sr-only\">sfb.zip</span>",
@@ -38,12 +42,19 @@ public class ChitankaHttpParser extends HTTPParser
           EXT_FB2 = ".fb2",
           EXT_EPUB = ".epub",
           EXT_SFB = ".sfb",
-          EXT_TXT = ".txt";
+          EXT_TXT = ".txt",
+          EXT_PDF = ".pdf",
+          EXT_DJVU = ".djvu",
+          EXTS[] = {EXT_FB2, EXT_EPUB, EXT_TXT, EXT_SFB, EXT_PDF, EXT_DJVU},
+          URLS[] = {URL_FB2, URL_EPUB, URL_TXT, URL_SFB, URL_PDF, URL_DJVU};
    
    private boolean bDownloadFB2 = true,
                    bDownloadEPUB = true,
                    bDownloadSFB = false,
-                   bDownloadTXT = false;
+                   bDownloadTXT = false,
+                   bDownloadPDF = true,
+                   bDownloadDJVU = true,
+                   bDownloads[] = {bDownloadFB2, bDownloadEPUB, bDownloadTXT, bDownloadSFB, bDownloadPDF, bDownloadDJVU};
    
    private String sAuthor,
                   sTitle,
@@ -51,14 +62,19 @@ public class ChitankaHttpParser extends HTTPParser
                   sUrlFb2,
                   sUrlEpub,
                   sUrlTxt,
-                  sUrlSfb;
+                  sUrlSfb,
+                  sUrlPdf,
+                  sUrlDjvu;
    
    private Pattern ptnAuthotBgn = Pattern.compile(AUTHOR_BGN),
                    ptnTitleBgn = Pattern.compile(TITLE_BGN),
                    ptnUrlFb2 = Pattern.compile(URL_FB2),
                    ptnUrlEpub = Pattern.compile(URL_EPUB),
                    ptnUrlTxt = Pattern.compile(URL_TXT),
-                   ptnUrlSfb = Pattern.compile(URL_SFB);
+                   ptnUrlSfb = Pattern.compile(URL_SFB),
+                   ptnUrlPdf = Pattern.compile(URL_PDF),
+                   ptnUrlDjvu = Pattern.compile(URL_DJVU),
+                   ptnUrls[] = {ptnUrlFb2, ptnUrlEpub, ptnUrlTxt, ptnUrlSfb, ptnUrlPdf, ptnUrlDjvu};
 
 //   public ChitankaHttpParser(String sURL,
 //                             FileURLsTableModel oFileURLsTableModel, 
@@ -80,22 +96,41 @@ public class ChitankaHttpParser extends HTTPParser
    {
       String sResponse = super.doInBackground();
       
+      String sAuthorTitle = sResponse.substring(sResponse.indexOf("<h1>"), sResponse.indexOf("</h1>"));
+      
 //      sAuthor = sFindString(sResponse, ptnAuthotBgn, AUTHOR_END);
       
-      ArrayList<String> alAuthors = sFindStrings(sResponse, ptnAuthotBgn, AUTHOR_END);
+      ArrayList<String> alAuthors = sFindStrings(sAuthorTitle, ptnAuthotBgn, AUTHOR_END);
       sAuthor = String.join(", ", alAuthors);
       
-      sTitle = sFindString(sResponse, ptnTitleBgn, TITLE_END);
+//      sTitle = sFindString(sResponse, BOOK_BGN, BOOK_END);
+//      
+//      if(sTitle == null)
+      sTitle = sFindString(sAuthorTitle, ptnTitleBgn, TITLE_END);
       
       sVolume = sFindString(sResponse, VOLUME_BGN, VOLUME_END);
       
-      sUrlFb2 = sFindString(sResponse, ptnUrlFb2, URL_BGN, URL_END);
-
-      sUrlEpub = sFindString(sResponse, ptnUrlEpub, URL_BGN, URL_END);
+      String sLinks = sResponse.substring(sResponse.indexOf(LNKS_BGN) != -1 ? sResponse.indexOf(LNKS_BGN) : 0);
       
-      sUrlTxt = sFindString(sResponse, ptnUrlTxt, URL_BGN, URL_END);
+//      sUrlFb2 = sFindString(sLinks, ptnUrlFb2, URL_BGN, URL_END);
+//
+//      sUrlEpub = sFindString(sLinks, ptnUrlEpub, URL_BGN, URL_END);
+//      
+//      sUrlTxt = sFindString(sLinks, ptnUrlTxt, URL_BGN, URL_END);
+//      
+//      sUrlSfb = sFindString(sLinks, ptnUrlSfb, URL_BGN, URL_END);
+//      
+//      sUrlSfb = sFindString(sLinks, ptnUrlSfb, URL_BGN, URL_END); 
+//      
+//      sUrlPdf = sFindString(sLinks, ptnUrlPdf, URL_BGN, URL_END);
+//      
+//      sUrlDjvu = sFindString(sLinks, ptnUrlDjvu, URL_BGN, URL_END);
       
-      sUrlSfb = sFindString(sResponse, ptnUrlSfb, URL_BGN, URL_END); 
+      String sUrls[] = new String[URLS.length];
+      for(int i = 0; i < URLS.length; i++)
+      {
+         sUrls[i] = sFindString(sLinks, ptnUrls[i], URL_BGN, URL_END);
+      }
       
 //      DownloadFile oDownloadFile = new DownloadFile(sUrlFb2, DOWNLOAD_FLD);
 //      oDownloadFile.execute();
@@ -103,31 +138,62 @@ public class ChitankaHttpParser extends HTTPParser
 //      String sFileName = DOWNLOAD_FLD + File.separator + (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
       String sFileName = (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
       
+      sFileName = sFileName.replaceAll("[?:]", ".");
+      if(sFileName.endsWith("."))
+         sFileName = sFileName.substring(0, sFileName.length()-1);
+      
       Book bkFb2 = null,
            bkEpub = null,
            bkTxt = null,
-           bkSfb = null;
+           bkSfb = null,
+           bkPdf = null,
+           bkDjvu = null,
+           oBook = null;
       
-      if(bDownloadFB2 && sUrlFb2 != null && !sUrlFb2.trim().isEmpty())
+//      if(bDownloadFB2 && sUrlFb2 != null && !sUrlFb2.trim().isEmpty())
+//      {
+//         bkFb2 = new Book(sFileName + EXT_FB2, URL_DWN_BGN + sUrlFb2);
+//         vFilesFnd.add(bkFb2);
+//      }
+//      if(bDownloadEPUB && sUrlEpub != null && !sUrlEpub.trim().isEmpty())
+//      {
+//         bkEpub = new Book(sFileName + EXT_EPUB, URL_DWN_BGN + sUrlEpub);
+//         vFilesFnd.add(bkEpub);
+//      }
+//      if(bDownloadTXT && sUrlTxt != null && !sUrlTxt.trim().isEmpty())
+//      {
+//         bkTxt = new Book(sFileName + EXT_TXT, URL_DWN_BGN + sUrlTxt);
+//         vFilesFnd.add(bkTxt);
+//      }
+//      if(bDownloadSFB && sUrlSfb != null && !sUrlSfb.trim().isEmpty())
+//      {
+//         bkSfb = new Book(sFileName + EXT_SFB, URL_DWN_BGN + sUrlSfb);
+//         vFilesFnd.add(bkSfb);
+//      }
+//      
+//      if(bDownloadPDF && sUrlPdf != null && !sUrlPdf.trim().isEmpty())
+//      {
+//         bkPdf = new Book(sFileName + EXT_PDF, URL_DWN_BGN + sUrlPdf);
+//         vFilesFnd.add(bkPdf);
+//      }
+//      
+//      if(bDownloadDJVU && sUrlDjvu != null && !sUrlDjvu.trim().isEmpty())
+//      {
+//         bkDjvu= new Book(sFileName + EXT_DJVU, URL_DWN_BGN + sUrlDjvu);
+//         vFilesFnd.add(bkDjvu);
+//      }
+      
+      for(int i = 0; i < URLS.length; i++)
       {
-         bkFb2 = new Book(sFileName + EXT_FB2, URL_DWN_BGN + sUrlFb2);
-         vFilesFnd.add(bkFb2);
+         if(bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
+         {
+            oBook = new Book(sFileName + EXTS[i], URL_DWN_BGN + sUrls[i]);
+            vFilesFnd.add(oBook);
+         }
+         
       }
-      if(bDownloadEPUB && sUrlEpub != null && !sUrlEpub.trim().isEmpty())
-      {
-         bkEpub = new Book(sFileName + EXT_EPUB, URL_DWN_BGN + sUrlEpub);
-         vFilesFnd.add(bkEpub);
-      }
-      if(bDownloadTXT && sUrlTxt != null && !sUrlTxt.trim().isEmpty())
-      {
-         bkTxt = new Book(sFileName + EXT_TXT, URL_DWN_BGN + sUrlTxt);
-         vFilesFnd.add(bkTxt);
-      }
-      if(bDownloadSFB && sUrlSfb != null && !sUrlSfb.trim().isEmpty())
-      {
-         bkSfb = new Book(sFileName + EXT_SFB, URL_DWN_BGN + sUrlSfb);
-         vFilesFnd.add(bkSfb);
-      }
+
+      
       
       return sFileName;
    }
