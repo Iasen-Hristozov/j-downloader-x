@@ -1,12 +1,17 @@
 package com.discworld.jdownloaderx.dto;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ChitankaHttpParser extends HTTPParser
+public class ChitankaPlugin extends Plugin
 {
 
    public final static String DOMAIN = "chitanka.info";
@@ -51,7 +56,8 @@ public class ChitankaHttpParser extends HTTPParser
    
    private String sAuthor,
                   sTitle,
-                  sVolume;
+                  sVolume,
+                  sUrls[] = new String[URLS.length];;
    
    private Pattern ptnAuthotBgn = Pattern.compile(AUTHOR_BGN),
                    ptnTitleBgn = Pattern.compile(TITLE_BGN),
@@ -62,19 +68,81 @@ public class ChitankaHttpParser extends HTTPParser
                    ptnUrlPdf = Pattern.compile(URL_PDF),
                    ptnUrlDjvu = Pattern.compile(URL_DJVU),
                    ptnUrls[] = {ptnUrlFb2, ptnUrlEpub, ptnUrlTxt, ptnUrlSfb, ptnUrlPdf, ptnUrlDjvu},
-                   ptnUrlBook = Pattern.compile(URL_BOOK);
-   
-   public ChitankaHttpParser(String sURL, 
-                             Vector<CFile> vBooksFnd,
-                             Runnable rnbOnDone)
+                   ptnUrlBook = Pattern.compile(URL_BOOK);   
+
+   public ChitankaPlugin(IDownloader oDownloader)
    {
-      super(sURL, vBooksFnd, rnbOnDone);
-   }   
-   
+      super(oDownloader);
+   }
+
    @Override
-   protected String doInBackground() throws Exception
+   protected void doneDownloadFile(CFile oFile, 
+                                   String sDownloadFolder,
+                                   String saveFilePath)
    {
-      String sResponse = super.doInBackground();
+      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
+      
+      if(oFile.getURL().endsWith(".zip"))
+      {
+         File oFolder = new File(saveFilePath.substring(0, saveFilePath.lastIndexOf(".zip")));
+         ExtractFile oExtractFile = new ExtractFile(saveFilePath, oFolder.getPath());
+         oExtractFile.execute();
+         try
+         {
+            oExtractFile.get();
+            new File(saveFilePath).delete();
+            if(oFolder.listFiles().length == 1)
+            {
+               File file = oFolder.listFiles()[0];
+            
+               Files.move(file.toPath(), new File(sDownloadFolder + File.separator + oFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+               FileUtils.deleteFile(oFolder);
+            }
+            else
+            {
+               FileFilter filter = new FileFilter() 
+               {
+                  @Override
+                  public boolean accept(File pathname) 
+                  {
+                     return pathname.getName().endsWith(".sfb")|| pathname.getName().endsWith(".fb2") || pathname.getName().endsWith(".txt") || pathname.getName().endsWith(".epub");
+                  }
+               };                  
+               for(int i = 0; i < oFolder.listFiles(filter).length; i++)
+               {
+                  File file = oFolder.listFiles(filter)[i];
+                  FileUtils.renameFile(file.getPath(), oFolder.getPath() + File.separator + oFile.getName());
+               }
+            
+               FileUtils.renameFile(oFolder.getPath(), sDownloadFolder + File.separator + oFile.getName());
+            }         
+         } 
+         catch(InterruptedException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         } 
+         catch(ExecutionException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         } 
+         catch(IOException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
+      }
+      else
+      {
+         FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + oFile.getName());
+      }                     
+   }
+
+   @Override
+   protected String inBackgroundHttpParse(String sURL)
+   {
+      String sResponse = super.inBackgroundHttpParse(sURL);
       
       String sAuthorTitle = sResponse.substring(sResponse.indexOf("<h1>"), sResponse.indexOf("</h1>"));
       
@@ -91,54 +159,51 @@ public class ChitankaHttpParser extends HTTPParser
       
       String sLinks = sResponse.substring(sResponse.indexOf(LNKS_BGN) != -1 ? sResponse.indexOf(LNKS_BGN) : 0);
       
-      String sUrls[] = new String[URLS.length];
+//      String sUrls[] = new String[URLS.length];
       for(int i = 0; i < URLS.length; i++)
          sUrls[i] = sFindString(sLinks, ptnUrls[i], URL_BGN, URL_END);
       
       String sFileName = (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
       
-      sFileName = sFileName.replaceAll("[?]", ".").replaceAll("[:]", " - ").replaceAll("<br>", "");
+      sFileName = sFileName.replaceAll("[?]", ".").replace(":", " - ").replace("<br>", "").replace("\n", ". ");
 //      sFileName = sFileName.replaceAll("[:]", " - ");
 //      sFileName = sFileName.replaceAll("<br>", "");
       if(sFileName.endsWith("."))
          sFileName = sFileName.substring(0, sFileName.length()-1);
+      if(sFileName.length() > 250)
+         sFileName = sFileName.substring(0, 247) + "...";
       
+//      Book oBook = null;
+      
+//      for(int i = 0; i < URLS.length; i++)
+//      {
+//         if(bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
+//         {
+//            oBook = new Book(sFileName + EXTS[i], URL_DWN_BGN + sUrls[i]);
+//            oDownloader.addFile(oBook);
+////            vFilesFnd.add(oBook);
+//         }
+//      }
+      
+      return sFileName;   
+   }
+
+   @Override
+   protected ArrayList<CFile> doneHttpParse(String sResult)
+   {
       Book oBook = null;
-      
+      ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
       for(int i = 0; i < URLS.length; i++)
       {
          if(bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
          {
-            oBook = new Book(sFileName + EXTS[i], URL_DWN_BGN + sUrls[i]);
+            oBook = new Book(sResult + EXTS[i], URL_DWN_BGN + sUrls[i]);
+//            oDownloader.addFile(oBook);
             vFilesFnd.add(oBook);
          }
       }
       
-      return sFileName;
-   }
-
-   @Override
-   protected void done()
-   {
-      super.done();
-      
-      try
-      {
-         String sResponse = get();
-         
-         rnbOnDone.run();
-         
-      } 
-      catch(InterruptedException e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } 
-      catch(ExecutionException e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
+      return vFilesFnd;
    }
    
    public static ArrayList<String> parseClipboard(String sContent)
@@ -154,5 +219,5 @@ public class ChitankaHttpParser extends HTTPParser
       }      
       
       return alUrlBooks;
-   }
+   }   
 }

@@ -152,7 +152,6 @@ public class HTTPParser extends SwingWorker<String, Void>
       
       return alResult;
    }
-   
 
    protected String sFindString(String sSource, String sBegin, String sEnd)
    {
@@ -191,6 +190,11 @@ public class HTTPParser extends SwingWorker<String, Void>
    public static void OnDownloadDone()
    {
       
+   }
+   
+   public static ArrayList<String> parseClipboard(String sContentt)
+   {
+      return null;
    }
    
 }
