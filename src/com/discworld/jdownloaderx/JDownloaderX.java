@@ -33,14 +33,17 @@ import java.awt.FlowLayout;
 import javax.swing.JTextField;
 
 import com.discworld.jdownloaderx.dto.CFile;
-import com.discworld.jdownloaderx.dto.ChitankaPlugin;
 import com.discworld.jdownloaderx.dto.ClipboardListener;
+import com.discworld.jdownloaderx.dto.FileUtils;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.JABXList;
+import com.discworld.jdownloaderx.plugins.Plugin;
 
 import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -58,7 +61,9 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                                MAX_DWN = 2;
    
    private final static String DOWNLOAD_FLD = "Download",
-                               FILE_LIST = "files.xml";
+                               FILE_LIST = "files.xml",
+                               PLUGIN_FOLDER = "plugins",
+                               PLUGIN_SUFFIX = ".jar";         
    
    private static String sVersion;
    
@@ -91,7 +96,9 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                  vFilesFnd,
                  vFilesCur;
    
-   ChitankaPlugin oChitankaPlugin = new ChitankaPlugin(this);
+//   ChitankaPlugin oChitankaPlugin = new ChitankaPlugin(this);
+   
+   private static ArrayList<Plugin> alPlugins = new ArrayList<Plugin>();
    
    /**
     * Launch the application.
@@ -120,30 +127,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       });
    }
    
-   public class ProgressCellRender extends JProgressBar implements TableCellRenderer 
-   {
-      /**
-       * 
-       */
-      private static final long serialVersionUID = -2555436479986175987L;
-
-      @Override
-      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
-      {
-          int progress = 0;
-          if (value instanceof Float) 
-          {
-              progress = Math.round(((Float) value) * 100f);
-          } 
-          else if (value instanceof Integer) 
-          {
-              progress = (Integer) value;
-          }
-          setValue(progress);
-          return this;
-      }
-  }   
-
    /**
     * Create the application.
     */
@@ -163,21 +146,41 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
          {
             String sContent = oClipboardListener.getContent();
             
-            if(sContent.contains(ChitankaPlugin.DOMAIN))
+            for(Plugin oPlugin: alPlugins)
             {
-               ArrayList<String> alURLs = ChitankaPlugin.parseClipboard(sContent);
-               String.join(",", alURLs);
-               txtURL.setText(String.join(",", alURLs));
-               try
+//               if(sContent.contains(oPlugin.DOMAIN))
+               if(sContent.contains(oPlugin.getDomain()))
                {
-                  for(String sURL : alURLs)
-                     vParseURL(sURL);
-               } catch(IOException e)
-               {
-                  // TODO Auto-generated catch block
-                  e.printStackTrace();
+                  ArrayList<String> alURLs = oPlugin.parseClipboard(sContent);
+                  String.join(",", alURLs);
+                  txtURL.setText(String.join(",", alURLs));
+                  try
+                  {
+                     for(String sURL : alURLs)
+                        vParseURL(sURL);
+                  } catch(IOException e)
+                  {
+                     // TODO Auto-generated catch block
+                     e.printStackTrace();
+                  }
                }
-            }
+            }      
+            
+//            if(sContent.contains(ChitankaPlugin.DOMAIN))
+//            {
+//               ArrayList<String> alURLs = ChitankaPlugin.parseClipboard(sContent);
+//               String.join(",", alURLs);
+//               txtURL.setText(String.join(",", alURLs));
+//               try
+//               {
+//                  for(String sURL : alURLs)
+//                     vParseURL(sURL);
+//               } catch(IOException e)
+//               {
+//                  // TODO Auto-generated catch block
+//                  e.printStackTrace();
+//               }
+//            }
          }
       };      
       
@@ -188,6 +191,78 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       loadFiles();
       oFileDownloadTableModel.setValues(vFilesDwn);
       oFileDownloadTableModel.fireTableDataChanged();
+      
+      //===============================================================
+      // Loading plugins
+      new File(PLUGIN_FOLDER).mkdirs();
+      
+//      Policy.setPolicy(new PluginPolicy());
+//      System.setSecurityManager(new SecurityManager());
+      
+//      alPlugins = new ArrayList<Plugin>();
+      
+      final File fPluginFolder = new File(System.getProperty("user.dir") + "\\" + PLUGIN_FOLDER);
+      
+      try
+      {
+         loadPlugins(fPluginFolder);
+      } 
+      catch(InstantiationException | IllegalAccessException | ClassNotFoundException | IOException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }            
+   }
+
+   @Override
+   public void actionPerformed(ActionEvent e)
+   {
+      Object oSource = e.getSource();
+   
+      if(oSource == btnSearch)
+         vSearch();
+      else if(oSource == btnAdd)
+         vAdd();
+      else if(oSource == btnRemove)
+         vRemove();
+      else if(oSource == btnStart)
+         vStartStop();
+   }
+
+   @Override
+   public void onHttpParseDone(ArrayList<CFile> alFilesFnd)
+   {
+      vFilesFnd.addAll(alFilesFnd);
+   
+      oFileURLsTableModel.fireTableDataChanged();
+      
+      tabbedPane.setSelectedIndex(PNL_NDX_FND);
+      
+   }
+
+   @Override
+   public boolean isStarted()
+   {
+      return _isStarted();
+   }
+
+   @Override
+   public void setFileProgress(CFile oFile, int progress)
+   {
+      _setFileProgress(oFile, progress);
+   }
+
+   @Override
+   public void deleteFile(CFile oFile)
+   {
+      _deleteFile(oFile);
+   }
+
+   @Override
+   public void saveFiles()
+   {
+      _saveFiles();
+      
    }
 
    /**
@@ -285,21 +360,52 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       panel.add(spFilesUrl);
    }
 
-   @Override
-   public void actionPerformed(ActionEvent e)
+   private void loadPlugins(final File fPluginFolder) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException
    {
-      Object oSource = e.getSource();
-
-      if(oSource == btnSearch)
-         vSearch();
-      else if(oSource == btnAdd)
-         vAdd();
-      else if(oSource == btnRemove)
-         vRemove();
-      else if(oSource == btnStart)
-         vStartStop();
+      for (final File fEntry : fPluginFolder.listFiles()) 
+      {
+         if (fEntry.isDirectory()) 
+         {
+             loadPlugins(fEntry);
+         } 
+         else 
+         {
+//             System.out.println(fEntry.getName());
+             
+             if(!fEntry.getName().endsWith(PLUGIN_SUFFIX))
+                continue;
+             
+             ClassLoader oClassLoader = URLClassLoader.newInstance(new URL[] { fEntry.toURL() });
+             Plugin oPlugin = (Plugin) oClassLoader.loadClass(FileUtils.getClassName(fEntry.getAbsolutePath())).newInstance();
+             oPlugin.setDownloader(this);
+             alPlugins.add(oPlugin);
+         }
+      }      
    }
+
+   private void loadFiles()
+   {
+      try 
+      {
+         File file = new File(FILE_LIST);
+         if(!file.exists())
+            return;
+         JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, CFile.class);
+         Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+         JABXList<CFile> Files = (JABXList<CFile>)jaxbUnmarshaller.unmarshal(file);
    
+         vFilesDwn.clear();
+         
+         vFilesDwn = new Vector<CFile>(Files.getValues());
+      } 
+      catch (JAXBException e) 
+      {
+         e.printStackTrace();
+      }
+   }
+
+
+
    private void vSearch()
    {
       try
@@ -379,112 +485,31 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
    private void vParseURL(String sURL) throws IOException
    {
-      if(sURL.contains(ChitankaPlugin.DOMAIN))
+      for(Plugin oPlugin: alPlugins)
       {
-         oChitankaPlugin.vParseUrl(sURL);
-      }
-   }
-
-
-   
-   private synchronized void _saveFiles()
-   {
-      try 
-      {
-         File file = new File(FILE_LIST);
-         JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, CFile.class);
-         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-    
-         JABXList<CFile> Files = new JABXList<CFile>(vFilesDwn);
-         
-         // output pretty printed
-         jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-
-         jaxbMarshaller.marshal(Files, file);
-         jaxbMarshaller.marshal(Files, System.out);
-      } 
-      catch (JAXBException e) 
-      {
-         e.printStackTrace();
+         if(sURL.contains(oPlugin.getDomain()))
+            oPlugin.vParseUrl(sURL);
       }      
-   }
-   
-   private void loadFiles()
-   {
-      try 
-      {
-         File file = new File(FILE_LIST);
-         if(!file.exists())
-            return;
-         JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, CFile.class);
-         Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-         JABXList<CFile> Files = (JABXList<CFile>)jaxbUnmarshaller.unmarshal(file);
 
-         vFilesDwn.clear();
-         
-         vFilesDwn = new Vector<CFile>(Files.getValues());
-      } 
-      catch (JAXBException e) 
-      {
-         e.printStackTrace();
-      }
+      
+//      if(sURL.contains(ChitankaPlugin.DOMAIN))
+//      {
+//         oChitankaPlugin.vParseUrl(sURL);
+//      }
    }
 
-   private class downloadThread extends SwingWorker<Void, Void> 
-   {
-      @Override
-      protected Void doInBackground() throws Exception
-      {
-         try
-         {
-            while(_isStarted())
-            {
-               if(vFilesDwn.size() == 0)
-               {
-                  vToggleButton();
-                  setIsStarted(false);
-                  break;
-               }
-               
-               for(CFile oFile: vFilesDwn)
-               {
-                  if(!vFilesCur.contains(oFile))
-                  {
-                     addFile(oFile);
-                     oChitankaPlugin.downloadFile(oFile, DOWNLOAD_FLD);
-                  }
-                  if(vFilesCur.size() >= MAX_DWN)
-                     break;
-                  
-               }
-               
-               Thread.sleep(100);
-            }
-         } 
-         catch(InterruptedException e)
-         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         }
-         return null;
-      }
-   }
+
    
    public synchronized boolean _isStarted()
    {
       return bIsStarted;
    }
-   
-   private synchronized void setIsStarted(boolean bIsStarted)
-   {
-      this.bIsStarted = bIsStarted; 
-   }
-   
+
    private synchronized void _setFileProgress(CFile oFile, int progress)
    {
       oFileDownloadTableModel.updateStatus(oFile, progress);
    }
-   
+
    private synchronized void _deleteFile(CFile oFile)
    {
       vFilesDwn.remove(oFile);
@@ -493,45 +518,103 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       vFilesCur.remove(oFile);
    }
 
+   private synchronized void _saveFiles()
+   {
+      try 
+      {
+         File file = new File(FILE_LIST);
+         JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, CFile.class);
+         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+   
+         JABXList<CFile> Files = new JABXList<CFile>(vFilesDwn);
+         
+         // output pretty printed
+         jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+   
+         jaxbMarshaller.marshal(Files, file);
+         jaxbMarshaller.marshal(Files, System.out);
+      } 
+      catch (JAXBException e) 
+      {
+         e.printStackTrace();
+      }      
+   }
+
+   private synchronized void setIsStarted(boolean bIsStarted)
+   {
+      this.bIsStarted = bIsStarted; 
+   }
+
    private synchronized void addFile(CFile oFile)
    {
       vFilesCur.add(oFile);
    }
 
-   @Override
-   public void onHttpParseDone(ArrayList<CFile> alFilesFnd)
-   {
-      vFilesFnd.addAll(alFilesFnd);
+   private class ProgressCellRender extends JProgressBar implements TableCellRenderer 
+      {
+         /**
+          * 
+          */
+         private static final long serialVersionUID = -2555436479986175987L;
+   
+         @Override
+         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) 
+         {
+             int progress = 0;
+             if (value instanceof Float) 
+             {
+                 progress = Math.round(((Float) value) * 100f);
+             } 
+             else if (value instanceof Integer) 
+             {
+                 progress = (Integer) value;
+             }
+             setValue(progress);
+             return this;
+         }
+     }
 
-      oFileURLsTableModel.fireTableDataChanged();
-      
-      tabbedPane.setSelectedIndex(PNL_NDX_FND);
-      
-   }
-
-   @Override
-   public boolean isStarted()
-   {
-      return _isStarted();
-   }
-
-   @Override
-   public void setFileProgress(CFile oFile, int progress)
-   {
-      _setFileProgress(oFile, progress);
-   }
-
-   @Override
-   public void deleteFile(CFile oFile)
-   {
-      _deleteFile(oFile);
-   }
-
-   @Override
-   public void saveFiles()
-   {
-      _saveFiles();
-      
-   }
+   private class downloadThread extends SwingWorker<Void, Void> 
+      {
+         @Override
+         protected Void doInBackground() throws Exception
+         {
+            try
+            {
+               while(_isStarted())
+               {
+                  if(vFilesDwn.size() == 0)
+                  {
+                     vToggleButton();
+                     setIsStarted(false);
+                     break;
+                  }
+                  
+                  for(CFile oFile: vFilesDwn)
+                  {
+                     if(!vFilesCur.contains(oFile))
+                     {
+                        addFile(oFile);
+                        for(Plugin oPlugin: alPlugins)
+                           if(oFile.getURL().contains(oPlugin.getDomain()))
+                              oPlugin.downloadFile(oFile, DOWNLOAD_FLD);
+   //                     oChitankaPlugin.downloadFile(oFile, DOWNLOAD_FLD);
+                     }
+                     if(vFilesCur.size() >= MAX_DWN)
+                        break;
+                     
+                  }
+                  
+                  Thread.sleep(100);
+               }
+            } 
+            catch(InterruptedException e)
+            {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+            }
+            return null;
+         }
+      }
 
 }

@@ -1,17 +1,15 @@
-package com.discworld.jdownloaderx.dto;
+package com.discworld.jdownloaderx.plugins;
+
+import com.discworld.jdownloaderx.dto.CFile;
 
 public class Book extends CFile
 {
    private  String sAuthor,
                    sTitle,
                    sVolume;
-
-   
-   
    public Book()
    {
       super();
-      // TODO Auto-generated constructor stub
    }
 
    public Book(String sName, String sURL)
@@ -26,7 +24,6 @@ public class Book extends CFile
       this.sTitle = sTitle;
       this.sVolume = sVolume;
    }   
-   
    
    public String getAuthor()
    {

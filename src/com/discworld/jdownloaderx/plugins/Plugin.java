@@ -1,4 +1,4 @@
-package com.discworld.jdownloaderx.dto;
+package com.discworld.jdownloaderx.plugins;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,13 +18,27 @@ import java.util.regex.Pattern;
 
 import javax.swing.SwingWorker;
 
+import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.IDownloader;
+
 public abstract class Plugin
 {
+//   protected String DOMAIN = "domain";
+   public static final String DOMAIN = "domain";
+   
    protected IDownloader oDownloader;
+   
+   
+   public Plugin()
+   {}
    
    public Plugin(IDownloader oDownloader)
    {
-      super();
+      this.oDownloader = oDownloader;
+   }
+   
+   public void setDownloader(IDownloader oDownloader)
+   {
       this.oDownloader = oDownloader;
    }
    
@@ -280,16 +294,6 @@ public abstract class Plugin
    }
    
    abstract protected ArrayList<CFile> doneHttpParse(String sResult);
-   
-//   protected ArrayList<CFile> doneHttpParse(String sResult)
-//   {
-//      return null;
-//   }
-   
-//   abstract protected boolean inBackgroundDownloadFile();
-//   {
-//      return true;
-//   }
 
    protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
@@ -393,5 +397,7 @@ public abstract class Plugin
       return sResult;
    }
    
+   abstract public ArrayList<String> parseClipboard(String sContent);
    
+   abstract public String getDomain();
 }

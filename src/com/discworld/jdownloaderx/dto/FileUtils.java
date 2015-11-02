@@ -1,6 +1,10 @@
 package com.discworld.jdownloaderx.dto;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class FileUtils
 {
@@ -48,6 +52,31 @@ public class FileUtils
       
       file.delete();
    }
+   
+   public static String getClassName(String sFile) throws IOException
+   {
+      String sClassName = "";
+      ZipInputStream zip = new ZipInputStream(new FileInputStream(sFile));
+      for(ZipEntry entry = zip.getNextEntry(); entry!=null && sClassName.isEmpty(); entry=zip.getNextEntry())
+      {
+         if(entry.getName().endsWith(".class") && !entry.isDirectory()) 
+         {
+            // This ZipEntry represents a class. Now, what class does it represent?
+            StringBuilder className=new StringBuilder();
+            for(String part : entry.getName().split("/")) 
+            {
+               if(className.length() != 0)
+                  className.append(".");
+                  className.append(part);
+               if(part.endsWith(".class"))
+                  className.setLength(className.length()-".class".length());
+            }
+            sClassName = className.toString();
+         }
+      }
+      zip.close();
+      return sClassName;
+   }   
    
 
 }

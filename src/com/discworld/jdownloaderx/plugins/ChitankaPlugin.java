@@ -1,4 +1,4 @@
-package com.discworld.jdownloaderx.dto;
+package com.discworld.jdownloaderx.plugins;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -10,9 +10,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.ExtractFile;
+import com.discworld.jdownloaderx.dto.FileUtils;
+import com.discworld.jdownloaderx.dto.IDownloader;
+
 public class ChitankaPlugin extends Plugin
 {
-
    public final static String DOMAIN = "chitanka.info";
 //          DOMAIN = "chitanka.it-tali.net",
             
@@ -69,6 +73,10 @@ public class ChitankaPlugin extends Plugin
                    ptnUrls[] = {ptnUrlFb2, ptnUrlEpub, ptnUrlTxt, ptnUrlSfb, ptnUrlPdf, ptnUrlDjvu},
                    ptnUrlBook = Pattern.compile(URL_BOOK);   
 
+   public ChitankaPlugin()
+   {
+   }
+   
    public ChitankaPlugin(IDownloader oDownloader)
    {
       super(oDownloader);
@@ -190,13 +198,13 @@ public class ChitankaPlugin extends Plugin
    @Override
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
-      Book oBook = null;
+      CFile oBook = null;
       ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
       for(int i = 0; i < URLS.length; i++)
       {
          if(bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
          {
-            oBook = new Book(sResult + EXTS[i], URL_DWN_BGN + sUrls[i]);
+            oBook = new CFile(sResult + EXTS[i], URL_DWN_BGN + sUrls[i]);
 //            oDownloader.addFile(oBook);
             vFilesFnd.add(oBook);
          }
@@ -205,7 +213,8 @@ public class ChitankaPlugin extends Plugin
       return vFilesFnd;
    }
    
-   public static ArrayList<String> parseClipboard(String sContent)
+   @Override
+   public ArrayList<String> parseClipboard(String sContent)
    {
       Pattern ptnUrlBook = Pattern.compile(URL_BOOK);
       ArrayList<String> alUrlBooks = new ArrayList<String>();
@@ -218,5 +227,11 @@ public class ChitankaPlugin extends Plugin
       }      
       
       return alUrlBooks;
+   }
+
+   @Override
+   public String getDomain()
+   {
+      return DOMAIN;
    }   
 }
