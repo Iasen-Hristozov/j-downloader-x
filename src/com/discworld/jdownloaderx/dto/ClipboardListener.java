@@ -1,4 +1,4 @@
-package com.discworld.jdownloaderx;
+package com.discworld.jdownloaderx.dto;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -6,7 +6,7 @@ import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
-class ClipboardListener extends Thread implements ClipboardOwner 
+public class ClipboardListener extends Thread implements ClipboardOwner 
 {
    private boolean bEnough=false;
    

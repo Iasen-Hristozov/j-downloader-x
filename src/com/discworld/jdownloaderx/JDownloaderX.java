@@ -1,7 +1,5 @@
 package com.discworld.jdownloaderx;
 
-import static java.nio.file.StandardCopyOption.*;
-
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
@@ -36,27 +34,15 @@ import javax.swing.JTextField;
 
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.ChitankaPlugin;
-import com.discworld.jdownloaderx.dto.FileDownloadTableModel;
-import com.discworld.jdownloaderx.dto.FileURLsTableModel;
-import com.discworld.jdownloaderx.dto.ChitankaHttpParser;
-import com.discworld.jdownloaderx.dto.FileUtils;
+import com.discworld.jdownloaderx.dto.ClipboardListener;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.JABXList;
 
 import java.awt.Font;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Vector;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.ScrollPaneConstants;
 
@@ -76,8 +62,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
    private static String sVersion;
    
-   private boolean bIsStarted = false,
-                   bOverride = true;
+   private boolean bIsStarted = false;
    
    private JButton btnAdd,
                    btnRemove,
@@ -178,21 +163,15 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
          {
             String sContent = oClipboardListener.getContent();
             
-            
-            
-//            if(sContent.contains(ChitankaHttpParser.DOMAIN))
             if(sContent.contains(ChitankaPlugin.DOMAIN))
             {
-//               ArrayList<String> alURLs = ChitankaHttpParser.parseClipboard(sContent);
                ArrayList<String> alURLs = ChitankaPlugin.parseClipboard(sContent);
                String.join(",", alURLs);
-//               txtURL.setText(sContent);
                txtURL.setText(String.join(",", alURLs));
                try
                {
                   for(String sURL : alURLs)
                      vParseURL(sURL);
-//                  vParseURL(sContent);
                } catch(IOException e)
                {
                   // TODO Auto-generated catch block
@@ -237,13 +216,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       btnStart.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/play.png")));
       btnStart.addActionListener(this);
       pnlButtons.add(btnStart);
-      
-//      btnStop = new JButton("");
-//      btnStop.setAlignmentX(Component.CENTER_ALIGNMENT);
-//      btnStop.setToolTipText("Stop");
-//      btnStop.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/stop.png")));
-//      btnStop.addActionListener(this);
-//      pnlButtons.add(btnStop);
       
       btnRemove = new JButton("");
       btnRemove.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -407,246 +379,13 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
    private void vParseURL(String sURL) throws IOException
    {
-//      if(sURL.contains(ChitankaHttpParser.DOMAIN))
       if(sURL.contains(ChitankaPlugin.DOMAIN))
       {
          oChitankaPlugin.vParseUrl(sURL);
-//         new ChitankaHttpParser(sURL, vFilesFnd, rnbUpdateTable).execute();
       }
    }
 
-//   private class DownloadFile extends SwingWorker<Boolean, Integer> 
-//   {
-//      private static final int BUFFER_SIZE = 4096;
-//      
-//      String saveFilePath;
-//      
-//      private CFile oFile = null;
-//
-//      public DownloadFile(CFile aFile)
-//      {
-//         this.oFile = aFile; 
-//      }
-//
-//      @Override
-//      protected Boolean doInBackground()
-//      {
-//         boolean bResult = true;
-//         String sURL = oFile.getURL();
-//         URL url;
-//         try
-//         {
-//            url = new URL(sURL);
-//
-//            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-//            httpConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-GB;     rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13 (.NET CLR 3.5.30729)");
-//            int responseCode = httpConn.getResponseCode();
-//
-//            // always check HTTP response code first
-//            if (responseCode == HttpURLConnection.HTTP_OK) 
-//            {
-//               String fileName = "";
-//               String disposition = httpConn.getHeaderField("Content-Disposition");
-//               String contentType = httpConn.getContentType();
-//               int contentLength = httpConn.getContentLength();
-//
-//               if (disposition != null) 
-//               {
-//                  // extracts file name from header field
-//                  int index = disposition.indexOf("filename=");
-//                  if (index > 0) 
-//                  {
-//                     fileName = disposition.substring(index + 10, disposition.length() - 1);
-//                  }
-//               } 
-//               else 
-//               {
-//                  // extracts file name from URL
-//                  fileName = sURL.substring(sURL.lastIndexOf("/") + 1, sURL.length());
-//               }
-//
-//               System.out.println("Content-Type = " + contentType);
-//               System.out.println("Content-Disposition = " + disposition);
-//               System.out.println("Content-Length = " + contentLength);
-//               System.out.println("fileName = " + fileName);
-//
-//               // opens input stream from the HTTP connection
-//               InputStream inputStream = httpConn.getInputStream();
-//               File flDwnFolder = new File(DOWNLOAD_FLD);
-//               if(!flDwnFolder.exists())
-//                  flDwnFolder.mkdir();
-////               String saveFilePath = DOWNLOAD_FLD + fileName;
-//               saveFilePath = DOWNLOAD_FLD + File.separator + fileName;
-//               
-//               // opens an output stream to save into file
-//               FileOutputStream outputStream = new FileOutputStream(saveFilePath);
-//   
-//               int bytesRead = -1;
-//               int iTotalBytesRead = 0;
-//               int progress;
-//               publish(iTotalBytesRead);
-//               byte[] buffer = new byte[BUFFER_SIZE];
-//               while ((bytesRead = inputStream.read(buffer)) != -1) 
-//               {
-////                  System.out.println("bIsStarted = " + String.valueOf(bIsStarted));
-//                  outputStream.write(buffer, 0, bytesRead);
-//                  iTotalBytesRead += bytesRead;
-//
-//                  if(_isStarted())
-//                  {
-//                     progress = (int) Math.round(((float)iTotalBytesRead / (float)contentLength) * 100f);
-//                     publish(progress);
-//                  }
-//                  else
-//                  {
-////                     publish(0);
-////                        System.out.println(fileName +": " + 0);
-//                     
-//                     bResult = false;
-//                     break;
-//                     
-////                     throw new CException();
-//                  }
-//                  
-////                  setProgress(progress);
-//               }
-//   
-//               outputStream.close();
-//               inputStream.close();
-//   
-//               if(bResult)
-//                  System.out.println("File " + fileName + " downloaded");
-//            } 
-//            else 
-//            {
-//               System.out.println("No file to download. Server replied HTTP code: " + responseCode);
-//               bResult = false;
-//            }
-//            
-//            httpConn.disconnect();
-//         } 
-//         catch(MalformedURLException e)
-//         {
-//            e.printStackTrace();
-//            bResult = false;
-//         } 
-//         catch(IOException e)
-//         {
-//            e.printStackTrace();
-//            bResult = false;
-//         } 
-//         
-//         return bResult;
-//      }
-//      
-//      @Override
-//      protected void process(List<Integer> chunks)
-//      {
-//         int progress = chunks.get(0);
-//         _setFileProgress(oFile, progress);
-//         
-////         if(progress == 0)
-////            System.out.println("Progress: " + progress);
-//      }      
-//
-//      @Override
-//      protected void done()
-//      {
-//         super.done();
-//         
-//         try
-//         {
-//            boolean status = get();
-//            
-//            if(status)
-//            {
-//               _deleteFile(oFile);
-//               
-//               _saveFiles();
-//               
-//               if(oFile.getURL().endsWith(".zip"))
-//               {
-//                  File oFolder = new File(saveFilePath.substring(0, saveFilePath.lastIndexOf(".zip")));
-//                  ExtractFile oExtractFile = new ExtractFile(saveFilePath, oFolder.getPath());
-//                  oExtractFile.execute();
-//                  oExtractFile.get();
-//                  new File(saveFilePath).delete();
-////                  File oFolder = new File(oFile.getName());
-//                  if(oFolder.listFiles().length == 1)
-//                  {
-//                     File file = oFolder.listFiles()[0];
-//                     
-//                     Files.move(file.toPath(), new File(DOWNLOAD_FLD + File.separator + oFile.getName()).toPath(), REPLACE_EXISTING);
-//                     FileUtils.deleteFile(oFolder);
-//                  }
-//                  else
-//                  {
-//                     FileFilter filter = new FileFilter() 
-//                     {
-//                        @Override
-//                        public boolean accept(File pathname) 
-//                        {
-//                           return pathname.getName().endsWith(".sfb")|| pathname.getName().endsWith(".fb2") || pathname.getName().endsWith(".txt") || pathname.getName().endsWith(".epub");
-//                        }
-//                     };                  
-//                     for(int i = 0; i < oFolder.listFiles(filter).length; i++)
-//                     {
-//                        File file = oFolder.listFiles(filter)[i];
-////                        file.renameTo(new File(oFolder.getPath() + File.separator + oFile.getName()));
-////                        Files.move(file.toPath(), new File(oFolder.getPath() + File.separator + oFile.getName()).toPath(), REPLACE_EXISTING);
-//                        FileUtils.renameFile(file.getPath(), oFolder.getPath() + File.separator + oFile.getName());
-//                     }
-//                     
-//                     FileUtils.renameFile(oFolder.getPath(), DOWNLOAD_FLD + File.separator + oFile.getName());
-//                  }
-//               }
-//               else
-//               {
-//                  FileUtils.renameFile(saveFilePath, DOWNLOAD_FLD + File.separator + oFile.getName());
-//               }               
-//            }
-//            else
-//            {
-////               iDwns = MAX_DWN;
-//               _setFileProgress(oFile, 0);
-//            }
-//         } 
-//         catch(InterruptedException e)
-//         {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//         } catch(ExecutionException e)
-//         {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//         } catch(IOException e)
-//         {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//         }
-//      }
-//   }   
-   
-//   public class ExtractFile extends SwingWorker<Void, Void>
-//   {
-//      String zipFilePath, destDirectory;
-//      
-//      UnzipUtility oUnzipUtility;
-//      
-//      public ExtractFile(String zipFilePath, String destDirectory)
-//      {
-//         this.zipFilePath = zipFilePath;
-//         this.destDirectory = destDirectory;
-//         oUnzipUtility = new UnzipUtility();
-//      }
-//      
-//      @Override
-//      protected Void doInBackground() throws Exception
-//      {
-//         oUnzipUtility.unzip(zipFilePath, destDirectory);
-//         return null;
-//      }
-//   }
+
    
    private synchronized void _saveFiles()
    {
@@ -656,10 +395,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
          JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, CFile.class);
          Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
     
-//         JABXList<Book> Books = new JABXList<Book>();
-//         for(Book oFile: vFilesDwn)
-//            Books.add(oFile);
-         
          JABXList<CFile> Files = new JABXList<CFile>(vFilesDwn);
          
          // output pretty printed
@@ -683,7 +418,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
             return;
          JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, CFile.class);
          Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-//         JABXList<?> Books = (JABXList<?>)jaxbUnmarshaller.unmarshal(file);
          JABXList<CFile> Files = (JABXList<CFile>)jaxbUnmarshaller.unmarshal(file);
 
          vFilesDwn.clear();
@@ -717,7 +451,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                   if(!vFilesCur.contains(oFile))
                   {
                      addFile(oFile);
-//                     new DownloadFile(oFile).execute();
                      oChitankaPlugin.downloadFile(oFile, DOWNLOAD_FLD);
                   }
                   if(vFilesCur.size() >= MAX_DWN)
@@ -765,62 +498,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       vFilesCur.add(oFile);
    }
 
-//   private void renameFile(String sOldName, String sNewName)
-//   {
-//   // File (or directory) with old name
-//      File file = new File(sOldName);
-//
-//      // File (or directory) with new name
-//      File file2 = new File(sNewName);
-//      
-//      renameFile(file, file2);
-//   }
-//   
-//   private void renameFile(File flOld, File flNew)
-//   {
-//      boolean success;
-//      
-//      if (flNew.exists())
-//      {
-//         if(bOverride)
-//         {
-//            deleteFile(flNew);
-//         }
-//         else
-//            return;
-////         throw new java.io.IOException("file exists");
-//      }
-//
-//      // Rename file (or directory)
-//      success = flOld.renameTo(flNew);
-//
-//      if (!success) {
-//         // File was not successfully renamed
-//      }      
-//   }
-//
-//   private void deleteFile(File file) 
-//   {
-//      if (file.isDirectory()) 
-//         for (File sub : file.listFiles()) 
-//             deleteFile(sub);
-//      
-//      file.delete();
-//   }
-   
-   private Runnable rnbUpdateTable = new Runnable()
-   {
-      
-      @Override
-      public void run()
-      {
-         oFileURLsTableModel.fireTableDataChanged();
-         
-         tabbedPane.setSelectedIndex(PNL_NDX_FND);
-      }
-   };
-
-
    @Override
    public void onHttpParseDone(ArrayList<CFile> alFilesFnd)
    {
@@ -831,13 +508,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       tabbedPane.setSelectedIndex(PNL_NDX_FND);
       
    }
-
-//   @Override
-//   public void onDownloadDone()
-//   {
-//      // TODO Auto-generated method stub
-//      
-//   }
 
    @Override
    public boolean isStarted()

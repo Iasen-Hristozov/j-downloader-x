@@ -1,8 +1,10 @@
-package com.discworld.jdownloaderx.dto;
+package com.discworld.jdownloaderx;
 
 import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
+
+import com.discworld.jdownloaderx.dto.CFile;
 
 public class FileURLsTableModel extends AbstractTableModel
 {

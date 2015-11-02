@@ -1,4 +1,4 @@
-package com.discworld.jdownloaderx;
+package com.discworld.jdownloaderx.dto;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

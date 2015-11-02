@@ -2,8 +2,6 @@ package com.discworld.jdownloaderx.dto;
 
 import javax.swing.SwingWorker;
 
-import com.discworld.jdownloaderx.UnzipUtility;
-
 public class ExtractFile extends SwingWorker<Void, Void>
 {
    String zipFilePath, destDirectory;
