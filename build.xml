@@ -51,8 +51,9 @@
       <buildnumber file="${prj-name}.number"/>
       <property name="version-number" value="${major-version-number}.${build.number}" />
       <jar destfile="${dst}${prj-name}.jar" basedir="${build}" includes="**/*.class">
-      <fileset dir="${src}" includes="**" excludes="**/plugins/**" />
-   	<fileset dir="${src}" includes="**/plugins/Plugin.java"/>
+      	<fileset dir="${assets}" includes="**"/>
+      	<fileset dir="${src}" includes="**" excludes="**/plugins/**" />
+         <fileset dir="${src}" includes="**/plugins/Plugin.java"/>
       	<!--
       	<fileset dir="${src}" includes="**"
       		excludes="**/plugins/ChitankaPlugin.java" />

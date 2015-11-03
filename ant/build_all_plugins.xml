@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="build-all" default="build-all">
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="${basedir}/ant-contrib-1.0b3.jar"/>
+		</classpath>
+	</taskdef>
+
+	<target name="build-all">
+		<!-- <echo message="The first five letters of the alphabet are:"/> -->
+		<for list="ChitankaPlugin" param="plugin-name">
+			<sequential>
+				<echo>Plugin @{plugin-name}</echo>
+				<ant antfile="build_plugin.xml">
+					<property name="plugin-name" value="@{plugin-name}" />
+				</ant>
+			</sequential>
+		</for>
+	</target>
+
+</project>
