@@ -30,10 +30,13 @@ public abstract class Plugin
    
    
    public Plugin()
-   {}
+   {
+      loadSettings();
+   }
    
    public Plugin(IDownloader oDownloader)
    {
+      this();
       this.oDownloader = oDownloader;
    }
    
@@ -400,4 +403,8 @@ public abstract class Plugin
    abstract public ArrayList<String> parseClipboard(String sContent);
    
    abstract public String getDomain();
+   
+   abstract protected void loadSettings();
+   
+
 }

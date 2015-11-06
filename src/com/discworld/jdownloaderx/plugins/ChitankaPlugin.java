@@ -10,6 +10,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.ExtractFile;
 import com.discworld.jdownloaderx.dto.FileUtils;
@@ -49,13 +60,13 @@ public class ChitankaPlugin extends Plugin
           EXTS[] = {EXT_FB2, EXT_EPUB, EXT_TXT, EXT_SFB, EXT_PDF, EXT_DJVU},
           URLS[] = {URL_FB2, URL_EPUB, URL_TXT, URL_SFB, URL_PDF, URL_DJVU};
    
-   private boolean bDownloadFB2 = true,
-                   bDownloadEPUB = true,
-                   bDownloadSFB = false,
-                   bDownloadTXT = false,
-                   bDownloadPDF = true,
-                   bDownloadDJVU = true,
-                   bDownloads[] = {bDownloadFB2, bDownloadEPUB, bDownloadTXT, bDownloadSFB, bDownloadPDF, bDownloadDJVU};
+//   private boolean bDownloadFB2 = true,
+//                   bDownloadEPUB = true,
+//                   bDownloadSFB = false,
+//                   bDownloadTXT = false,
+//                   bDownloadPDF = true,
+//                   bDownloadDJVU = true,
+//                   bDownloads[] = {bDownloadFB2, bDownloadEPUB, bDownloadTXT, bDownloadSFB, bDownloadPDF, bDownloadDJVU};
    
    private String sAuthor,
                   sTitle,
@@ -71,8 +82,10 @@ public class ChitankaPlugin extends Plugin
                    ptnUrlPdf = Pattern.compile(URL_PDF),
                    ptnUrlDjvu = Pattern.compile(URL_DJVU),
                    ptnUrls[] = {ptnUrlFb2, ptnUrlEpub, ptnUrlTxt, ptnUrlSfb, ptnUrlPdf, ptnUrlDjvu},
-                   ptnUrlBook = Pattern.compile(URL_BOOK);   
-
+                   ptnUrlBook = Pattern.compile(URL_BOOK);
+   
+   private ChitankaSettings oChitankaSettings;
+   
    public ChitankaPlugin()
    {
    }
@@ -172,7 +185,13 @@ public class ChitankaPlugin extends Plugin
       
       String sFileName = (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
       
-      sFileName = sFileName.replaceAll("[?]", ".").replace(":", " - ").replace("<br>", "").replace("\n", ". ");
+      sFileName = sFileName.replaceAll("[?]", ".")
+                           .replace(":", " - ")
+                           .replace("<br>", "")
+                           .replace("\n", ". ")
+                           .replace("&#039;", "'")
+                           .replace("&gt;", " ");;
+      
 //      sFileName = sFileName.replaceAll("[:]", " - ");
 //      sFileName = sFileName.replaceAll("<br>", "");
       if(sFileName.endsWith("."))
@@ -202,7 +221,7 @@ public class ChitankaPlugin extends Plugin
       ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
       for(int i = 0; i < URLS.length; i++)
       {
-         if(bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
+         if(oChitankaSettings.bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
          {
             oBook = new CFile(sResult + EXTS[i], URL_DWN_BGN + sUrls[i]);
 //            oDownloader.addFile(oBook);
@@ -233,5 +252,66 @@ public class ChitankaPlugin extends Plugin
    public String getDomain()
    {
       return DOMAIN;
-   }   
+   }
+
+   
+   @Override
+   protected void loadSettings()
+   {
+      try
+      {
+         JAXBContext jaxbContext = JAXBContext.newInstance(ChitankaSettings.class);
+         
+         File file = new File("chitanka_settings.xml");
+         if(file.exists())
+         {
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            oChitankaSettings = (ChitankaSettings)jaxbUnmarshaller.unmarshal(file);
+            oChitankaSettings.reload();
+         }
+         else
+         {
+            oChitankaSettings = new ChitankaSettings();
+            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+            jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            jaxbMarshaller.marshal(oChitankaSettings, file);
+         }
+      } 
+      catch(JAXBException e1)
+      {
+         // TODO Auto-generated catch block
+         e1.printStackTrace();
+      }         
+   }
+
+   @XmlAccessorType(XmlAccessType.FIELD)
+   @XmlType(name = "", propOrder = {"bDownloadFB2","bDownloadEPUB","bDownloadSFB","bDownloadTXT","bDownloadPDF","bDownloadDJVU"})
+   @XmlRootElement(name = "settings")
+   static private class ChitankaSettings
+   {
+      @XmlElement(name = "download_fb2", required = true)
+      public boolean bDownloadFB2 = true;
+      @XmlElement(name = "download_epub", required = true)
+      public boolean bDownloadEPUB = true;
+      @XmlElement(name = "download_sfb", required = true)
+      public boolean bDownloadSFB = false;
+      @XmlElement(name = "download_txt", required = true)
+      public boolean bDownloadTXT = false;
+      @XmlElement(name = "download_pdf", required = true)
+      public boolean bDownloadPDF = true;
+      @XmlElement(name = "download_djvu", required = true)
+      public boolean bDownloadDJVU = true;
+      @XmlTransient
+      public boolean bDownloads[] = {bDownloadFB2, bDownloadEPUB, bDownloadTXT, bDownloadSFB, bDownloadPDF, bDownloadDJVU};
+      
+      public void reload() 
+      {
+         bDownloads[0] = bDownloadFB2;
+         bDownloads[1] = bDownloadEPUB;
+         bDownloads[2] = bDownloadTXT; 
+         bDownloads[3] = bDownloadSFB; 
+         bDownloads[4] = bDownloadPDF; 
+         bDownloads[5] = bDownloadDJVU;
+      }
+   }
 }

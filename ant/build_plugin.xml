@@ -8,8 +8,6 @@
 	<property name="dst" value="${basedir}/../plugins/" />
 	<property name="build" value="${basedir}/../build" />
 	<property name="builder" value="Discworld" />
-	<!--<property name="plugin-name" value="ABCDisk" />-->
-	<!--<property name="major-version-number" value="1" />-->
 
 	<tstamp prefix="build-info">
 		<format property="current-date" pattern="d-MMMM-yyyy" locale="en" />
@@ -21,9 +19,8 @@
           target: entry                      
          - - - - - - - - - - - - - - - - - -->
 	<target name="entry">
-		<antcall target="make-plugin-jar" />
+      <antcall target="copy-plugin" />
 		<antcall target="clear" />
-		<antcall target="copy-plugin" />
 	</target>
 
 
@@ -69,20 +66,13 @@
 		</jar>
 
 	</target>
-	<!--
-   <target name="make-plugin-jar-java" depends="make-plugin-jar">
-		<jar destfile="${plugin-name}.jar" basedir="${src}" includes="**/${plugin-name}.java" update="true">
-   	</jar>
-   </target>
-   -->
-
-	<target name="clear" depends="make-plugin-jar">
-		<delete dir="${build}" />
-	</target>
 
 	<target name="copy-plugin" depends="make-plugin-jar">
 		<copy file="${dst}${plugin-name}.jar" tofile="../../JDownloaderX/plugins/${plugin-name}.jar" overwrite="true" />
 	</target>
 
+   <target name="clear">
+      <delete dir="${build}" />
+   </target>
 
 </project>
