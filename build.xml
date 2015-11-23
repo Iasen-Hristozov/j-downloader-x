@@ -74,7 +74,7 @@
 
    </target>
 	
-   <target name="clear" depends="make-jar">
+   <target name="clear">
    	<delete dir="${build}" />
    </target>
 
