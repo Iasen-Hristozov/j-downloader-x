@@ -163,7 +163,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
             for(Plugin oPlugin: alPlugins)
             {
 //               if(sContent.contains(oPlugin.DOMAIN))
-               if(sContent.contains(oPlugin.getDomain()))
+//               if(sContent.contains(oPlugin.getDomain()))
+               if(oPlugin.isMine(sContent))
                {
                   ArrayList<String> alURLs = oPlugin.parseClipboard(sContent);
                   String.join(",", alURLs);
@@ -560,7 +561,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    {
       for(Plugin oPlugin: alPlugins)
       {
-         if(sURL.contains(oPlugin.getDomain()))
+//         if(sURL.contains(oPlugin.getDomain()))
+         if(oPlugin.isMine(sURL))
          {
             oPlugin.vParseUrl(sURL);
             break;
@@ -671,7 +673,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                      addFile(oFile);
                      for(Plugin oPlugin: alPlugins)
                      {
-                        if(oFile.getURL().contains(oPlugin.getDomain()))
+//                        if(oFile.getURL().contains(oPlugin.getDomain()))
+                        if(oPlugin.isMine(oFile.getURL()))
                         {
                            oPlugin.downloadFile(oFile, oSettings.sDownloadFolder);
                            break;

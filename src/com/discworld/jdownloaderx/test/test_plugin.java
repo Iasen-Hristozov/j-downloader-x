@@ -8,7 +8,7 @@ import javax.swing.SwingWorker;
 
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.IDownloader;
-import com.discworld.jdownloaderx.plugins.ZamundaSePlugin;
+import com.discworld.jdownloaderx.plugins.ZamundaSe;
 
 public class test_plugin 
 {
@@ -55,7 +55,7 @@ public class test_plugin
       };
       
       
-      ZamundaSePlugin oZamundaSePlugin = new ZamundaSePlugin(oDownloader);
+      ZamundaSe oZamundaSePlugin = new ZamundaSe(oDownloader);
       
       
       oZamundaSePlugin.vParseUrl("http://zelka.org/details.php?id=454728");

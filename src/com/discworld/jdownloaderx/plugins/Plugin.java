@@ -18,13 +18,16 @@ import java.util.regex.Pattern;
 
 import javax.swing.SwingWorker;
 
+import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
+
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.IDownloader;
+import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public abstract class Plugin
 {
 //   protected String DOMAIN = "domain";
-   public static final String DOMAIN = "domain";
+   protected String DOMAIN = "domain";
    
    protected IDownloader oDownloader;
    
@@ -77,7 +80,7 @@ public abstract class Plugin
       }
    }
 
-   private class DownloadFile extends SwingWorker<Boolean, Integer> 
+   protected class DownloadFile extends SwingWorker<Boolean, Integer> 
    {
       private static final int BUFFER_SIZE = 4096;
       
@@ -85,11 +88,19 @@ public abstract class Plugin
              saveFilePath;
       
       private CFile oFile = null;
+      
+      private ArrayList<SHttpProperty> alHttpProperties = null;
 
       public DownloadFile(CFile aFile, String sDownloadFolder)
       {
          this.oFile = aFile; 
          this.sDownloadFolder = sDownloadFolder;
+      }
+      
+      public DownloadFile(CFile aFile, String sDownloadFolder, ArrayList<SHttpProperty> alHttpProperties)
+      {
+         this(aFile, sDownloadFolder);
+         this.alHttpProperties = alHttpProperties; 
       }
 
       @Override
@@ -104,6 +115,12 @@ public abstract class Plugin
 
             HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
             httpConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-GB;     rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13 (.NET CLR 3.5.30729)");
+            if(alHttpProperties != null && !alHttpProperties.isEmpty())
+            {
+               for(SHttpProperty oHttpProperty : alHttpProperties)
+                  httpConn.setRequestProperty(oHttpProperty.name, oHttpProperty.value);
+            }
+            
             int responseCode = httpConn.getResponseCode();
 
             // always check HTTP response code first
@@ -142,8 +159,14 @@ public abstract class Plugin
 //               String saveFilePath = DOWNLOAD_FLD + fileName;
                saveFilePath = sDownloadFolder + File.separator + fileName;
                
+               File f = new File(saveFilePath);
+
+               f.getParentFile().mkdirs();
+               f.createNewFile();
+               
                // opens an output stream to save into file
-               FileOutputStream outputStream = new FileOutputStream(saveFilePath);
+//               FileOutputStream outputStream = new FileOutputStream(saveFilePath);
+               FileOutputStream outputStream = new FileOutputStream(f);
    
                int bytesRead = -1;
                int iTotalBytesRead = 0;
@@ -246,54 +269,7 @@ public abstract class Plugin
    
    protected String inBackgroundHttpParse(String sURL)
    {
-      final String USER_AGENT = "Mozilla/5.0";
-
-      String sResponse = null;
-
-      URL oURL;
-
-      BufferedReader in;
-
-      HttpURLConnection oHTTPConn;
-
-      try
-      {
-         oURL = new URL(sURL);
-         oHTTPConn = (HttpURLConnection) oURL.openConnection();
-
-         // optional default is GET
-         oHTTPConn.setRequestMethod("GET");
-
-         // add reuqest header
-         oHTTPConn.setRequestProperty("User-Agent", USER_AGENT);
-
-         if(oHTTPConn.getResponseCode() == 200)
-         {
-            in = new BufferedReader(new InputStreamReader(oHTTPConn.getInputStream(), "UTF-8"));
-
-            String inputLine;
-            StringBuffer sbResponse = new StringBuffer();
-
-            while((inputLine = in.readLine()) != null)
-               sbResponse.append(inputLine + "\n");
-            in.close();
-
-            sResponse = sbResponse.toString();
-         }
-      } catch(MalformedURLException e)
-      {
-         e.printStackTrace();
-      } catch(ProtocolException e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } catch(IOException e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-
-      return sResponse;
+      return getHttpResponse(sURL);
    }
    
    abstract protected ArrayList<CFile> doneHttpParse(String sResult);
@@ -322,9 +298,12 @@ public abstract class Plugin
    
    public void downloadFile(CFile oFile, String sDownloadFolder)
    {
-//      oDownloadFile = new DownloadFile(oFile, sDownloadFolder);
-//      oDownloadFile.execute();
       new DownloadFile(oFile, sDownloadFolder).execute();
+   }
+   
+   public void downloadFile(CFile oFile, String sDownloadFolder, ArrayList<SHttpProperty> alHttpProperties)
+   {
+      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
    protected static String sFindString(String sSource, Pattern oPattern, String sEnd)
@@ -410,9 +389,91 @@ public abstract class Plugin
    
    abstract public ArrayList<String> parseClipboard(String sContent);
    
-   abstract public String getDomain();
+   public String getDomain()
+   {
+      return DOMAIN;
+   }
    
    abstract protected void loadSettings();
    
+   abstract public boolean isMine(String sURL);
+   
+   protected String getHttpResponse(String sURL)
+   {
+      return getHttpResponse(sURL, null);
+   }
+   
+   
+   protected String getHttpResponse(String sURL, ArrayList<SHttpProperty> alHttpProperties)
+   {
+      final String USER_AGENT = "Mozilla/5.0";
+      
+//      final Pattern ptnCharset = Pattern.compile("charset=\"?(.+?)\"?");
+      final Pattern ptnCharset = Pattern.compile("charset=\"?(\\w+\\-\\d+)\"?");
+      
+      String sResponse = null;
 
+      URL oURL;
+
+      BufferedReader in;
+
+      HttpURLConnection oHTTPConn;
+
+      try
+      {
+         oURL = new URL(sURL);
+         oHTTPConn = (HttpURLConnection) oURL.openConnection();
+
+         // optional default is GET
+         oHTTPConn.setRequestMethod("GET");
+
+         // add reuqest header
+         oHTTPConn.setRequestProperty("User-Agent", USER_AGENT);
+         if(alHttpProperties != null && !alHttpProperties.isEmpty())
+         {
+            for(SHttpProperty oHttpProperty : alHttpProperties)
+               oHTTPConn.setRequestProperty(oHttpProperty.name, oHttpProperty.value);
+         }
+         
+         if(oHTTPConn.getResponseCode() == HttpURLConnection.HTTP_OK)
+         {
+            List<String> cookies = oHTTPConn.getHeaderFields().get("Content-Type");
+            Matcher oMatcher =ptnCharset.matcher(cookies.get(0));
+            String sCharset = "UTF-8";
+            if(oMatcher.find())
+            {
+               sCharset = oMatcher.group(1); 
+               if(sCharset.equalsIgnoreCase("windows-1251"))
+                  sCharset = "Cp1251";
+               else
+                  sCharset = "UTF-8";
+                  
+            }
+            
+            in = new BufferedReader(new InputStreamReader(oHTTPConn.getInputStream(), sCharset));
+
+            String inputLine;
+            StringBuffer sbResponse = new StringBuffer();
+
+            while((inputLine = in.readLine()) != null)
+               sbResponse.append(inputLine + "\n");
+            in.close();
+
+            sResponse = sbResponse.toString();
+         }
+      } catch(MalformedURLException e)
+      {
+         e.printStackTrace();
+      } catch(ProtocolException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      } catch(IOException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+
+      return sResponse;      
+   }
 }

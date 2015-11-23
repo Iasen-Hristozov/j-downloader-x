@@ -26,12 +26,13 @@ import com.discworld.jdownloaderx.dto.ExtractFile;
 import com.discworld.jdownloaderx.dto.FileUtils;
 import com.discworld.jdownloaderx.dto.IDownloader;
 
-public class ChitankaPlugin extends Plugin
+public class Chitanka extends Plugin
 {
-   public final static String DOMAIN = "chitanka.info";
+   String DOMAIN = "chitanka.info";
 //          DOMAIN = "chitanka.it-tali.net",
             
    private final static String 
+          DOMAIND = "chitanka.info",
           AUTHOR_BGN = "<span itemscope itemtype=\"http://schema\\.org/Person\"><a href=\"/person/[\\w\\-]+\" itemprop=\"name\" data-edit=\"/admin/person/\\d+/edit\">",
           AUTHOR_END = "</a></span>",
           TITLE_BGN = "<a class=\"selflink\" itemprop=\"name\" data-edit=\"/admin/((\\bbook\\b)|(\\btext\\b))/\\d+/edit\">",
@@ -40,7 +41,7 @@ public class ChitankaPlugin extends Plugin
           BOOK_END = "</i>",
           VOLUME_BGN = "<h2><span>",
           VOLUME_END = "</span></h2>",
-          URL_DWN_BGN = "http://" + DOMAIN,
+          URL_DWN_BGN = "http://" + DOMAIND,
           LNKS_BGN = "<div class=\"tab-pane expanded-links text-links\" id=\"text-links\">",
           URL_FB2 = "<a href=\"/((\\bbook\\b)|(\\btext\\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 fb2.zip\" class=\"(btn btn-default )?dl dl-fb2 action\"><span( class=\"sr-only\")?>fb2.zip</span>",
           URL_EPUB = "<a href=\"/((\\bbook\\b)|(\\btext\\b))/[\\d\\w\\-\\.]+\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 epub\" class=\"(btn btn-default )?dl dl-epub action\"><span( class=\"sr-only\")?>epub</span>",
@@ -86,14 +87,14 @@ public class ChitankaPlugin extends Plugin
    
    private ChitankaSettings oChitankaSettings;
    
-   public ChitankaPlugin()
-   {
-   }
-   
-   public ChitankaPlugin(IDownloader oDownloader)
-   {
-      super(oDownloader);
-   }
+//   public ChitankaPlugin()
+//   {
+//   }
+//   
+//   public ChitankaPlugin(IDownloader oDownloader)
+//   {
+//      super(oDownloader);
+//   }
 
    @Override
    protected void doneDownloadFile(CFile oFile, 
@@ -248,11 +249,11 @@ public class ChitankaPlugin extends Plugin
       return alUrlBooks;
    }
 
-   @Override
-   public String getDomain()
-   {
-      return DOMAIN;
-   }
+//   @Override
+//   public String getDomain()
+//   {
+//      return DOMAIN;
+//   }
 
    
    @Override
@@ -262,7 +263,7 @@ public class ChitankaPlugin extends Plugin
       {
          JAXBContext jaxbContext = JAXBContext.newInstance(ChitankaSettings.class);
          
-         File file = new File("chitanka_settings.xml");
+         File file = new File("chitanka.xml");
          if(file.exists())
          {
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
@@ -313,5 +314,15 @@ public class ChitankaPlugin extends Plugin
          bDownloads[4] = bDownloadPDF; 
          bDownloads[5] = bDownloadDJVU;
       }
+   }
+
+   
+   @Override
+   public boolean isMine(String sURL)
+   {
+      if(sURL.contains(DOMAIN))
+         return true;
+      else
+         return false;
    }
 }

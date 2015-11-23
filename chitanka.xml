@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<settings>
+    <download_fb2>true</download_fb2>
+    <download_epub>true</download_epub>
+    <download_sfb>false</download_sfb>
+    <download_txt>false</download_txt>
+    <download_pdf>true</download_pdf>
+    <download_djvu>true</download_djvu>
+</settings>

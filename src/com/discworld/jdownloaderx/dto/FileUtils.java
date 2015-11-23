@@ -17,6 +17,7 @@ public class FileUtils
 
       // File (or directory) with new name
       File file2 = new File(sNewName);
+      file2.getParentFile().mkdirs();
       
       renameFile(file, file2);
    }

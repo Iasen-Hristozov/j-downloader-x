@@ -2,7 +2,7 @@
 <project name="create-plugin" default="call-build">
 	<target name="call-build">
 		<ant antfile="build_plugin.xml">
-			<property name="plugin-name" value="ZamundaSePlugin" />
+			<property name="plugin-name" value="Chitanka" />
 		</ant>
 	</target>
 </project>

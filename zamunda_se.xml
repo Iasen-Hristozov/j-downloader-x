@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<settings>
+    <download_torrent>true</download_torrent>
+    <download_magnet>true</download_magnet>
+    <download_image>true</download_image>
+    <download_description>true</download_description>
+    <download_subtitles>true</download_subtitles>
+    <user>Rincewind123</user>
+    <password>suleiman</password>
+    <cookie_uid>1344584</cookie_uid>
+    <cookie_pass>c2884ddbd5d59f9a9db7c8947754aa7a</cookie_pass>
+</settings>

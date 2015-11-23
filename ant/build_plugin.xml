@@ -36,17 +36,19 @@
 			<include name="FileUtils.java" />
 			<include name="ExtractFile.java" />
 			<include name="UnzipUtility.java" />
+			<include name="SHttpProperty.java" />
 		</javac>
 	</target>
 
    <target name="compile-base-class" depends="compile-dto">
       <javac destdir="${build}" srcdir="${src_ext}" includeantruntime="true">
          <include name="Plugin.java" />
+      	<include name="MovieTorrent.java" />
       </javac>
    </target>
 	
 	<target name="compile-plugin" depends="compile-base-class">
-		<javac destdir="${build}" srcdir="${src_ext}" includeantruntime="true" debug="true" classpath="${build}/com/discworld/guitarsongplugins/dto" debuglevel="lines,vars,source">
+		<javac destdir="${build}" srcdir="${src_ext}" includeantruntime="true" debug="true" classpath="${build}/com/discworld/jdownloaderx/dto" debuglevel="lines,vars,source">
 			<include name="${plugin-name}.java" />
 		</javac>
 	</target>
@@ -54,7 +56,9 @@
 	<target name="make-plugin-jar" depends="compile-plugin">
 		<buildnumber file="${plugin-name}.number" />
 		<property name="version-number" value="${major-version-number}.${build.number}" />
+		<!--<jar destfile="${dst}${plugin-name}.jar" basedir="${build}" includes="**/${plugin-name}.class">-->
 		<jar destfile="${dst}${plugin-name}.jar" basedir="${build}" includes="**/${plugin-name}.class">
+			<fileset dir="${build}" includes="**/${plugin-name}*.class" excludes="**/${plugin-name}.class" />
 			<fileset dir="${src}" includes="**/${plugin-name}.java" />
 			<fileset dir="${src}" includes="**/Plugin.java" />
 			<manifest>
@@ -72,7 +76,7 @@
 	</target>
 
    <target name="clear">
-      <delete dir="${build}" />
+      <!--<delete dir="${build}" />-->
    </target>
 
 </project>
