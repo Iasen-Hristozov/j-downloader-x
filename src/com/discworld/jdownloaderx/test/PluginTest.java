@@ -18,6 +18,9 @@ import javax.swing.JButton;
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.plugins.Chitanka;
+import com.discworld.jdownloaderx.plugins.Plugin;
+import com.discworld.jdownloaderx.plugins.SubsSab;
+import com.discworld.jdownloaderx.plugins.SubsUnacs;
 import com.discworld.jdownloaderx.plugins.ZamundaSe;
 
 public class PluginTest extends JFrame implements ActionListener, IDownloader
@@ -94,9 +97,16 @@ public class PluginTest extends JFrame implements ActionListener, IDownloader
 //         e.printStackTrace();
 //      }
       
-      ZamundaSe oZamundaSePlugin = new ZamundaSe(this);
+//      ZamundaSe oZamundaSePlugin = new ZamundaSe(this);
+//      oZamundaSePlugin.vParseUrl("http://zelka.org/details.php?id=455785");
       
-      oZamundaSePlugin.vParseUrl("http://zelka.org/details.php?id=455785");
+//      SubsUnacs oPlugin = new SubsUnacs(this);
+//      oPlugin.vParseUrl("http://subsunacs.net/info.php?id=110802");
+
+      SubsSab oPlugin = new SubsSab(this);
+      oPlugin.vParseUrl("http://subs.sab.bz/index.php?act=download&attach_id=82601");
+      
+      
 //      oZamundaSePlugin.vParseUrl("http://zelka.org/details.php?id=455831");
 //      oZamundaSePlugin.vParseUrl("http://zelka.org/details.php?id=454728");
       

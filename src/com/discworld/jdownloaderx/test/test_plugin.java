@@ -1,6 +1,5 @@
 package com.discworld.jdownloaderx.test;
 
-import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
@@ -56,7 +55,6 @@ public class test_plugin
       
       
       ZamundaSe oZamundaSePlugin = new ZamundaSe(oDownloader);
-      
       
       oZamundaSePlugin.vParseUrl("http://zelka.org/details.php?id=454728");
       

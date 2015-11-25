@@ -439,7 +439,7 @@ public abstract class Plugin
          {
             List<String> cookies = oHTTPConn.getHeaderFields().get("Content-Type");
             Matcher oMatcher =ptnCharset.matcher(cookies.get(0));
-            String sCharset = "UTF-8";
+            String sCharset = "Cp1251";
             if(oMatcher.find())
             {
                sCharset = oMatcher.group(1); 

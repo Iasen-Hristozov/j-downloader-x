@@ -24,11 +24,10 @@ import javax.xml.bind.annotation.XmlType;
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.ExtractFile;
 import com.discworld.jdownloaderx.dto.FileUtils;
-import com.discworld.jdownloaderx.dto.IDownloader;
 
 public class Chitanka extends Plugin
 {
-   String DOMAIN = "chitanka.info";
+   private final String DOMAIN = "chitanka.info";
 //          DOMAIN = "chitanka.it-tali.net",
             
    private final static String 

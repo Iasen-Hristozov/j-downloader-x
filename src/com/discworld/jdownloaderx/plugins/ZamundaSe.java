@@ -11,9 +11,6 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -33,13 +30,12 @@ import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.FileUtils;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
-import com.discworld.jdownloaderx.plugins.Plugin.DownloadFile;
 
 public class ZamundaSe extends Plugin
 {
-   public final static String DOMAIN = "zelka.org";
+   private final static String DOMAIN = "zelka.org";
 
-   public final static String[] DOMAINS = {"zelka.org", "zamunda.se"};
+   private final static String[] DOMAINS = {"zelka.org", "zamunda.se"};
    
    private final static String TITLE = "(<h1>)(.+)(<[\\s]*/h1>)",
                                TITLE_PARTS = "(.+ )(/? )(.* )(\\(\\d+\\))",
@@ -48,7 +44,7 @@ public class ZamundaSe extends Plugin
                                IMAGE = "(<div id=description>(<div align=center>)?<img border=\"0\" src=\")(.+?)(\">)",
                                SUBSUNACS = "(<a href=)((http://)?(www\\.)?subsunacs.net/((get\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)",
                                SUBSUNACS_SUBS = "\"(/subtitles/.+?/)\"",
-                               ZELKASUBS = "(<a href=)((http://)?(www\\.)?zelka.org/getsubs.php/.+?)((target=_blank)?>)",
+                               ZELKASUBS = "(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>",
                                SUBSSAB = "(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)((target=_blank)?>)",
                                DESCRIPTION = "(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))",
                                URL = "(http://)?zelka\\.org/details\\.php\\?id=(\\d)*",
@@ -95,7 +91,6 @@ public class ZamundaSe extends Plugin
    {
       super();
    }
-
    
    public ZamundaSe(IDownloader oDownloader)
    {
@@ -135,8 +130,6 @@ public class ZamundaSe extends Plugin
    @Override
    protected String inBackgroundHttpParse(String sURL)
    {
-//      getHttpResponse("http://chitanka.info/book/7246-taka-mi-haresva");
-      
       if(oZamundaSeSettings.sCookieUID == null || 
          oZamundaSeSettings.sCookieUID.isEmpty() || 
          oZamundaSeSettings.sCookiePass == null || 
@@ -235,6 +228,7 @@ public class ZamundaSe extends Plugin
          if(oMatcher.find())
          {
             sSubssab = oMatcher.group(2);
+            sSubssab = sSubssab.replace("&amp;", "&");
             System.out.println(sSubssab);
          }
       }
@@ -277,19 +271,20 @@ public class ZamundaSe extends Plugin
       
       if(sSubsunacs != null && !sSubsunacs.isEmpty())
       {
-         flSubsunacs = new CFile(sFolderName, sSubsunacs);
+         flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
          vFilesFnd.add(flSubsunacs);
       }
       
       if(sSubssab != null && !sSubssab.isEmpty())
       {
-         flSubssab= new CFile(sFolderName, sSubssab);
+         flSubssab= new CFile(sFolderName + File.separator, sSubssab);
          vFilesFnd.add(flSubssab);
       }
 
       if(sZelkasubs != null && !sZelkasubs.isEmpty())
       {
-         flZelkasubs = new CFile(sFolderName, sZelkasubs);
+         String sExtension =  sZelkasubs.substring(sZelkasubs.lastIndexOf(".")+1);
+         flZelkasubs = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sZelkasubs);
          vFilesFnd.add(flZelkasubs);
       }
 
@@ -311,15 +306,6 @@ public class ZamundaSe extends Plugin
 
       return alUrlMovies;
    }
-
-//   @Override
-//   public String getDomain()
-//   {
-//      String sDomains = String.join("|", DOMAINS);
-//      sDomains = sDomains.replace(".", "\\.").replace("|", ".*)|(.*");
-//      sDomains = "(.*" + sDomains + ".*)";
-//      return DOMAIN;
-//   }
 
    @Override
    protected void loadSettings()
@@ -545,6 +531,7 @@ public class ZamundaSe extends Plugin
    }
 
 
+   
    @Override
    public boolean isMine(String sURL)
    {
