@@ -14,20 +14,15 @@ import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public class SubsUnacs extends Plugin
 {
-   private final static String DOMAIN = "subsunacs.net";
-
-   
-   private final static String TITLE = "<h1>(.+?)</h1>",
-                               URL = "<div id=\"buttonBox\"><a href=\"(.+?)\"",
-                               ID = "http://subsunacs\\.net/subtitles/.+?-(\\d+)/",
+   private final static String DOMAIN = "subsunacs.net",
                                DWN = "http://subsunacs.net/get.php?id="; 
+                               
+   private final static Pattern ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
+                                ptnURL = Pattern.compile("<div id=\"buttonBox\"><a href=\"(.+?)\""),
+                                ptnID = Pattern.compile("http://(www\\.)?subsunacs\\.net/((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?");
    
    private String              sTitle,
                                sUrl;
-
-   private Pattern             ptnTitle = Pattern.compile(TITLE),
-                               ptnURL = Pattern.compile(URL),
-                               ptnID = Pattern.compile(ID);
    
    public SubsUnacs()
    {
@@ -89,10 +84,9 @@ public class SubsUnacs extends Plugin
    @Override
    public ArrayList<String> parseClipboard(String sContent)
    {
-      Pattern ptnUrlMovie = Pattern.compile(URL);
       ArrayList<String> alUrlMovies = new ArrayList<String>();
 
-      Matcher m = ptnUrlMovie.matcher(sContent);
+      Matcher m = ptnURL.matcher(sContent);
       while(m.find())
       {
          String s = m.group();
@@ -115,7 +109,7 @@ public class SubsUnacs extends Plugin
       
       Matcher oMatcher = ptnID.matcher(oFile.getURL());
       if(oMatcher.find())
-         oFile.setURL(DWN + oMatcher.group(1));
+         oFile.setURL(DWN + oMatcher.group(5));
       
       new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
    }

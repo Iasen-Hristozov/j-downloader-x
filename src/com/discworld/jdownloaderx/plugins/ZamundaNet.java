@@ -10,7 +10,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -27,31 +28,34 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import com.discworld.jdownloaderx.dto.CFile;
-import com.discworld.jdownloaderx.dto.FileUtils;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
-public class ZamundaSe extends Plugin
+public class ZamundaNet extends Plugin
 {
-   private final static String DOMAIN = "zelka.org",
-                               URL = "(http://)?zelka\\.org/details\\.php\\?id=(\\d)*",
+   private final static String DOMAIN = "zamunda.net",
                                COOKIE_UID_NAME = "uid",
                                COOKIE_PASS_NAME = "pass",
-                               SETTINGS_FILE = "zamunda_se.xml",
+                               SETTINGS_FILE = "zamunda_net.xml",
                                MAGNET_FILE = "magnet.txt",
-                               INFO_FILE = "info.txt";
-
-   private final static String[] DOMAINS = {"zelka.org", "zamunda.se"};
+                               INFO_FILE = "info.txt",
+                               HTTP = "http://",
+                               WWW = "www.";
 
    private final static Pattern ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
                                 ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
-                                ptnTorrent = Pattern.compile("download.php/\\S+\\.(torrent?)"),
+                                ptnTorrent = Pattern.compile("/download_go\\.php\\?id=(\\d+)\"[\\s]*>(.+?)</a>"),
+                                ptnMagnetLink = Pattern.compile("/magnetlink/download_go\\.php\\?id=\\d+&m=x"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
-                                ptnImage = Pattern.compile("(<div id=description>(<div align=center>)?<img border=\"0\" src=\")(.+?)(\">)"),
-                                ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
-                                ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/((get\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
-                                ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>"),
-                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=[\\d\\w]+&amp;)?act=download&amp;attach_id=.+?)((target=_blank)?>)");
+                                ptnImage = Pattern.compile("img border=\"0\" src=\"((http://)?img.zamunda.net/bitbucket/(.+?))\""),
+                                ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
+                                ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
+                                ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
+                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)(( target=_blank)?>)"),
+                                ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+");   
+   
+   
+   private ZamundaNetSettings oZamundaNetSettings;
 
    private String              sTitle, 
                                sMagnet,
@@ -63,10 +67,10 @@ public class ZamundaSe extends Plugin
                                sSubssab,
                                sFilesName,
                                sFolderName;
+
+
    
    private MovieTorrent        oMovieTorrent = null;
-
-   private ZamundaSeSettings   oZamundaSeSettings;
    
    private CFile               flImage = null,
                                flSubsunacs = null,
@@ -74,20 +78,28 @@ public class ZamundaSe extends Plugin
                                flZelkasubs = null;
 
 
-   public ZamundaSe()
+   public ZamundaNet()
    {
       super();
    }
    
-   public ZamundaSe(IDownloader oDownloader)
+   public ZamundaNet(IDownloader oDownloader)
    {
       super(oDownloader);
    }
 
    @Override
+   public boolean isMine(String sURL)
+   {
+      if(sURL.contains(DOMAIN))
+         return true;
+      else
+         return false;
+   }
+
+   @Override
    public ArrayList<String> parseClipboard(String sContent)
    {
-      Pattern ptnUrlMovie = Pattern.compile(URL);
       ArrayList<String> alUrlMovies = new ArrayList<String>();
    
       Matcher m = ptnUrlMovie.matcher(sContent);
@@ -103,73 +115,87 @@ public class ZamundaSe extends Plugin
    @Override
       protected String inBackgroundHttpParse(String sURL)
       {
-         if(oZamundaSeSettings.sCookieUID == null || 
-            oZamundaSeSettings.sCookieUID.isEmpty() || 
-            oZamundaSeSettings.sCookiePass == null || 
-            oZamundaSeSettings.sCookiePass.isEmpty())
+         sMagnet = "";
+         sTorrent = "";
+         sImage = "";
+         sDescription = "";
+         sSubsunacs = "";
+         sZelkasubs = "";
+         sSubssab = "";
+      
+         if(oZamundaNetSettings.sCookieUID == null || 
+            oZamundaNetSettings.sCookieUID.isEmpty() || 
+            oZamundaNetSettings.sCookiePass == null || 
+            oZamundaNetSettings.sCookiePass.isEmpty())
          {
-            loginZelka();
+            loginZamunda();
             saveSettings();
          }
    
-   //      String sResponse = super.inBackgroundHttpParse(sURL);
-         
-         String sResponse = getZelka(sURL).replace("\n", "");
+         String sResponse = getZamunda(sURL).replace("\n", "");
    
          Matcher oMatcher = ptnTitle.matcher(sResponse);
          if(oMatcher.find())
          {
-   //         sTitle = oMatcher.group();
-   //         sTitle = sTitle.replaceAll(TITLE_BGN, "").replaceAll(TITLE_END, "").replace("/", "");
             sTitle = oMatcher.group(2);
+            sTitle = sTitle.replace(":", " -");
             System.out.println(sTitle);
          }
    
-         if(oZamundaSeSettings.bDownloadTorrent)
+         if(oZamundaNetSettings.bDownloadTorrent)
          {
             oMatcher = ptnTorrent.matcher(sResponse);
             if(oMatcher.find())
             {
-               sTorrent = oMatcher.group();
+               
+               sTorrent = HTTP + WWW + DOMAIN + "/download.php/" + oMatcher.group(1) + "/" + oMatcher.group(2) + ".torrent";
                System.out.println(sTorrent);
             }
          }
          
-         
-   //      sMagnet = sFindString(sResponse, MAGNET_BGN , MAGNET_END);
-         
-         if(oZamundaSeSettings.bDownloadMagnet)
+         if(oZamundaNetSettings.bDownloadMagnet)
          {
-            oMatcher = ptnMagnet.matcher(sResponse);
+            oMatcher = ptnMagnetLink.matcher(sResponse);
             if(oMatcher.find())
             {
                sMagnet = oMatcher.group();
+               
+               ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
+               String sCookies = COOKIE_UID_NAME + "=" + oZamundaNetSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oZamundaNetSettings.sCookiePass;
+               alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
+               String sMagnetResult = getHttpResponse(HTTP + WWW + DOMAIN + sMagnet, alHttpProperties);
+               oMatcher = ptnMagnet.matcher(sMagnetResult);
+               if(oMatcher.find())
+               {
+                  sMagnet = oMatcher.group();
+               }
+               
                System.out.println(sMagnet);
             }
          }
    
-         if(oZamundaSeSettings.bDownloadImage)
+         if(oZamundaNetSettings.bDownloadImage)
          {
             oMatcher = ptnImage.matcher(sResponse);
             if(oMatcher.find())
             {
-               sImage = oMatcher.group(3);
+               sImage = oMatcher.group(1);
                System.out.println(sImage);
             }
          }
    
-         if(oZamundaSeSettings.bDownloadDescription)
+         if(oZamundaNetSettings.bDownloadDescription)
          {
             oMatcher = ptnDescription.matcher(sResponse);
             if(oMatcher.find())
             {
                sDescription = oMatcher.group(2);
-               sDescription = sDescription.replace("<br />", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
+               sDescription = sDescription.replaceAll("<br[\\s]*/>", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
                System.out.println(sDescription);
             }
          }
    
-         if(oZamundaSeSettings.bDownloadSubtitles)
+         if(oZamundaNetSettings.bDownloadSubtitles)
          {
             oMatcher = ptnSubsunacs.matcher(sResponse);
             if(oMatcher.find())
@@ -219,10 +245,9 @@ public class ZamundaSe extends Plugin
          sFilesName = sTitle;
       System.out.println(sFilesName);
       
-      sFolderName = sTitle.trim().replace("/", "").replace(":", " -");
-      
-      String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/") + 1);
-      oMovieTorrent = new MovieTorrent(sFolderName + File.separator + sTorrentName, "http://" + DOMAIN + "/" + sTorrent, sDescription, sMagnet);
+      sFolderName = sTitle.replace("/", "").trim();
+      String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
+      oMovieTorrent = new MovieTorrent(sFolderName + File.separator + sTorrentName, sTorrent, sDescription, sMagnet);
       vFilesFnd.add(oMovieTorrent);
       
       if(sImage != null && !sImage.isEmpty())
@@ -261,7 +286,7 @@ public class ZamundaSe extends Plugin
 //      if(oFile.getURL().endsWith(".torrent"))
 //      {
          alHttpProperties = new ArrayList<SHttpProperty>();
-         String sCookies = COOKIE_UID_NAME + "=" + oZamundaSeSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oZamundaSeSettings.sCookiePass;
+         String sCookies = COOKIE_UID_NAME + "=" + oZamundaNetSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oZamundaNetSettings.sCookiePass;
          alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
 //      }
       new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
@@ -270,31 +295,61 @@ public class ZamundaSe extends Plugin
    @Override
    protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
+      
       super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
       
-      FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + oFile.getName());
-      if(oFile.getURL().endsWith(".torrent"))
+//      FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + oFile.getName());
+      try
       {
-         try
+         File f;
+
+         if(oFile.getURL().endsWith(".torrent"))
          {
-            File f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
+            if(oFile.getName().endsWith(File.separator))
+               f = new File(sDownloadFolder
+                        + File.separator
+                        + oFile.getName()
+                        + saveFilePath.substring(saveFilePath
+                                 .lastIndexOf(File.separator) + 1));
+            else
+               f = new File(sDownloadFolder + File.separator + oFile.getName());
             f.getParentFile().mkdirs();
-            f.createNewFile();
-            FileOutputStream fos = new FileOutputStream(f);
-            fos.write(((MovieTorrent)oFile).getMagnet().getBytes());
-            fos.close();
+            File source = new File(saveFilePath);
+            Files.move(source.toPath(), f.toPath(),
+                     StandardCopyOption.REPLACE_EXISTING);
+            FileOutputStream fos; 
+            if(((MovieTorrent) oFile).getMagnet() != null && !((MovieTorrent) oFile).getMagnet().isEmpty())
+            {
+               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
+               f.getParentFile().mkdirs();
+               f.createNewFile();
+               fos= new FileOutputStream(f);
+               fos.write(((MovieTorrent) oFile).getMagnet().getBytes());
+               fos.close();
+            }
             f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
             f.createNewFile();
             fos = new FileOutputStream(f);
-            fos.write(((MovieTorrent)oFile).getInfo().getBytes());
+            fos.write(((MovieTorrent) oFile).getInfo().getBytes());
             fos.close();
-            
-         } catch(IOException e)
+
+         } 
+         else
          {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            if(oFile.getName().endsWith(File.separator))
+               f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
+            else
+               f = new File(sDownloadFolder + File.separator + oFile.getName());
+            f.getParentFile().mkdirs();
+            File source = new File(saveFilePath);
+            Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
          }
+      } catch(IOException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
       }
+
    }
 
    @Override
@@ -302,20 +357,20 @@ public class ZamundaSe extends Plugin
    {
       try
       {
-         JAXBContext jaxbContext = JAXBContext.newInstance(ZamundaSeSettings.class);
+         JAXBContext jaxbContext = JAXBContext.newInstance(ZamundaNetSettings.class);
          
          File file = new File(SETTINGS_FILE);
          if(file.exists())
          {
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            oZamundaSeSettings = (ZamundaSeSettings)jaxbUnmarshaller.unmarshal(file);
+            oZamundaNetSettings = (ZamundaNetSettings)jaxbUnmarshaller.unmarshal(file);
          }
          else
          {
-            oZamundaSeSettings = new ZamundaSeSettings();
+            oZamundaNetSettings = new ZamundaNetSettings();
             Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
             jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            jaxbMarshaller.marshal(oZamundaSeSettings, file);
+            jaxbMarshaller.marshal(oZamundaNetSettings, file);
          }
       } 
       catch(JAXBException e1)
@@ -330,11 +385,11 @@ public class ZamundaSe extends Plugin
       JAXBContext jaxbContext;
       try
       {
-         jaxbContext = JAXBContext.newInstance(ZamundaSeSettings.class);
+         jaxbContext = JAXBContext.newInstance(ZamundaNetSettings.class);
          File file = new File(SETTINGS_FILE);
          Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
          jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-         jaxbMarshaller.marshal(oZamundaSeSettings, file);
+         jaxbMarshaller.marshal(oZamundaNetSettings, file);
          
       } catch(JAXBException e)
       {
@@ -343,53 +398,29 @@ public class ZamundaSe extends Plugin
       }
    }
    
-   private void loginZelka()
+   private void loginZamunda()
    {
-      
-      
       String urlParameters  = "username=Rincewind123&password=suleiman";
-      byte[] postData       = urlParameters.getBytes( StandardCharsets.UTF_8 );
-      int    postDataLength = postData.length;
-      String request        = "http://zelka.org/takelogin.php";
+      String request        = "http://www.zamunda.net/takelogin.php";
       URL url;
       BufferedReader in;
       String sResponse;
       try
       {
          url = new URL( request );
-//         url = new URL(null, request,new sun.net.www.protocol.https.Handler());
          HttpURLConnection conn= (HttpURLConnection) url.openConnection();
-//         java.net.URLConnection conn = new URL(request).openConnection();
-//         Map<String, List<String>> headers = conn.getHeaderFields(); 
-//         List<String> values = headers.get("Set-Cookie");
-
-//         conn.connect();
-
-         //         conn.setRequestMethod( "POST" );
-//         conn.setDoOutput( true );
-//         conn.setInstanceFollowRedirects( false );
-//         conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-//         conn.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded"); 
-//         conn.setRequestProperty( "charset", "utf-8");
-//         conn.setRequestProperty( "Content-Length", Integer.toString( postDataLength ));
-//         conn.setUseCaches( false );
          
          conn.setRequestMethod("POST");
-//         conn.setRequestProperty("method", "POST");
          conn.setDoOutput(true);
          conn.setUseCaches(false);
          conn.setInstanceFollowRedirects(false);
-         conn.setRequestProperty("Host", "zelka.org");
+         conn.setRequestProperty("Host", "www.zamunda.net");
          conn.setRequestProperty("User-Agent", "Mozilla/5.0");
          conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-////         conn.setRequestProperty("Content-Length", String.valueOf(postData));
          conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-////         conn.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-         conn.setRequestProperty("Referer", "http://zelka.org");
+         conn.setRequestProperty("Referer", "http://www.zamunda.net");
          conn.setRequestProperty("Connection", "keep-alive");
          conn.setDoInput(true);
-//         conn.getOutputStream().write(postData);
-      // Send post request
 
          conn.setRequestProperty("Content-Length", Integer.toString(urlParameters.length()));
          conn.connect();
@@ -401,17 +432,6 @@ public class ZamundaSe extends Plugin
          
          if(conn.getResponseCode() == 302)
          {
-//            Cookie[] cookies = request.getCookies();
-            
-//            String headerName=null;
-//            for (int i=1; (headerName = conn.getHeaderFieldKey(i))!=null; i++) {
-//               if (headerName.equals("Set-Cookie")) {                  
-//               String cookie = conn.getHeaderField(i);
-//               System.out.println(cookie);
-//               }
-//            }
-
-            
             List<String> cookies = conn.getHeaderFields().get("Set-Cookie");
             if (cookies != null) 
             {
@@ -421,21 +441,13 @@ public class ZamundaSe extends Plugin
                   String cookieName = cookie.substring(0, cookie.indexOf("="));
                   String cookieValue = cookie.substring(cookie.indexOf("=") + 1, cookie.length());
                   if(cookieName.equals(COOKIE_UID_NAME))
-                     oZamundaSeSettings.sCookieUID = cookieValue;
+                     oZamundaNetSettings.sCookieUID = cookieValue;
                   else if(cookieName.equals(COOKIE_PASS_NAME))
-                     oZamundaSeSettings.sCookiePass = cookieValue;
+                     oZamundaNetSettings.sCookiePass = cookieValue;
                      
                   System.out.println(cookie);
                }
-//             for (Cookie cookie : cookies) {
-//               if (cookie.getName().equals("cookieName")) {
-//                 //do something
-//                 //value can be retrieved using #cookie.getValue()
-//                }
-//              }
             }
-            
-
          }
          if(conn.getResponseCode() == 200)
          {
@@ -452,49 +464,35 @@ public class ZamundaSe extends Plugin
             
             System.out.print(sResponse);            
          }
-//         DataOutputStream wr = new DataOutputStream( conn.getOutputStream());
-//         wr.write( postData );
-//         sResponse = wr.toString();
-//         
-//         System.out.print(sResponse);
          
-      } catch(MalformedURLException e)
+      } 
+      catch(MalformedURLException e)
       {
-         // TODO Auto-generated catch block
          e.printStackTrace();
-      } catch(ProtocolException e)
+      } 
+      catch(ProtocolException e)
       {
-         // TODO Auto-generated catch block
          e.printStackTrace();
-      } catch(IOException e)
+      } 
+      catch(IOException e)
       {
-         // TODO Auto-generated catch block
          e.printStackTrace();
       }
    }
    
-   private String getZelka(String sURL)
+   private String getZamunda(String sURL)
    {
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      String sCookies = COOKIE_UID_NAME + "=" + oZamundaSeSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oZamundaSeSettings.sCookiePass;
+      String sCookies = COOKIE_UID_NAME + "=" + oZamundaNetSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oZamundaNetSettings.sCookiePass;
       alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
       
       return getHttpResponse(sURL, alHttpProperties);
-   }
-   
-   @Override
-   public boolean isMine(String sURL)
-   {
-      for(String sDomain : DOMAINS)
-         if(sURL.contains(sDomain))
-            return true;
-      return false;
    }
 
    @XmlAccessorType(XmlAccessType.FIELD)
    @XmlType(name = "", propOrder = {"bDownloadTorrent","bDownloadMagnet","bDownloadImage","bDownloadDescription","bDownloadSubtitles", "sUser","sPassword","sCookieUID","sCookiePass"})
    @XmlRootElement(name = "settings")
-   static private class ZamundaSeSettings
+   static private class ZamundaNetSettings
    {
       @XmlElement(name = "download_torrent", required = true)
       public boolean bDownloadTorrent = true;
