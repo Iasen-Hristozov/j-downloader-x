@@ -10,7 +10,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -85,7 +84,7 @@ public class ZamundaSe extends Plugin
    }
 
    @Override
-   public ArrayList<String> parseClipboard(String sContent)
+   public ArrayList<String> parseContent(String sContent)
    {
       Pattern ptnUrlMovie = Pattern.compile(URL);
       ArrayList<String> alUrlMovies = new ArrayList<String>();
@@ -103,6 +102,14 @@ public class ZamundaSe extends Plugin
    @Override
       protected String inBackgroundHttpParse(String sURL)
       {
+         sMagnet = "";
+         sTorrent = "";
+         sImage = "";
+         sDescription = "";
+         sSubsunacs = "";
+         sZelkasubs = "";
+         sSubssab = "";
+
          if(oZamundaSeSettings.sCookieUID == null || 
             oZamundaSeSettings.sCookieUID.isEmpty() || 
             oZamundaSeSettings.sCookiePass == null || 
@@ -111,51 +118,32 @@ public class ZamundaSe extends Plugin
             loginZelka();
             saveSettings();
          }
-   
-   //      String sResponse = super.inBackgroundHttpParse(sURL);
          
          String sResponse = getZelka(sURL).replace("\n", "");
    
          Matcher oMatcher = ptnTitle.matcher(sResponse);
          if(oMatcher.find())
-         {
-   //         sTitle = oMatcher.group();
-   //         sTitle = sTitle.replaceAll(TITLE_BGN, "").replaceAll(TITLE_END, "").replace("/", "");
             sTitle = oMatcher.group(2);
-            System.out.println(sTitle);
-         }
    
          if(oZamundaSeSettings.bDownloadTorrent)
          {
             oMatcher = ptnTorrent.matcher(sResponse);
             if(oMatcher.find())
-            {
                sTorrent = oMatcher.group();
-               System.out.println(sTorrent);
-            }
          }
-         
-         
-   //      sMagnet = sFindString(sResponse, MAGNET_BGN , MAGNET_END);
          
          if(oZamundaSeSettings.bDownloadMagnet)
          {
             oMatcher = ptnMagnet.matcher(sResponse);
             if(oMatcher.find())
-            {
                sMagnet = oMatcher.group();
-               System.out.println(sMagnet);
-            }
          }
    
          if(oZamundaSeSettings.bDownloadImage)
          {
             oMatcher = ptnImage.matcher(sResponse);
             if(oMatcher.find())
-            {
                sImage = oMatcher.group(3);
-               System.out.println(sImage);
-            }
          }
    
          if(oZamundaSeSettings.bDownloadDescription)
@@ -165,7 +153,6 @@ public class ZamundaSe extends Plugin
             {
                sDescription = oMatcher.group(2);
                sDescription = sDescription.replace("<br />", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
-               System.out.println(sDescription);
             }
          }
    
@@ -173,24 +160,17 @@ public class ZamundaSe extends Plugin
          {
             oMatcher = ptnSubsunacs.matcher(sResponse);
             if(oMatcher.find())
-            {
                sSubsunacs = oMatcher.group(2);
-               System.out.println(sSubsunacs);
-            }
             
             oMatcher = ptnZelkasubs.matcher(sResponse);
             if(oMatcher.find())
-            {
                sZelkasubs = oMatcher.group(2);
-               System.out.println(sZelkasubs);
-            }
       
             oMatcher = ptnSubssab.matcher(sResponse);
             if(oMatcher.find())
             {
                sSubssab = oMatcher.group(2);
                sSubssab = sSubssab.replace("&amp;", "&");
-               System.out.println(sSubssab);
             }
          }
    
@@ -204,20 +184,11 @@ public class ZamundaSe extends Plugin
       Matcher oMatcher = ptnTitleParts.matcher(sTitle);
       if(oMatcher.find())
       {
-         for(int i = 0; i <= oMatcher.groupCount(); i++)
-         {
-            System.out.println(oMatcher.group(i));
-         }
-   
-//         if(oMatcher.groupCount() == 3)
          sFilesName = oMatcher.group(1) + " " + oMatcher.group(3);   
-//         else if(oMatcher.groupCount() == 2)
-//            sFilesName = oMatcher.group(1) + oMatcher.group(2);
          sFilesName = sFilesName.trim();
       }
       else
          sFilesName = sTitle;
-      System.out.println(sFilesName);
       
       sFolderName = sTitle.trim().replace("/", "").replace(":", " -");
       
@@ -258,12 +229,9 @@ public class ZamundaSe extends Plugin
    public void downloadFile(CFile oFile, String sDownloadFolder)
    {
       ArrayList<SHttpProperty> alHttpProperties = null;
-//      if(oFile.getURL().endsWith(".torrent"))
-//      {
-         alHttpProperties = new ArrayList<SHttpProperty>();
-         String sCookies = COOKIE_UID_NAME + "=" + oZamundaSeSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oZamundaSeSettings.sCookiePass;
-         alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
-//      }
+      alHttpProperties = new ArrayList<SHttpProperty>();
+      String sCookies = COOKIE_UID_NAME + "=" + oZamundaSeSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oZamundaSeSettings.sCookiePass;
+      alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
       new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
@@ -345,52 +313,29 @@ public class ZamundaSe extends Plugin
    
    private void loginZelka()
    {
-      
-      
-      String urlParameters  = "username=Rincewind123&password=suleiman";
-      byte[] postData       = urlParameters.getBytes( StandardCharsets.UTF_8 );
-      int    postDataLength = postData.length;
-      String request        = "http://zelka.org/takelogin.php";
+      String urlParameters  = String.format("username=%s&password=%s", oZamundaSeSettings.sUser, oZamundaSeSettings.sPassword);
+      String request        = HTTP + WWW + DOMAIN + "/takelogin.php";
       URL url;
       BufferedReader in;
       String sResponse;
       try
       {
          url = new URL( request );
-//         url = new URL(null, request,new sun.net.www.protocol.https.Handler());
          HttpURLConnection conn= (HttpURLConnection) url.openConnection();
-//         java.net.URLConnection conn = new URL(request).openConnection();
-//         Map<String, List<String>> headers = conn.getHeaderFields(); 
-//         List<String> values = headers.get("Set-Cookie");
-
-//         conn.connect();
-
-         //         conn.setRequestMethod( "POST" );
-//         conn.setDoOutput( true );
-//         conn.setInstanceFollowRedirects( false );
-//         conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-//         conn.setRequestProperty( "Content-Type", "application/x-www-form-urlencoded"); 
-//         conn.setRequestProperty( "charset", "utf-8");
-//         conn.setRequestProperty( "Content-Length", Integer.toString( postDataLength ));
-//         conn.setUseCaches( false );
          
          conn.setRequestMethod("POST");
-//         conn.setRequestProperty("method", "POST");
          conn.setDoOutput(true);
          conn.setUseCaches(false);
          conn.setInstanceFollowRedirects(false);
          conn.setRequestProperty("Host", "zelka.org");
          conn.setRequestProperty("User-Agent", "Mozilla/5.0");
          conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-////         conn.setRequestProperty("Content-Length", String.valueOf(postData));
          conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-////         conn.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-         conn.setRequestProperty("Referer", "http://zelka.org");
+         conn.setRequestProperty("Referer", HTTP + DOMAIN);
          conn.setRequestProperty("Connection", "keep-alive");
          conn.setDoInput(true);
-//         conn.getOutputStream().write(postData);
-      // Send post request
 
+         // Send post request
          conn.setRequestProperty("Content-Length", Integer.toString(urlParameters.length()));
          conn.connect();
 
@@ -401,17 +346,6 @@ public class ZamundaSe extends Plugin
          
          if(conn.getResponseCode() == 302)
          {
-//            Cookie[] cookies = request.getCookies();
-            
-//            String headerName=null;
-//            for (int i=1; (headerName = conn.getHeaderFieldKey(i))!=null; i++) {
-//               if (headerName.equals("Set-Cookie")) {                  
-//               String cookie = conn.getHeaderField(i);
-//               System.out.println(cookie);
-//               }
-//            }
-
-            
             List<String> cookies = conn.getHeaderFields().get("Set-Cookie");
             if (cookies != null) 
             {
@@ -424,18 +358,8 @@ public class ZamundaSe extends Plugin
                      oZamundaSeSettings.sCookieUID = cookieValue;
                   else if(cookieName.equals(COOKIE_PASS_NAME))
                      oZamundaSeSettings.sCookiePass = cookieValue;
-                     
-                  System.out.println(cookie);
                }
-//             for (Cookie cookie : cookies) {
-//               if (cookie.getName().equals("cookieName")) {
-//                 //do something
-//                 //value can be retrieved using #cookie.getValue()
-//                }
-//              }
             }
-            
-
          }
          if(conn.getResponseCode() == 200)
          {
@@ -449,15 +373,7 @@ public class ZamundaSe extends Plugin
             in.close();
 
             sResponse = sbResponse.toString();
-            
-            System.out.print(sResponse);            
          }
-//         DataOutputStream wr = new DataOutputStream( conn.getOutputStream());
-//         wr.write( postData );
-//         sResponse = wr.toString();
-//         
-//         System.out.print(sResponse);
-         
       } catch(MalformedURLException e)
       {
          // TODO Auto-generated catch block

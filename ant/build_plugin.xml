@@ -59,7 +59,9 @@
 		<!--<jar destfile="${dst}${plugin-name}.jar" basedir="${build}" includes="**/${plugin-name}.class">-->
 		<jar destfile="${dst}${plugin-name}.jar" basedir="${build}" includes="**/${plugin-name}.class">
 			<fileset dir="${build}" includes="**/${plugin-name}*.class" excludes="**/${plugin-name}.class" />
-			<fileset dir="${src}" includes="**/${plugin-name}.java" />
+         <fileset dir="${src}" includes="**/${plugin-name}.java" />
+			<fileset dir="${build}" includes="**/MovieTorrent.class" />
+			<fileset dir="${src}" includes="**/MovieTorrent.java" />
 			<fileset dir="${src}" includes="**/Plugin.java" />
 			<manifest>
 				<attribute name="Built-By" value="${builder}" />

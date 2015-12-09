@@ -65,7 +65,6 @@ public class SubsUnacs extends Plugin
       {
          sUrl = oMatcher.group(1);
          sUrl = "http://" + DOMAIN + sUrl;
-         System.out.println(sUrl);
       }
       
       oMatcher = ptnTitle.matcher(sResult);
@@ -73,7 +72,6 @@ public class SubsUnacs extends Plugin
       {
          sTitle = oMatcher.group(1);
          sTitle = sTitle.replace("nbsp;", " ");
-         System.out.println(sTitle);
       }      
 
       vFilesFnd.add(new CFile(sTitle, sUrl));
@@ -82,7 +80,7 @@ public class SubsUnacs extends Plugin
    }
 
    @Override
-   public ArrayList<String> parseClipboard(String sContent)
+   public ArrayList<String> parseContent(String sContent)
    {
       ArrayList<String> alUrlMovies = new ArrayList<String>();
 
@@ -117,6 +115,6 @@ public class SubsUnacs extends Plugin
    @Override
    public boolean isMine(String sURL)
    {
-      return sURL.contains(DOMAIN) ? true : false;
+      return sURL.contains(DOMAIN);
    }
 }

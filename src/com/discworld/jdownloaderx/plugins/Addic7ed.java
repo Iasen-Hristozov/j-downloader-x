@@ -12,22 +12,22 @@ import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
-public class SubsSab extends Plugin
+public class Addic7ed extends Plugin
 {
-   private final static String DOMAIN = "subs.sab.bz";
+   private final static String DOMAIN = "addic7ed.com";
    
-   private final static Pattern ptnTitle = Pattern.compile("<big>(<.+?>)?(.+?)</big>"),
-                                ptnURL = Pattern.compile("\u0421\u0412\u0410\u041b\u0418 \u0421\u0423\u0411\u0422\u0418\u0422\u0420\u0418\u0422\u0415&nbsp;</a><center><br/><br/><fb:like href=\"(.+?)\"");
+   private final static Pattern ptnTitle = Pattern.compile("<span class=\"titulo\">(.+?)<small>"),
+                                ptnURL = Pattern.compile("href=\"(/(original|updated)/.+?)\"");
    
    private String              sTitle,
                                sUrl;
    
-   public SubsSab()
+   public Addic7ed()
    {
       super();
    }
    
-   public SubsSab(IDownloader oDownloader)
+   public Addic7ed(IDownloader oDownloader)
    {
       super(oDownloader);
    }
@@ -41,18 +41,23 @@ public class SubsSab extends Plugin
    @Override
    public ArrayList<String> parseContent(String sContent)
    {
+      return parseResponse(sContent);
+   }
+
+   public static ArrayList<String> parseResponse(String sResponse)
+   {
       ArrayList<String> alUrlMovies = new ArrayList<String>();
    
-      Matcher m = ptnURL.matcher(sContent);
+      Matcher m = ptnURL.matcher(sResponse);
       while(m.find())
       {
-         String s = m.group();
-         alUrlMovies.add(s);
+         String s = m.group(1);
+         alUrlMovies.add("http://" + DOMAIN + s);
       }
    
       return alUrlMovies;
    }
-
+   
    @Override
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
@@ -66,7 +71,7 @@ public class SubsSab extends Plugin
       oMatcher = ptnTitle.matcher(sResult);
       if(oMatcher.find())
       {
-         sTitle = oMatcher.group(oMatcher.groupCount());
+         sTitle = oMatcher.group(1);
          sTitle = sTitle.replaceAll("<.*?>", "");
       }      
    
@@ -76,13 +81,13 @@ public class SubsSab extends Plugin
    }
 
    @Override
-      public void downloadFile(CFile oFile, String sDownloadFolder)
-      {
-         ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-         alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
-         
-         new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
-      }
+   public void downloadFile(CFile oFile, String sDownloadFolder)
+   {
+      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
+      alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
+      
+      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+   }
 
    @Override
    protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)

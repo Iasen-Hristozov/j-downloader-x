@@ -26,17 +26,32 @@ public class ClipboardListener extends Thread implements ClipboardOwner
       Transferable trans = sysClip.getContents(this);
       regainOwnership(trans);
 //      System.out.println("Listening to board...");
-      while(true) 
+      
+      synchronized(this) 
       {
-         if(isitEnough())
-            break;
-      }
+         while (true) 
+         {
+             try
+            {
+               this.wait();
+            } catch(InterruptedException e)
+            {
+               e.printStackTrace();
+            }
+         }
+      }      
+//      while(true) 
+//      {
+//         if(isitEnough())
+//            break;
+//      }
 //      System.out.println("No more Listening...");
    }
 
    public void itisEnough()
    {
       bEnough=true;
+      notify();
    }
    
    public void itisNotEnough()

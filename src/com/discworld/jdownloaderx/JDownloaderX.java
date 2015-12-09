@@ -159,26 +159,20 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
          public void run()
          {
             String sContent = oClipboardListener.getContent();
+            if(sContent == null)
+               return;
             
             for(Plugin oPlugin: alPlugins)
             {
-//               if(sContent.contains(oPlugin.DOMAIN))
-//               if(sContent.contains(oPlugin.getDomain()))
                if(oPlugin.isMine(sContent))
                {
-                  ArrayList<String> alURLs = oPlugin.parseClipboard(sContent);
+                  ArrayList<String> alURLs = oPlugin.parseContent(sContent);
                   String.join(",", alURLs);
                   txtURL.setText(String.join(",", alURLs));
-                  try
-                  {
-                     for(String sURL : alURLs)
-                        vParseURL(sURL);
-                     break;
-                  } catch(IOException e)
-                  {
-                     // TODO Auto-generated catch block
-                     e.printStackTrace();
-                  }
+                  
+                  for(String sURL : alURLs)
+                     oPlugin.vParseUrl(sURL);
+                  break;
                }
             }      
          }
@@ -561,19 +555,12 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    {
       for(Plugin oPlugin: alPlugins)
       {
-//         if(sURL.contains(oPlugin.getDomain()))
          if(oPlugin.isMine(sURL))
          {
             oPlugin.vParseUrl(sURL);
             break;
          }
       }      
-
-      
-//      if(sURL.contains(ChitankaPlugin.DOMAIN))
-//      {
-//         oChitankaPlugin.vParseUrl(sURL);
-//      }
    }
    
    public synchronized boolean _isStarted()
