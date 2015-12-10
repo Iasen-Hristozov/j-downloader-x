@@ -269,7 +269,7 @@ public class ZamundaNet extends Plugin
       {
          File f;
 
-         if(oFile.getURL().endsWith(".torrent"))
+         if(oFile instanceof MovieTorrent)
          {
             if(oFile.getName().endsWith(File.separator))
                f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));

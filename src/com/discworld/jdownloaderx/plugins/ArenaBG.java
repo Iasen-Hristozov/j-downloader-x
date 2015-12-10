@@ -97,82 +97,82 @@ public class ArenaBG extends Plugin
    }
 
    @Override
-      protected String inBackgroundHttpParse(String sURL)
-      {
-         sTorrent = "";
-         sImage = "";
-         sDescription = "";
-         sSubsunacs = "";
-         sSubssab = "";
-         sAddic7ed = "";
-      
-         String sResponse = getHttpResponse(sURL).replace("\n", "");
+   protected String inBackgroundHttpParse(String sURL)
+   {
+      sTorrent = "";
+      sImage = "";
+      sDescription = "";
+      sSubsunacs = "";
+      sSubssab = "";
+      sAddic7ed = "";
    
-         Matcher oMatcher = ptnTitle.matcher(sResponse);
+      String sResponse = getHttpResponse(sURL).replace("\n", "");
+
+      Matcher oMatcher = ptnTitle.matcher(sResponse);
+      if(oMatcher.find())
+      {
+         sTitle = oMatcher.group(1);
+         sTitle = sTitle.replace(":", " -");
+      }
+
+      if(oArenaBGSettings.bDownloadTorrent)
+      {
+         oMatcher = ptnTorrent.matcher(sResponse);
+         if(oMatcher.find())
+            sTorrent = HTTP + DOMAIN + oMatcher.group();
+      }
+
+      if(oArenaBGSettings.bDownloadImage)
+      {
+         oMatcher = ptnImage.matcher(sResponse);
+         if(oMatcher.find())
+            sImage = oMatcher.group();
+      }
+
+      if(oArenaBGSettings.bDownloadDescription)
+      {
+         oMatcher = ptnDescription.matcher(sResponse);
          if(oMatcher.find())
          {
-            sTitle = oMatcher.group(1);
-            sTitle = sTitle.replace(":", " -");
+            sDescription = oMatcher.group(1);
+            sDescription = sDescription.replaceAll("<br[\\s]*/>", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
          }
-   
-         if(oArenaBGSettings.bDownloadTorrent)
-         {
-            oMatcher = ptnTorrent.matcher(sResponse);
-            if(oMatcher.find())
-               sTorrent = HTTP + DOMAIN + oMatcher.group();
-         }
-   
-         if(oArenaBGSettings.bDownloadImage)
-         {
-            oMatcher = ptnImage.matcher(sResponse);
-            if(oMatcher.find())
-               sImage = oMatcher.group();
-         }
-   
-         if(oArenaBGSettings.bDownloadDescription)
-         {
-            oMatcher = ptnDescription.matcher(sResponse);
-            if(oMatcher.find())
-            {
-               sDescription = oMatcher.group(1);
-               sDescription = sDescription.replaceAll("<br[\\s]*/>", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
-            }
-         }
-   
-         if(oArenaBGSettings.bDownloadSubtitles)
-         {
-            oMatcher = ptnSubsunacs.matcher(sResponse);
-            while(oMatcher.find())
-            {
-               sSubsunacs = oMatcher.group(1);
-               alSubsunacs.add(sSubsunacs);
-            }
-            
-            oMatcher = ptnSubssab.matcher(sResponse);
-            while(oMatcher.find())
-            {
-               sSubssab = oMatcher.group(1).replace("&amp;", "&");;
-               alSubssab.add(sSubssab);
-            }
-            
-            oMatcher = ptnAddic7ed.matcher(sResponse);
-            if(oMatcher.find())
-            {
-               sAddic7ed = oMatcher.group(1);
-               
-               String sAddic7edRespone = getHttpResponse(sAddic7ed);
-
-               if(sAddic7edRespone != null)
-               {
-                  oMatcher = ptnUrlAddic7ed.matcher(sAddic7edRespone);
-                  while(oMatcher.find())
-                     alAddic7ed.add(HTTP + "addic7ed.com" + oMatcher.group(1));
-               }
-            }
-         }
-   
-         return sTitle;
       }
+
+      if(oArenaBGSettings.bDownloadSubtitles)
+      {
+         oMatcher = ptnSubsunacs.matcher(sResponse);
+         while(oMatcher.find())
+         {
+            sSubsunacs = oMatcher.group(1);
+            alSubsunacs.add(sSubsunacs);
+         }
+         
+         oMatcher = ptnSubssab.matcher(sResponse);
+         while(oMatcher.find())
+         {
+            sSubssab = oMatcher.group(1).replace("&amp;", "&");;
+            alSubssab.add(sSubssab);
+         }
+         
+         oMatcher = ptnAddic7ed.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sAddic7ed = oMatcher.group(1);
+            
+            String sAddic7edRespone = getHttpResponse(sAddic7ed);
+
+            if(sAddic7edRespone != null)
+            {
+               oMatcher = ptnUrlAddic7ed.matcher(sAddic7edRespone);
+               while(oMatcher.find())
+                  alAddic7ed.add(HTTP + "addic7ed.com" + oMatcher.group(1));
+            }
+         }
+      }
+
+      return sTitle;
+   }
 
    @Override
    protected ArrayList<CFile> doneHttpParse(String sResult)
@@ -249,7 +249,7 @@ public class ArenaBG extends Plugin
       {
          File f;
 
-         if(oFile.getURL().endsWith(".torrent"))
+         if(oFile instanceof MovieTorrent)
          {
             if(oFile.getName().endsWith(File.separator))
                f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
@@ -273,7 +273,6 @@ public class ArenaBG extends Plugin
             fos = new FileOutputStream(f);
             fos.write(((MovieTorrent) oFile).getInfo().getBytes());
             fos.close();
-
          } 
          else
          {

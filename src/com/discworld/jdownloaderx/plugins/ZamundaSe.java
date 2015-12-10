@@ -241,7 +241,7 @@ public class ZamundaSe extends Plugin
       super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
       
       FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + oFile.getName());
-      if(oFile.getURL().endsWith(".torrent"))
+      if(oFile instanceof MovieTorrent)
       {
          try
          {
