@@ -48,7 +48,7 @@ public class ZamundaSe extends Plugin
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("(<div id=description>(<div align=center>)?<img border=\"0\" src=\")(.+?)(\">)"),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
-                                ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/((get\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
+                                ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/(((get|info)\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
                                 ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>"),
                                 ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=[\\d\\w]+&amp;)?act=download&amp;attach_id=.+?)((target=_blank)?>)");
 
@@ -100,82 +100,82 @@ public class ZamundaSe extends Plugin
    }
 
    @Override
-      protected String inBackgroundHttpParse(String sURL)
-      {
-         sMagnet = "";
-         sTorrent = "";
-         sImage = "";
-         sDescription = "";
-         sSubsunacs = "";
-         sZelkasubs = "";
-         sSubssab = "";
+   protected String inBackgroundHttpParse(String sURL)
+   {
+      sMagnet = "";
+      sTorrent = "";
+      sImage = "";
+      sDescription = "";
+      sSubsunacs = "";
+      sZelkasubs = "";
+      sSubssab = "";
 
-         if(oZamundaSeSettings.sCookieUID == null || 
-            oZamundaSeSettings.sCookieUID.isEmpty() || 
-            oZamundaSeSettings.sCookiePass == null || 
-            oZamundaSeSettings.sCookiePass.isEmpty())
-         {
-            loginZelka();
-            saveSettings();
-         }
-         
-         String sResponse = getZelka(sURL).replace("\n", "");
-   
-         Matcher oMatcher = ptnTitle.matcher(sResponse);
-         if(oMatcher.find())
-            sTitle = oMatcher.group(2);
-   
-         if(oZamundaSeSettings.bDownloadTorrent)
-         {
-            oMatcher = ptnTorrent.matcher(sResponse);
-            if(oMatcher.find())
-               sTorrent = oMatcher.group();
-         }
-         
-         if(oZamundaSeSettings.bDownloadMagnet)
-         {
-            oMatcher = ptnMagnet.matcher(sResponse);
-            if(oMatcher.find())
-               sMagnet = oMatcher.group();
-         }
-   
-         if(oZamundaSeSettings.bDownloadImage)
-         {
-            oMatcher = ptnImage.matcher(sResponse);
-            if(oMatcher.find())
-               sImage = oMatcher.group(3);
-         }
-   
-         if(oZamundaSeSettings.bDownloadDescription)
-         {
-            oMatcher = ptnDescription.matcher(sResponse);
-            if(oMatcher.find())
-            {
-               sDescription = oMatcher.group(2);
-               sDescription = sDescription.replace("<br />", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
-            }
-         }
-   
-         if(oZamundaSeSettings.bDownloadSubtitles)
-         {
-            oMatcher = ptnSubsunacs.matcher(sResponse);
-            if(oMatcher.find())
-               sSubsunacs = oMatcher.group(2);
-            
-            oMatcher = ptnZelkasubs.matcher(sResponse);
-            if(oMatcher.find())
-               sZelkasubs = oMatcher.group(2);
-      
-            oMatcher = ptnSubssab.matcher(sResponse);
-            if(oMatcher.find())
-            {
-               sSubssab = oMatcher.group(2);
-               sSubssab = sSubssab.replace("&amp;", "&");
-            }
-         }
-   
-         return sTitle;
+      if(oZamundaSeSettings.sCookieUID == null || 
+         oZamundaSeSettings.sCookieUID.isEmpty() || 
+         oZamundaSeSettings.sCookiePass == null || 
+         oZamundaSeSettings.sCookiePass.isEmpty())
+      {
+         loginZelka();
+         saveSettings();
       }
+      
+      String sResponse = getZelka(sURL).replace("\n", "");
+
+      Matcher oMatcher = ptnTitle.matcher(sResponse);
+      if(oMatcher.find())
+         sTitle = oMatcher.group(2);
+
+      if(oZamundaSeSettings.bDownloadTorrent)
+      {
+         oMatcher = ptnTorrent.matcher(sResponse);
+         if(oMatcher.find())
+            sTorrent = oMatcher.group();
+      }
+      
+      if(oZamundaSeSettings.bDownloadMagnet)
+      {
+         oMatcher = ptnMagnet.matcher(sResponse);
+         if(oMatcher.find())
+            sMagnet = oMatcher.group();
+      }
+
+      if(oZamundaSeSettings.bDownloadImage)
+      {
+         oMatcher = ptnImage.matcher(sResponse);
+         if(oMatcher.find())
+            sImage = oMatcher.group(3);
+      }
+
+      if(oZamundaSeSettings.bDownloadDescription)
+      {
+         oMatcher = ptnDescription.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sDescription = oMatcher.group(2);
+            sDescription = sDescription.replace("<br />", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
+         }
+      }
+
+      if(oZamundaSeSettings.bDownloadSubtitles)
+      {
+         oMatcher = ptnSubsunacs.matcher(sResponse);
+         if(oMatcher.find())
+            sSubsunacs = oMatcher.group(2);
+         
+         oMatcher = ptnZelkasubs.matcher(sResponse);
+         if(oMatcher.find())
+            sZelkasubs = oMatcher.group(2);
+   
+         oMatcher = ptnSubssab.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sSubssab = oMatcher.group(2);
+            sSubssab = sSubssab.replace("&amp;", "&");
+         }
+      }
+
+      return sTitle;
+   }
 
    @Override
    protected ArrayList<CFile> doneHttpParse(String sResult)

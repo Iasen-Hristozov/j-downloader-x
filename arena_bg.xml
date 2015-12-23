@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<settings>
+    <download_torrent>true</download_torrent>
+    <download_image>true</download_image>
+    <download_description>true</download_description>
+    <download_subtitles>true</download_subtitles>
+    <user>Rincewind123</user>
+    <password>suleiman</password>
+</settings>

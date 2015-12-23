@@ -49,9 +49,9 @@ public class ZamundaNet extends Plugin
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("img border=\"0\" src=\"((http://)?img.zamunda.net/bitbucket/(.+?))\""),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
-                                ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
-                                ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
-                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)(( target=_blank)?>)"),
+                                ptnSubsunacs = Pattern.compile("<a href=((http://)?(www\\.)?subsunacs.net/((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))( target=_blank)?>"),
+                                ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)( target=_blank)?>"),
+                                ptnZamundaSubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+");   
    
    
@@ -63,7 +63,7 @@ public class ZamundaNet extends Plugin
                                sImage,
                                sDescription,
                                sSubsunacs,
-                               sZelkasubs,
+                               sZamundaSubs,
                                sSubssab,
                                sFilesName,
                                sFolderName;
@@ -75,8 +75,10 @@ public class ZamundaNet extends Plugin
    private CFile               flImage = null,
                                flSubsunacs = null,
                                flSubssab = null,
-                               flZelkasubs = null;
-
+                               flZamundaSubs = null;
+   
+   private ArrayList<String>   alSubsunacs = new ArrayList<String>(),
+                               alSubssab = new ArrayList<String>();
 
    public ZamundaNet()
    {
@@ -117,7 +119,7 @@ public class ZamundaNet extends Plugin
       sImage = "";
       sDescription = "";
       sSubsunacs = "";
-      sZelkasubs = "";
+      sZamundaSubs = "";
       sSubssab = "";
    
       if(oZamundaNetSettings.sCookieUID == null || 
@@ -183,19 +185,22 @@ public class ZamundaNet extends Plugin
       if(oZamundaNetSettings.bDownloadSubtitles)
       {
          oMatcher = ptnSubsunacs.matcher(sResponse);
-         if(oMatcher.find())
-            sSubsunacs = oMatcher.group(2);
-         
-         oMatcher = ptnZelkasubs.matcher(sResponse);
-         if(oMatcher.find())
-            sZelkasubs = oMatcher.group(2);
-   
-         oMatcher = ptnSubssab.matcher(sResponse);
-         if(oMatcher.find())
+         while(oMatcher.find())
          {
-            sSubssab = oMatcher.group(2);
-            sSubssab = sSubssab.replace("&amp;", "&");
+            sSubsunacs = oMatcher.group(1);
+            alSubsunacs.add(sSubsunacs);
          }
+         
+         oMatcher = ptnSubssab.matcher(sResponse);
+         while(oMatcher.find())
+         {
+            sSubssab = oMatcher.group(1).replace("&amp;", "&");;
+            alSubssab.add(sSubssab);
+         }         
+         
+         oMatcher = ptnZamundaSubs.matcher(sResponse);
+         if(oMatcher.find())
+            sZamundaSubs = oMatcher.group(2);
       }
 
       return sTitle;
@@ -226,23 +231,31 @@ public class ZamundaNet extends Plugin
          vFilesFnd.add(flImage);
       }
       
-      if(sSubsunacs != null && !sSubsunacs.isEmpty())
+      if(alSubsunacs != null && !alSubsunacs.isEmpty())
       {
-         flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
-         vFilesFnd.add(flSubsunacs);
+         for(String sSubsunacs : alSubsunacs)
+         {
+            flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
+            vFilesFnd.add(flSubsunacs);
+         }
+         alSubsunacs.clear();
       }
       
-      if(sSubssab != null && !sSubssab.isEmpty())
+      if(alSubssab != null && !alSubssab.isEmpty())
       {
-         flSubssab= new CFile(sFolderName + File.separator, sSubssab);
-         vFilesFnd.add(flSubssab);
+         for(String sSubssab : alSubssab)
+         {
+            flSubssab= new CFile(sFolderName + File.separator, sSubssab);
+            vFilesFnd.add(flSubssab);
+         }
+         alSubssab.clear();
       }
    
-      if(sZelkasubs != null && !sZelkasubs.isEmpty())
+      if(sZamundaSubs != null && !sZamundaSubs.isEmpty())
       {
-         String sExtension =  sZelkasubs.substring(sZelkasubs.lastIndexOf(".")+1);
-         flZelkasubs = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sZelkasubs);
-         vFilesFnd.add(flZelkasubs);
+         String sExtension =  sZamundaSubs.substring(sZamundaSubs.lastIndexOf(".")+1);
+         flZamundaSubs = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sZamundaSubs);
+         vFilesFnd.add(flZamundaSubs);
       }
    
       return vFilesFnd;
