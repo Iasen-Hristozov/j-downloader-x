@@ -61,7 +61,7 @@ public class Chitanka extends Plugin
    private String sAuthor,
                   sTitle,
                   sVolume,
-                  sUrls[] = new String[URLS.length];;
+                  sUrls[];
    
    
    private ChitankaSettings oChitankaSettings;
@@ -93,6 +93,7 @@ public class Chitanka extends Plugin
    {
       String sAuthorTitle = null;
       ArrayList<String> alAuthors = new ArrayList<>();
+      sUrls = new String[URLS.length];
       
       String sResponse = super.inBackgroundHttpParse(sURL).replace("\n", "");
       
