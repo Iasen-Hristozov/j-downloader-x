@@ -14,6 +14,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.JTable;
@@ -53,6 +54,7 @@ import javax.swing.JLabel;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
 import java.awt.Dimension;
 
 public class JDownloaderX extends JFrame implements ActionListener, IDownloader
@@ -167,7 +169,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                if(oPlugin.isMine(sContent))
                {
                   ArrayList<String> alURLs = oPlugin.parseContent(sContent);
-                  String.join(",", alURLs);
                   txtURL.setText(String.join(",", alURLs));
                   
                   for(String sURL : alURLs)
@@ -230,13 +231,21 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    public void onHttpParseDone(ArrayList<CFile> alFilesFnd)
    {
 //      vFilesFnd.addAll(alFilesFnd);
+      boolean isNew = false;
       for(CFile oFile : alFilesFnd)
          if(!vFilesFnd.contains(oFile))
+         {
             vFilesFnd.add(oFile);
+            isNew = true;
+         }
    
-      updateFilesFndTable();
       
-      tabbedPane.setSelectedIndex(PNL_NDX_FND);
+      if(isNew)
+      {
+         updateFilesFndTable();
+         
+         tabbedPane.setSelectedIndex(PNL_NDX_FND);
+      }
    }
 
    @Override
@@ -369,11 +378,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       JScrollPane spFilesUrl = new JScrollPane(tblFilesUrl);
       spFilesUrl.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
       
-//      JScrollBar sb = spFilesUrl.getVerticalScrollBar();
-//      sb.setPreferredSize(new Dimension(50, 0));
-
-      // Put it to the left.
-//      spFilesUrl.remove(sb);
       panel_2.add(spFilesUrl);
       
       pnlFilesFndStatus = new JPanel();
@@ -381,6 +385,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       FlowLayout flowLayout = (FlowLayout) pnlFilesFndStatus.getLayout();
       flowLayout.setAlignment(FlowLayout.RIGHT);
       pnlFilesFndStatus.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+
       panel_2.add(pnlFilesFndStatus);
       
       lblFilesFndSel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -392,6 +397,31 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       lblFilesFnd.setHorizontalAlignment(SwingConstants.LEFT);
       lblFilesFnd.setFont(new Font("Tahoma", Font.PLAIN, 11));
       pnlFilesFndStatus.add(lblFilesFnd);
+      
+      KeyListener klDelete = new KeyListener()
+      {
+         
+         @Override
+         public void keyTyped(KeyEvent e)
+         {
+         }
+         
+         @Override
+         public void keyReleased(KeyEvent e)
+         {
+            if(e.getKeyCode() == KeyEvent.VK_DELETE)
+               vRemove();            
+         }
+         
+         @Override
+         public void keyPressed(KeyEvent e)
+         {
+            
+         }
+      };
+      
+      tblFilesDwn.addKeyListener(klDelete);
+      tblFilesUrl.addKeyListener(klDelete);
    }
 
    @Override

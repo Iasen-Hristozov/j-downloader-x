@@ -1,12 +1,18 @@
-package com.discworld.jdownloaderx.plugins;
+package com.discworld.jdownloaderx.dto;
 
-import com.discworld.jdownloaderx.dto.CFile;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
+@XmlRootElement(name = "book")
 public class Book extends CFile
 {
-   private  String sAuthor,
-                   sTitle,
-                   sVolume;
+   @XmlElement(name = "author", required = true)
+   private  String sAuthor;
+   @XmlElement(name = "title", required = true)
+   private  String sTitle;
+   @XmlElement(name = "volume", required = true)
+   private  String sVolume;
+   
    public Book()
    {
       super();

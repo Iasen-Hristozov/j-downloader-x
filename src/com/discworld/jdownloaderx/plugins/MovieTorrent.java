@@ -1,7 +1,10 @@
 package com.discworld.jdownloaderx.plugins;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
 import com.discworld.jdownloaderx.dto.CFile;
 
+@XmlRootElement(name = "movie_torrent")
 public class MovieTorrent extends CFile
 {
    private  String sInfo,

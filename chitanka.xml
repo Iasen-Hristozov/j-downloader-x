@@ -6,4 +6,6 @@
     <download_txt>false</download_txt>
     <download_pdf>true</download_pdf>
     <download_djvu>true</download_djvu>
+    <author_folder>true</author_folder>
+    <title_folder>true</title_folder>
 </settings>

@@ -306,87 +306,6 @@ public abstract class Plugin
       new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
-//   protected static String sFindString(String sSource, Pattern oPattern, String sEnd)
-//   {
-//      int iBgn,
-//          iEnd;
-//      
-//      String sResult = null;
-//      
-//      Matcher oMatcher = oPattern.matcher(sSource);
-//      if(oMatcher.find())
-//      {
-//         iBgn = oMatcher.end();
-//         iEnd = sSource.indexOf(sEnd, iBgn);
-//         sResult = sSource.substring(iBgn, iEnd);
-//      }
-//      
-//      return sResult;
-//   }
-//   
-//   protected static ArrayList<String> sFindStrings(String sSource, Pattern oPattern, String sEnd)
-//   {
-//      int iBgn = 0,
-//          iEnd = 0;
-//      
-//      ArrayList<String> alResult = new ArrayList<String>();
-//      
-//      String sResult = null,
-//             sSubSource = sSource;
-//      
-//      while(true)
-//      {
-//         sSubSource = sSubSource.substring(iEnd);
-//         Matcher oMatcher = oPattern.matcher(sSubSource);
-//         if(oMatcher.find())
-//         {
-//            iBgn = oMatcher.end();
-//            iEnd = sSubSource.indexOf(sEnd, iBgn);
-//            sResult = sSubSource.substring(iBgn, iEnd);
-//            alResult.add(sResult);
-//         }
-//         else 
-//            break;
-//      }
-//      
-//      
-//      return alResult;
-//   }
-//
-//   protected static String sFindString(String sSource, String sBegin, String sEnd)
-//   {
-//      int iBgn,
-//          iEnd;
-//      
-//      String sResult = null;
-//      
-//      if((iBgn = sSource.indexOf(sBegin)) > -1)
-//      {
-//         iEnd = sSource.indexOf(sEnd, iBgn);
-//         sResult = sSource.substring(iBgn + sBegin.length(), iEnd);
-//      }      
-//      
-//      return sResult;
-//   }
-//   
-//   protected static String sFindString(String sSource, Pattern oPattern, String sBegin, String sEnd)
-//   {
-//      int iBgn,
-//          iEnd;
-//      
-//      String sResult = null;
-//      
-//      Matcher oMatcher = oPattern.matcher(sSource);
-//      if(oMatcher.find())
-//      {
-//         iBgn = oMatcher.start() + sBegin.length();
-//         iEnd = sSource.indexOf(sEnd, iBgn);
-//         sResult = sSource.substring(iBgn, iEnd);
-//      }      
-//      
-//      return sResult;
-//   }
-//   
    abstract public ArrayList<String> parseContent(String sContent);
    
    public String getDomain()
@@ -402,7 +321,6 @@ public abstract class Plugin
    {
       return getHttpResponse(sURL, null);
    }
-   
    
    protected String getHttpResponse(String sURL, ArrayList<SHttpProperty> alHttpProperties)
    {
@@ -440,6 +358,8 @@ public abstract class Plugin
          if(rc == HttpURLConnection.HTTP_OK)
          {
             List<String> cookies = oHTTPConn.getHeaderFields().get("Content-Type");
+            if(cookies == null)
+               cookies = oHTTPConn.getHeaderFields().get("Content-type");
             Matcher oMatcher =ptnCharset.matcher(cookies.get(0));
             String sCharset = "Cp1251";
             if(oMatcher.find())

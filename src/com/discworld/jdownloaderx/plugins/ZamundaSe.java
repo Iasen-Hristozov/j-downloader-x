@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.CMovie;
 import com.discworld.jdownloaderx.dto.FileUtils;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
@@ -40,17 +41,19 @@ public class ZamundaSe extends Plugin
                                MAGNET_FILE = "magnet.txt",
                                INFO_FILE = "info.txt";
 
-   private final static String[] DOMAINS = {"zelka.org", "zamunda.se"};
+   private final static String[] DOMAINS = {DOMAIN, "zamunda.se"};
 
    private final static Pattern ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
                                 ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
                                 ptnTorrent = Pattern.compile("download.php/\\S+\\.(torrent?)"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("(<div id=description>(<div align=center>)?<img border=\"0\" src=\")(.+?)(\">)"),
-                                ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
+//                                ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
+                                ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(NFO))"),
                                 ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/(((get|info)\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
                                 ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>"),
-                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=[\\d\\w]+&amp;)?act=download&amp;attach_id=.+?)((target=_blank)?>)");
+                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=[\\d\\w]+&amp;)?act=download&amp;attach_id=.+?)((target=_blank)?>)"),
+                                ptnSubtitrite = Pattern.compile("(http://)?subtitrite.net/subs/\\d+/.*?/");
 
    private String              sTitle, 
                                sMagnet,
@@ -60,17 +63,19 @@ public class ZamundaSe extends Plugin
                                sSubsunacs,
                                sZelkasubs,
                                sSubssab,
+                               sSutitrite,
                                sFilesName,
                                sFolderName;
    
-   private MovieTorrent        oMovieTorrent = null;
+   private CMovie        oMovieTorrent = null;
 
    private ZamundaSeSettings   oZamundaSeSettings;
    
    private CFile               flImage = null,
                                flSubsunacs = null,
                                flSubssab = null,
-                               flZelkasubs = null;
+                               flZelkasubs = null,
+                               flSubtitrite = null;
 
 
    public ZamundaSe()
@@ -172,6 +177,10 @@ public class ZamundaSe extends Plugin
             sSubssab = oMatcher.group(2);
             sSubssab = sSubssab.replace("&amp;", "&");
          }
+         
+         oMatcher = ptnSubtitrite.matcher(sResponse);
+         if(oMatcher.find())
+            sSutitrite = oMatcher.group();
       }
 
       return sTitle;
@@ -193,13 +202,13 @@ public class ZamundaSe extends Plugin
       sFolderName = sTitle.trim().replace("/", "").replace(":", " -");
       
       String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/") + 1);
-      oMovieTorrent = new MovieTorrent(sFolderName + File.separator + sTorrentName, "http://" + DOMAIN + "/" + sTorrent, sDescription, sMagnet);
+      oMovieTorrent = new CMovie(sFolderName + File.separator + sTorrentName, "http://" + DOMAIN + "/" + sTorrent, sMagnet, sDescription);
       vFilesFnd.add(oMovieTorrent);
       
       if(sImage != null && !sImage.isEmpty())
       {
          String sExtension =  sImage.substring(sImage.lastIndexOf(".")+1);
-         flImage = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sImage);
+         flImage = new CFile(sFolderName + File.separator + sFolderName + "." + sExtension, sImage);
          vFilesFnd.add(flImage);
       }
       
@@ -221,6 +230,12 @@ public class ZamundaSe extends Plugin
          flZelkasubs = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sZelkasubs);
          vFilesFnd.add(flZelkasubs);
       }
+      
+      if(sSutitrite != null && !sSutitrite.isEmpty())
+      {
+         flSubtitrite = new CFile(sFolderName + File.separator, sSutitrite);
+         vFilesFnd.add(flSubtitrite);
+      }
    
       return vFilesFnd;
    }
@@ -241,23 +256,34 @@ public class ZamundaSe extends Plugin
       super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
       
       FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + oFile.getName());
-      if(oFile instanceof MovieTorrent)
+      if(oFile instanceof CMovie)
       {
          try
          {
-            File f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
-            f.getParentFile().mkdirs();
-            f.createNewFile();
-            FileOutputStream fos = new FileOutputStream(f);
-            fos.write(((MovieTorrent)oFile).getMagnet().getBytes());
-            fos.close();
-            f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
-            f.createNewFile();
-            fos = new FileOutputStream(f);
-            fos.write(((MovieTorrent)oFile).getInfo().getBytes());
-            fos.close();
+            CMovie oMovie = (CMovie) oFile;
+            sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
+            File f;
+            FileOutputStream fos;
             
-         } catch(IOException e)
+            if(oMovie.getMagnet() != null && !oMovie.getMagnet().isEmpty())
+            {
+               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
+               f.createNewFile();
+               fos = new FileOutputStream(f);
+               fos.write(oMovie.getMagnet().getBytes());
+               fos.close();
+            }
+            
+            if(oMovie.getInfo() != null && !oMovie.getInfo().isEmpty())
+            {
+               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
+               f.createNewFile();
+               fos = new FileOutputStream(f);
+               fos.write(oMovie.getInfo().getBytes());
+               fos.close();
+            }
+         } 
+         catch(IOException e)
          {
             // TODO Auto-generated catch block
             e.printStackTrace();

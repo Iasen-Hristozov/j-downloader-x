@@ -2,8 +2,10 @@ package com.discworld.jdownloaderx.dto;
 
 import javax.xml.bind.annotation.*;
 
+
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "", propOrder = {"sName","sURL","sParameter1","sParameter2","sParameter3"})
+//@XmlType(name = "", propOrder = {"sName","sURL","sParameter1","sParameter2","sParameter3"})
+@XmlSeeAlso({CMovie.class, CRPTDump.class, Book.class})
 @XmlRootElement(name = "file")
 
 
@@ -16,17 +18,17 @@ public class CFile
    }
 
    @XmlElement(name = "name", required = true)
-   private String sName;
+   protected String sName;
    @XmlElement(name = "url", required = true)
-   private String sURL;
+   protected String sURL;
    @XmlTransient
-   private int iStatus;
-   @XmlElement(name = "parameter1", required = true)
-   protected String sParameter1 = null;
-   @XmlElement(name = "parameter2", required = true)
-   protected String sParameter2 = null;
-   @XmlElement(name = "parameter3", required = true)
-   protected String sParameter3 = null;
+   protected int iStatus;
+//   @XmlElement(name = "parameter1", required = true)
+//   protected String sParameter1 = null;
+//   @XmlElement(name = "parameter2", required = true)
+//   protected String sParameter2 = null;
+//   @XmlElement(name = "parameter3", required = true)
+//   protected String sParameter3 = null;
    
    
    public CFile()

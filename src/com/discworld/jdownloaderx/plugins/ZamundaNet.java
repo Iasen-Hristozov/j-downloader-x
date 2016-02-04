@@ -28,11 +28,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.CMovie;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public class ZamundaNet extends Plugin
 {
+   
    private final static String DOMAIN = "zamunda.net",
                                COOKIE_UID_NAME = "uid",
                                COOKIE_PASS_NAME = "pass",
@@ -41,6 +43,9 @@ public class ZamundaNet extends Plugin
                                INFO_FILE = "info.txt",
                                HTTP = "http://",
                                WWW = "www.";
+   
+//   private final static String[] DOMAINS = {DOMAIN, "subsland.com"};
+   private final static String[] DOMAINS = {DOMAIN};
 
    private final static Pattern ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
                                 ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
@@ -52,7 +57,8 @@ public class ZamundaNet extends Plugin
                                 ptnSubsunacs = Pattern.compile("<a href=((http://)?(www\\.)?subsunacs.net/((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))( target=_blank)?>"),
                                 ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)( target=_blank)?>"),
                                 ptnZamundaSubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
-                                ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+");   
+                                ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
+                                ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)");   
    
    
    private ZamundaNetSettings oZamundaNetSettings;
@@ -65,17 +71,19 @@ public class ZamundaNet extends Plugin
                                sSubsunacs,
                                sZamundaSubs,
                                sSubssab,
+                               sSubslandFile,
                                sFilesName,
                                sFolderName;
 
 
    
-   private MovieTorrent        oMovieTorrent = null;
+   private CMovie        oMovieTorrent = null;
    
    private CFile               flImage = null,
                                flSubsunacs = null,
                                flSubssab = null,
-                               flZamundaSubs = null;
+                               flZamundaSubs = null,
+                               flSubsland = null;
    
    private ArrayList<String>   alSubsunacs = new ArrayList<String>(),
                                alSubssab = new ArrayList<String>();
@@ -93,7 +101,10 @@ public class ZamundaNet extends Plugin
    @Override
    public boolean isMine(String sURL)
    {
-      return sURL.contains(DOMAIN);
+      for(String sDomain : DOMAINS)
+         if(sURL.contains(sDomain))
+            return true;
+      return false;      
    }
 
    @Override
@@ -201,6 +212,10 @@ public class ZamundaNet extends Plugin
          oMatcher = ptnZamundaSubs.matcher(sResponse);
          if(oMatcher.find())
             sZamundaSubs = oMatcher.group(2);
+         
+         oMatcher = ptnSubslandFile.matcher(sResponse);
+         if(oMatcher.find())
+            sSubslandFile = oMatcher.group();
       }
 
       return sTitle;
@@ -221,7 +236,7 @@ public class ZamundaNet extends Plugin
       
       sFolderName = sTitle.replace("/", "").trim();
       String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
-      oMovieTorrent = new MovieTorrent(sFolderName + File.separator + sTorrentName, sTorrent, sDescription, sMagnet);
+      oMovieTorrent = new CMovie(sFolderName + File.separator + sTorrentName, sTorrent, sMagnet, sDescription);
       vFilesFnd.add(oMovieTorrent);
       
       if(sImage != null && !sImage.isEmpty())
@@ -257,6 +272,12 @@ public class ZamundaNet extends Plugin
          flZamundaSubs = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sZamundaSubs);
          vFilesFnd.add(flZamundaSubs);
       }
+      
+      if(sSubslandFile != null && !sSubslandFile.isEmpty())
+      {
+         flSubsland = new CFile(sFolderName + File.separator, sSubslandFile);
+         vFilesFnd.add(flSubsland);
+      }      
    
       return vFilesFnd;
    }
@@ -282,9 +303,12 @@ public class ZamundaNet extends Plugin
       {
          File f;
 
-         if(oFile instanceof MovieTorrent)
+         if(oFile instanceof CMovie)
          {
-            if(oFile.getName().endsWith(File.separator))
+            CMovie oMovie = (CMovie) oFile;
+            sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
+            
+            if(oMovie.getName().endsWith(File.separator))
                f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
             else
                f = new File(sDownloadFolder + File.separator + oFile.getName());
@@ -292,20 +316,24 @@ public class ZamundaNet extends Plugin
             File source = new File(saveFilePath);
             Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
             FileOutputStream fos; 
-            if(((MovieTorrent) oFile).getMagnet() != null && !((MovieTorrent) oFile).getMagnet().isEmpty())
+            
+            if(oMovie.getMagnet() != null && !oMovie.getMagnet().isEmpty())
             {
                f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
-               f.getParentFile().mkdirs();
                f.createNewFile();
-               fos= new FileOutputStream(f);
-               fos.write(((MovieTorrent) oFile).getMagnet().getBytes());
+               fos = new FileOutputStream(f);
+               fos.write(oMovie.getMagnet().getBytes());
                fos.close();
             }
-            f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
-            f.createNewFile();
-            fos = new FileOutputStream(f);
-            fos.write(((MovieTorrent) oFile).getInfo().getBytes());
-            fos.close();
+
+            if(oMovie.getInfo() != null && !oMovie.getInfo().isEmpty())
+            {
+               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
+               f.createNewFile();
+               fos = new FileOutputStream(f);
+               fos.write(oMovie.getInfo().getBytes());
+               fos.close();
+            }
 
          } 
          else

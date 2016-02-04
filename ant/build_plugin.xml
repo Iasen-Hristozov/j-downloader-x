@@ -32,18 +32,20 @@
 	<target name="compile-dto" depends="prepare">
 		<javac destdir="${build}" srcdir="${src_dto}" includeantruntime="true">
 			<include name="CFile.java" />
+			<include name="CMovie.java" />
+			<include name="CRPTDump.java" />
 			<include name="IDownloader.java" />
 			<include name="FileUtils.java" />
 			<include name="ExtractFile.java" />
 			<include name="UnzipUtility.java" />
 			<include name="SHttpProperty.java" />
+			<include name="Book.java" />
 		</javac>
 	</target>
 
    <target name="compile-base-class" depends="compile-dto">
       <javac destdir="${build}" srcdir="${src_ext}" includeantruntime="true">
          <include name="Plugin.java" />
-      	<include name="MovieTorrent.java" />
       </javac>
    </target>
 	

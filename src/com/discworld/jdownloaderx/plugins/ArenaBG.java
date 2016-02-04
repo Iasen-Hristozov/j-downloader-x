@@ -20,6 +20,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.CMovie;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
@@ -57,7 +58,7 @@ public class ArenaBG extends Plugin
                      alSubsunacs = new ArrayList<String>(),
                      alSubssab = new ArrayList<String>();
    
-   private MovieTorrent        oMovieTorrent = null;
+   private CMovie        oMovieTorrent = null;
    
    private CFile               flImage = null,
                                flSubsunacs = null,
@@ -185,7 +186,7 @@ public class ArenaBG extends Plugin
       
       sFolderName = sTitle.replace("/", "").trim();
       String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
-      oMovieTorrent = new MovieTorrent(sFolderName + File.separator + sTorrentName, sTorrent, sDescription, null);
+      oMovieTorrent = new CMovie(sFolderName + File.separator + sTorrentName, sTorrent, null, sDescription);
       vFilesFnd.add(oMovieTorrent);
       
       if(sImage != null && !sImage.isEmpty())
@@ -249,29 +250,34 @@ public class ArenaBG extends Plugin
       {
          File f;
 
-         if(oFile instanceof MovieTorrent)
+         if(oFile instanceof CMovie)
          {
-            if(oFile.getName().endsWith(File.separator))
-               f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
+            CMovie oMovie = (CMovie) oFile;
+
+            sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
+            
+            if(oMovie.getName().endsWith(File.separator))
+               f = new File(sDownloadFolder + File.separator + oMovie.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
             else
-               f = new File(sDownloadFolder + File.separator + oFile.getName());
+               f = new File(sDownloadFolder + File.separator + oMovie.getName());
+
             f.getParentFile().mkdirs();
             File source = new File(saveFilePath);
             Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
             FileOutputStream fos; 
-            if(((MovieTorrent) oFile).getMagnet() != null && !((MovieTorrent) oFile).getMagnet().isEmpty())
+            if(oMovie.getMagnet() != null && !oMovie.getMagnet().isEmpty())
             {
                f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
                f.getParentFile().mkdirs();
                f.createNewFile();
                fos= new FileOutputStream(f);
-               fos.write(((MovieTorrent) oFile).getMagnet().getBytes());
+               fos.write(oMovie.getMagnet().getBytes());
                fos.close();
             }
             f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
             f.createNewFile();
             fos = new FileOutputStream(f);
-            fos.write(((MovieTorrent) oFile).getInfo().getBytes());
+            fos.write(oMovie.getInfo().getBytes());
             fos.close();
          } 
          else

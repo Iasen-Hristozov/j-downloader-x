@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -14,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.CRPTDump;
 import com.discworld.jdownloaderx.dto.IDownloader;
 
 public class SlaviShow extends Plugin
@@ -26,7 +26,8 @@ public class SlaviShow extends Plugin
 
 
    private final static Pattern ptnName = Pattern.compile("www\\.slavishow\\.com/(.+?)/"),
-                                ptnMp4 = Pattern.compile("\"url\":\"slavishow/(.+?)\","),
+//                                ptnMp4 = Pattern.compile("\"url\":\"slavishow/(.+?)\","),
+                                ptnMp4 = Pattern.compile("slavishow/(.+?\\.mp4)\""),
                                 ptnPrg = Pattern.compile("\\d{1,6}\\.\\d{3} kB / \\d{1,5}\\.\\d{2} sec \\((\\d{1,3})\\.\\d{1}%\\)");   
    
    
@@ -104,9 +105,9 @@ public class SlaviShow extends Plugin
 
          sNameLat = cyr2lat(sName);
          
-      } catch(UnsupportedEncodingException e)
+      } 
+      catch(UnsupportedEncodingException e)
       {
-         // TODO Auto-generated catch block
          e.printStackTrace();
       }
 
@@ -118,7 +119,7 @@ public class SlaviShow extends Plugin
    {
       ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
 
-      CFile oMovie = new Movie(sNameLat+".flv", sURL, sMP4, sURLEnc); 
+      CFile oMovie = new CRPTDump(sNameLat+".flv", sURL, sMP4, sURLEnc); 
       vFilesFnd.add(oMovie);
       
       return vFilesFnd;
@@ -127,23 +128,13 @@ public class SlaviShow extends Plugin
    @Override
    public void downloadFile(CFile oFile, String sDownloadFolder)
    {
-
-//      sNameLat = cyr2lat(((Movie)oFile).getName());
-      
-//      try
-//      {
-//         String sNameEnc = URLEncoder.encode(((Movie)oFile).getName(), "UTF-8");
-         
-//         String sURLEnc = HTTP + WWW + DOMAIN + "/" + sNameEnc + "/";
-//         String sURLEnc = URLEncoder.encode(sName, "UTF-8");
-         
-      if (oFile instanceof Movie) 
+      if (oFile instanceof CRPTDump) 
       {
          
          File flDownload = new File(sDownloadFolder);
          flDownload.mkdirs();
          
-         final String sRTMPDumpCmd = String.format(RTMP_DUMP_CMD, ((Movie)oFile).getURLEnc(), ((Movie)oFile).getMp4(), flDownload.getAbsolutePath() + File.separator, oFile.getName());
+         final String sRTMPDumpCmd = String.format(RTMP_DUMP_CMD, ((CRPTDump)oFile).getURLEnc(), ((CRPTDump)oFile).getMp4(), flDownload.getAbsolutePath() + File.separator, oFile.getName());
          System.out.print(sRTMPDumpCmd);
          
          String sRTMPDump = RTMP_DUMP_PATH + sRTMPDumpCmd;
@@ -161,73 +152,12 @@ public class SlaviShow extends Plugin
          
 
       }
-         
-//      } catch(UnsupportedEncodingException e)
-//      {
-//         // TODO Auto-generated catch block
-//         e.printStackTrace();
-//      }
-      
-//      
-//      ArrayList<SHttpProperty> alHttpProperties = null;
-//      
-//      alHttpProperties = new ArrayList<SHttpProperty>();
-//      alHttpProperties.add(new SHttpProperty("Referer", DOMAIN));
-//
-//      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
    @Override
    protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
-      
-//      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
-//      
-//      try
-//      {
-//         File f;
-//
-//         if(oFile instanceof MovieTorrent)
-//         {
-//            if(oFile.getName().endsWith(File.separator))
-//               f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
-//            else
-//               f = new File(sDownloadFolder + File.separator + oFile.getName());
-//            f.getParentFile().mkdirs();
-//            File source = new File(saveFilePath);
-//            Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-//            FileOutputStream fos; 
-//            if(((MovieTorrent) oFile).getMagnet() != null && !((MovieTorrent) oFile).getMagnet().isEmpty())
-//            {
-//               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
-//               f.getParentFile().mkdirs();
-//               f.createNewFile();
-//               fos= new FileOutputStream(f);
-//               fos.write(((MovieTorrent) oFile).getMagnet().getBytes());
-//               fos.close();
-//            }
-//            f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
-//            f.createNewFile();
-//            fos = new FileOutputStream(f);
-//            fos.write(((MovieTorrent) oFile).getInfo().getBytes());
-//            fos.close();
-//         } 
-//         else
-//         {
-//            if(oFile.getName().endsWith(File.separator))
-//               f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
-//            else
-//               f = new File(sDownloadFolder + File.separator + oFile.getName());
-//            f.getParentFile().mkdirs();
-//            File source = new File(saveFilePath);
-//            Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-//         }
-//      } 
-//      catch(IOException e)
-//      {
-//         e.printStackTrace();
-//      }
-
+      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
    }
 
    @Override
@@ -247,53 +177,6 @@ public class SlaviShow extends Plugin
       }
 
       return sLat;
-   }
-   
-   private class Movie extends CFile
-   {
-      public Movie()
-      {
-         super();
-      }
-
-      public Movie(String sName, String sURL)
-      {
-         super(sName, sURL);
-      }   
-
-      public Movie(String sName, String sURL, String sURLEnc)
-      {
-         super(sName, sURL);
-         this.sParameter2 = sURLEnc;
-      }   
-
-      public Movie(String sName, String sURL, String sMp4, String sURLEnc)
-      {
-         super(sName, sURL);
-         this.sParameter1 = sMp4;
-         this.sParameter2 = sURLEnc;
-      }   
-      
-      
-      public String getMp4()
-      {
-         return sParameter1;
-      }
-
-      public void setMp4(String sMp4)
-      {
-         this.sParameter1 = sMp4;
-      }
-
-      public String getURLEnc()
-      {
-         return sParameter2;
-      }
-
-      public void setURLEnc(String sURLEnc)
-      {
-         this.sParameter2 = sURLEnc;
-      }
    }
    
    class RTMPDumpThread extends Thread
@@ -350,8 +233,8 @@ public class SlaviShow extends Plugin
          }
          finally
          {
-//            vToggleButton();
             oDownloader.deleteFile(oFile);
+            oDownloader.saveFiles();
          }
       }
    }

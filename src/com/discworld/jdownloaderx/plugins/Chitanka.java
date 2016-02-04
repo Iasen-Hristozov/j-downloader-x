@@ -21,6 +21,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
+import com.discworld.jdownloaderx.dto.Book;
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.ExtractFile;
 import com.discworld.jdownloaderx.dto.FileUtils;
@@ -150,13 +151,14 @@ public class Chitanka extends Plugin
    @Override
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
-      CFile oBook = null;
+//      CFile oBook = null;
+      Book oBook = null;
       ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
       for(int i = 0; i < URLS.length; i++)
       {
          if(oChitankaSettings.bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
          {
-            oBook = new CFile(sResult + EXTS[i], URL_DWN_BGN + sUrls[i]);
+            oBook = new Book(sResult + EXTS[i], URL_DWN_BGN + sUrls[i], sAuthor, sTitle, sVolume);
             vFilesFnd.add(oBook);
          }
       }
@@ -170,7 +172,22 @@ public class Chitanka extends Plugin
                                    String saveFilePath)
    {
       super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
-      
+      String sSavePath;
+      if(oFile instanceof Book)
+      {
+         Book oBook = (Book) oFile;
+         sSavePath = sDownloadFolder 
+                   + (oChitankaSettings.bAuthorFolder ? File.separator + oBook.getAuthor() : "")
+                   + (oChitankaSettings.bTitleFolder ? File.separator + oBook.getTitle() : "")                                  
+                   + File.separator 
+                   + oBook.getName();
+      }
+      else
+         sSavePath = sDownloadFolder 
+                   + File.separator 
+                   + oFile.getName();
+         
+         
       if(oFile.getURL().endsWith(".zip"))
       {
          File oFolder = new File(saveFilePath.substring(0, saveFilePath.lastIndexOf(".zip")));
@@ -184,7 +201,8 @@ public class Chitanka extends Plugin
             {
                File file = oFolder.listFiles()[0];
             
-               Files.move(file.toPath(), new File(sDownloadFolder + File.separator + oFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+//               Files.move(file.toPath(), new File(sSavePath).toPath(), StandardCopyOption.REPLACE_EXISTING);
+               FileUtils.renameFile(file.getPath(), sSavePath);
                FileUtils.deleteFile(oFolder);
             }
             else
@@ -200,10 +218,10 @@ public class Chitanka extends Plugin
                for(int i = 0; i < oFolder.listFiles(filter).length; i++)
                {
                   File file = oFolder.listFiles(filter)[i];
-                  FileUtils.renameFile(file.getPath(), oFolder.getPath() + File.separator + oFile.getName());
+                  FileUtils.renameFile(file.getPath(), sSavePath);
                }
             
-               FileUtils.renameFile(oFolder.getPath(), sDownloadFolder + File.separator + oFile.getName());
+               FileUtils.renameFile(oFolder.getPath(), sSavePath);
             }         
          } 
          catch(InterruptedException e)
@@ -216,15 +234,15 @@ public class Chitanka extends Plugin
             // TODO Auto-generated catch block
             e.printStackTrace();
          } 
-         catch(IOException e)
-         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         }
+//         catch(IOException e)
+//         {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//         }
       }
       else
       {
-         FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + oFile.getName());
+         FileUtils.renameFile(saveFilePath, sSavePath);
       }                     
    }
    
@@ -257,8 +275,8 @@ public class Chitanka extends Plugin
       }         
    }
 
-   @XmlAccessorType(XmlAccessType.FIELD)
-   @XmlType(name = "", propOrder = {"bDownloadFB2","bDownloadEPUB","bDownloadSFB","bDownloadTXT","bDownloadPDF","bDownloadDJVU"})
+//   @XmlAccessorType(XmlAccessType.FIELD)
+//   @XmlType(name = "", propOrder = {"bDownloadFB2","bDownloadEPUB","bDownloadSFB","bDownloadTXT","bDownloadPDF","bDownloadDJVU"})
    @XmlRootElement(name = "settings")
    static private class ChitankaSettings
    {
@@ -274,6 +292,10 @@ public class Chitanka extends Plugin
       public boolean bDownloadPDF = true;
       @XmlElement(name = "download_djvu", required = true)
       public boolean bDownloadDJVU = true;
+      @XmlElement(name = "author_folder", required = true)
+      public boolean bAuthorFolder = false;
+      @XmlElement(name = "title_folder", required = true)
+      public boolean bTitleFolder = false;
       @XmlTransient
       public boolean bDownloads[] = {bDownloadFB2, bDownloadEPUB, bDownloadTXT, bDownloadSFB, bDownloadPDF, bDownloadDJVU};
       
