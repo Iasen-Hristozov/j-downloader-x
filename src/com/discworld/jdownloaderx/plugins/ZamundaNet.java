@@ -54,7 +54,7 @@ public class ZamundaNet extends Plugin
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("img border=\"0\" src=\"((http://)?img.zamunda.net/bitbucket/(.+?))\""),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
-                                ptnSubsunacs = Pattern.compile("<a href=((http://)?(www\\.)?subsunacs.net/((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))( target=_blank)?>"),
+                                ptnSubsunacs = Pattern.compile("<a href=((http://)?(www\\.)?subsunacs.net(/){1,2}((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))( target=_blank)?>"),
                                 ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)( target=_blank)?>"),
                                 ptnZamundaSubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
@@ -148,7 +148,7 @@ public class ZamundaNet extends Plugin
       if(oMatcher.find())
       {
          sTitle = oMatcher.group(2);
-         sTitle = sTitle.replace(":", " -");
+         sTitle = sTitle.replace(":", " -").replace("*", "-");
       }
 
       if(oZamundaNetSettings.bDownloadTorrent)

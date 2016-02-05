@@ -19,7 +19,7 @@ public class SubsUnacs extends Plugin
                                
    private final static Pattern ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnURL = Pattern.compile("<div id=\"buttonBox\"><a href=\"(.+?)\""),
-                                ptnID = Pattern.compile("http://(www\\.)?subsunacs\\.net/((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?");
+                                ptnID = Pattern.compile("http://(www\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?");
    
    private String              sTitle,
                                sUrl;
@@ -107,7 +107,7 @@ public class SubsUnacs extends Plugin
       
       Matcher oMatcher = ptnID.matcher(oFile.getURL());
       if(oMatcher.find())
-         oFile.setURL(DWN + oMatcher.group(5));
+         oFile.setURL(DWN + oMatcher.group(6));
       
       new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
    }
