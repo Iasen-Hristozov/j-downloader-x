@@ -47,7 +47,7 @@ public class ZamundaSe extends Plugin
                                 ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
                                 ptnTorrent = Pattern.compile("download.php/\\S+\\.(torrent?)"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
-                                ptnImage = Pattern.compile("(<div id=description>(<div align=center>)?<img border=\"0\" src=\")(.+?)(\">)"),
+                                ptnImage = Pattern.compile("<img border=\"0\" src=\"(.+?)\">"),
 //                                ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(NFO))"),
                                 ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/(((get|info)\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
@@ -148,7 +148,7 @@ public class ZamundaSe extends Plugin
       {
          oMatcher = ptnImage.matcher(sResponse);
          if(oMatcher.find())
-            sImage = oMatcher.group(3);
+            sImage = oMatcher.group(1);
       }
 
       if(oZamundaSeSettings.bDownloadDescription)
