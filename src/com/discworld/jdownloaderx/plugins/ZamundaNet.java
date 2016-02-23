@@ -58,7 +58,9 @@ public class ZamundaNet extends Plugin
                                 ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)( target=_blank)?>"),
                                 ptnZamundaSubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
-                                ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)");   
+                                ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)"),
+                                ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/\\d+/\\w+/[\\d\\-]+"),
+                                ptnBukviFile = Pattern.compile("<a href=\"((http://)?bukvi.bg/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\"");
    
    
    private ZamundaNetSettings oZamundaNetSettings;
@@ -72,6 +74,9 @@ public class ZamundaNet extends Plugin
                                sZamundaSubs,
                                sSubssab,
                                sSubslandFile,
+                               sBukvi,
+                               sBukviResponse,
+                               sBukviFile,
                                sFilesName,
                                sFolderName;
 
@@ -83,7 +88,8 @@ public class ZamundaNet extends Plugin
                                flSubsunacs = null,
                                flSubssab = null,
                                flZamundaSubs = null,
-                               flSubsland = null;
+                               flSubsland = null,
+                               flBukvi = null;
    
    private ArrayList<String>   alSubsunacs = new ArrayList<String>(),
                                alSubssab = new ArrayList<String>();
@@ -132,6 +138,8 @@ public class ZamundaNet extends Plugin
       sSubsunacs = "";
       sZamundaSubs = "";
       sSubssab = "";
+      sSubslandFile = "";
+      sBukvi = "";
    
       if(oZamundaNetSettings.sCookieUID == null || 
          oZamundaNetSettings.sCookieUID.isEmpty() || 
@@ -216,6 +224,22 @@ public class ZamundaNet extends Plugin
          oMatcher = ptnSubslandFile.matcher(sResponse);
          if(oMatcher.find())
             sSubslandFile = oMatcher.group();
+
+//         oMatcher = ptnBukvi.matcher(sResponse);
+         oMatcher = ptnBukvi.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sBukvi = oMatcher.group();
+            
+            String sBukviResponse = getHttpResponse(sBukvi);
+
+            if(sBukviResponse != null)
+            {
+               oMatcher = ptnBukviFile.matcher(sBukviResponse);
+               while(oMatcher.find())
+                  sBukviFile = oMatcher.group(1);
+            }
+         }
       }
 
       return sTitle;
@@ -278,7 +302,13 @@ public class ZamundaNet extends Plugin
          flSubsland = new CFile(sFolderName + File.separator, sSubslandFile);
          vFilesFnd.add(flSubsland);
       }      
-   
+
+      if(sBukviFile != null && !sBukviFile.isEmpty())
+      {
+         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
+         vFilesFnd.add(flBukvi);
+      }      
+      
       return vFilesFnd;
    }
 
