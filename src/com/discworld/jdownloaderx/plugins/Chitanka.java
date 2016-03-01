@@ -92,6 +92,9 @@ public class Chitanka extends Plugin
    @Override
    protected String inBackgroundHttpParse(String sURL)
    {
+      sAuthor = null;
+      sTitle = null;
+      sVolume = null;
       String sAuthorTitle = null;
       ArrayList<String> alAuthors = new ArrayList<>();
       sUrls = new String[URLS.length];
@@ -142,8 +145,8 @@ public class Chitanka extends Plugin
       
       if(sFileName.endsWith("."))
          sFileName = sFileName.substring(0, sFileName.length()-1);
-      if(sFileName.length() > 250)
-         sFileName = sFileName.substring(0, 247) + "...";
+      if(sFileName.length() > 90)
+         sFileName = sFileName.substring(0, 90) + "...";
       
       return sFileName;   
    }
