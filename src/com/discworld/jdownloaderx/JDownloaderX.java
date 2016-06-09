@@ -66,14 +66,11 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
 
    public final static int     PNL_NDX_DWN = 0,
                                PNL_NDX_FND = 1;
-//                               MAX_DWN = 2;
    
    private final static String FILE_LIST = "files.xml",
                                SETTINGS = "settings.xml",
                                PLUGIN_FOLDER = "plugins",
                                PLUGIN_SUFFIX = ".jar";
-   
-//   DOWNLOAD_FLD = "Download",
    
    private static String sVersion;
    

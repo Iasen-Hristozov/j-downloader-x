@@ -42,7 +42,8 @@ public class ZamundaNet extends Plugin
                                MAGNET_FILE = "magnet.txt",
                                INFO_FILE = "info.txt",
                                HTTP = "http://",
-                               WWW = "www.";
+                               WWW = "www.",
+                               BUKVI_URL = "http://bukvi.bg";
    
 //   private final static String[] DOMAINS = {DOMAIN, "subsland.com"};
    private final static String[] DOMAINS = {DOMAIN};
@@ -56,12 +57,12 @@ public class ZamundaNet extends Plugin
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
                                 ptnSubsunacs = Pattern.compile("<a href=((http://)?(www\\.)?subsunacs.net(/){1,2}((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))( target=_blank)?>"),
 //                                ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)( target=_blank)?>"),
-                                ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(&amp;)?act=download(&amp;sid=.+?)?&amp;attach_id=.+?)( target=_blank)?>"),
+                                ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&amp;attach_id=.+?)( target=_blank)?>"),
                                 ptnZamundaSubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
                                 ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)"),
-                                ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/\\d+/\\w+/[\\d\\-]+"),
-                                ptnBukviFile = Pattern.compile("<a href=\"((http://)?bukvi.bg/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\"");
+                                ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/(\\d+/\\w+/)?[\\d\\-]+"),
+                                ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\"");
    
    
    private ZamundaNetSettings oZamundaNetSettings;
@@ -76,7 +77,6 @@ public class ZamundaNet extends Plugin
                                sSubssab,
                                sSubslandFile,
                                sBukvi,
-                               sBukviResponse,
                                sBukviFile,
                                sFilesName,
                                sFolderName;
@@ -226,7 +226,6 @@ public class ZamundaNet extends Plugin
          if(oMatcher.find())
             sSubslandFile = oMatcher.group();
 
-//         oMatcher = ptnBukvi.matcher(sResponse);
          oMatcher = ptnBukvi.matcher(sResponse);
          if(oMatcher.find())
          {
@@ -238,7 +237,11 @@ public class ZamundaNet extends Plugin
             {
                oMatcher = ptnBukviFile.matcher(sBukviResponse);
                while(oMatcher.find())
+               {
                   sBukviFile = oMatcher.group(1);
+                  if(!sBukviFile.contains(BUKVI_URL))
+                     sBukviFile = BUKVI_URL + sBukviFile;
+               }
             }
          }
       }
