@@ -29,7 +29,8 @@ public class ArenaBG extends Plugin
    private final static String DOMAIN = "arenabg.com",
                                SETTINGS_FILE = "arena_bg.xml",
                                MAGNET_FILE = "magnet.txt",
-                               INFO_FILE = "info.txt";
+                               INFO_FILE = "info.txt",
+                               BUKVI_URL = "http://bukvi.bg";
 
    private final static Pattern ptnTitle = Pattern.compile("<title>(.+?) (\\.\\.\\. )?\u0441\u0432\u0430\u043b\u044f\u043d\u0435</title>"),
                                 ptnTorrent = Pattern.compile("/download/key:.+?/"),
@@ -39,7 +40,9 @@ public class ArenaBG extends Plugin
                                 ptnAddic7ed = Pattern.compile("href=\"((http://)?(www.)?addic7ed.com/.+?)\""),
                                 ptnSubssab = Pattern.compile("<a href=\"((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download\\&amp;attach_id=\\d+)\"( target=\"_blank\")?>"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www\\.)?arenabg.com/[\\w\\d\\-]+?/"),
-                                ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\"");   
+                                ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\""),
+                                ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/(\\d+/\\w+/)?[\\d\\-]+"),
+                                ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\"");
    
    
    private ArenaBGSettings oArenaBGSettings;
@@ -51,6 +54,8 @@ public class ArenaBG extends Plugin
                                sSubsunacs,
                                sSubssab,
                                sAddic7ed,
+                               sBukvi,
+                               sBukviFile,
                                sFilesName,
                                sFolderName;
 
@@ -63,7 +68,8 @@ public class ArenaBG extends Plugin
    private CFile               flImage = null,
                                flSubsunacs = null,
                                flSubssab = null,
-                               flAddic7ed = null;
+                               flAddic7ed = null,
+                               flBukvi = null;
 
 
    public ArenaBG()
@@ -106,6 +112,8 @@ public class ArenaBG extends Plugin
       sSubsunacs = "";
       sSubssab = "";
       sAddic7ed = "";
+      sBukvi = "";
+      sBukviFile = "";
    
       String sResponse = getHttpResponse(sURL).replace("\n", "");
 
@@ -170,6 +178,25 @@ public class ArenaBG extends Plugin
                   alAddic7ed.add(HTTP + "addic7ed.com" + oMatcher.group(1));
             }
          }
+         
+         oMatcher = ptnBukvi.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sBukvi = oMatcher.group();
+            
+            String sBukviResponse = getHttpResponse(sBukvi);
+
+            if(sBukviResponse != null)
+            {
+               oMatcher = ptnBukviFile.matcher(sBukviResponse);
+               while(oMatcher.find())
+               {
+                  sBukviFile = oMatcher.group(1);
+                  if(!sBukviFile.contains(BUKVI_URL))
+                     sBukviFile = BUKVI_URL + sBukviFile;
+               }
+            }
+         }         
       }
 
       return sTitle;
@@ -225,6 +252,13 @@ public class ArenaBG extends Plugin
          }
          alAddic7ed.clear();
       }
+      
+      if(sBukviFile != null && !sBukviFile.isEmpty())
+      {
+         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
+         vFilesFnd.add(flBukvi);
+      }      
+      
    
       return vFilesFnd;
    }
