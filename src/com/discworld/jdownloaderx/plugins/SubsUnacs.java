@@ -19,7 +19,8 @@ public class SubsUnacs extends Plugin
                                
    private final static Pattern ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnURL = Pattern.compile("<div id=\"buttonBox\"><a href=\"(.+?)\""),
-                                ptnID = Pattern.compile("http://(www\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?");
+                                ptnID = Pattern.compile("http://(www\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?"),
+                                ptnURLs = Pattern.compile("<a href=\"(\\/subtitles\\/[\\w\\d_\\-]+\\/)?\"");
    
    private String              sTitle,
                                sUrl;
@@ -83,7 +84,7 @@ public class SubsUnacs extends Plugin
    public ArrayList<String> parseContent(String sContent)
    {
       ArrayList<String> alUrlMovies = new ArrayList<String>();
-
+      
       Matcher m = ptnURL.matcher(sContent);
       while(m.find())
       {
@@ -93,7 +94,7 @@ public class SubsUnacs extends Plugin
 
       return alUrlMovies;
    }
-
+   
    @Override
    protected void loadSettings()
    {

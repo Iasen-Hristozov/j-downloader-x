@@ -36,6 +36,7 @@ public class ZamundaNet extends Plugin
 {
    
    private final static String DOMAIN = "zamunda.net",
+                               SUBSUNACS_DOMAIN = "subsunacs.net",
                                COOKIE_UID_NAME = "uid",
                                COOKIE_PASS_NAME = "pass",
                                SETTINGS_FILE = "zamunda_net.xml",
@@ -48,15 +49,20 @@ public class ZamundaNet extends Plugin
 //   private final static String[] DOMAINS = {DOMAIN, "subsland.com"};
    private final static String[] DOMAINS = {DOMAIN};
 
-   private final static Pattern ptnTitle = Pattern.compile("<h1>(.*?)<.*?>"),
+   private final static Pattern 
+//                                ptnTitle = Pattern.compile("<h1>(.+?</h1>)"),
+                                ptnTitle = Pattern.compile("<h1>(.*?)<.*?>"),
 //                                ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
-                                ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
+//                                ptnTitleParts = Pattern.compile("(.+?)( / .+?)* (\\(\\d+(\\-\\d+)?\\))?"),
+                                ptnTitleParts = Pattern.compile("^(.+?)(\\/.+?)*(\\(\\d+(\\-\\d+)?\\))?([ ]?\\[.+?\\])?$"),
                                 ptnTorrent = Pattern.compile("/download_go\\.php\\?id=(\\d+)\"[\\s]*>(.+?)</a>"),
                                 ptnMagnetLink = Pattern.compile("/magnetlink/download_go\\.php\\?id=\\d+&m=x"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("img border=(\")?0(\")? src=\"((http://)?img.zamunda.net/bitbucket/(.+?))\""),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
                                 ptnSubsunacs = Pattern.compile("<a href=((http://)?(www\\.)?subsunacs.net(/){1,2}((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))( target=_blank)?>"),
+                                ptnSubsunacsURL = Pattern.compile("<a href=((http:\\/\\/)?(www\\.)?subsunacs\\.net\\/search\\.php.+?)( target=_blank)?>"),
+                                ptnSubsunacsURLs = Pattern.compile("<a href=\"(\\/subtitles\\/[\\w\\d_\\-]+\\/)?\""),
 //                                ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)( target=_blank)?>"),
                                 ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&amp;attach_id=.+?)( target=_blank)?>"),
                                 ptnZamundaSubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
@@ -158,7 +164,7 @@ public class ZamundaNet extends Plugin
       if(oMatcher.find())
       {
          sTitle = oMatcher.group(1);
-         sTitle = sTitle.replace(":", " -").replace("*", "-").replace("?", "");
+         sTitle = sTitle.replace(":", " -").replace("*", "-").replace("?", "").trim();
       }
 
       if(oZamundaNetSettings.bDownloadTorrent)
@@ -218,6 +224,22 @@ public class ZamundaNet extends Plugin
             sSubssab = oMatcher.group(1).replace("&amp;", "&");;
             alSubssab.add(sSubssab);
          }         
+
+         oMatcher = ptnSubsunacsURL.matcher(sResponse);
+         while(oMatcher.find())
+         {
+
+            String sSubsunacsURL = oMatcher.group(1).replace("&amp;", "&");
+            
+            String sSubsunacsRespone = getHttpResponse(sSubsunacsURL);
+            
+            Matcher m = ptnSubsunacsURLs.matcher(sSubsunacsRespone);
+            while(m.find())
+            {
+               String s = m.group(1);
+               alSubsunacs.add("http://" + SUBSUNACS_DOMAIN + s);
+            }
+         }
          
          oMatcher = ptnZamundaSubs.matcher(sResponse);
          if(oMatcher.find())
@@ -257,7 +279,9 @@ public class ZamundaNet extends Plugin
       Matcher oMatcher = ptnTitleParts.matcher(sTitle);
       if(oMatcher.find())
       {
-         sFilesName = oMatcher.group(1) + " " + oMatcher.group(3);   
+         sFilesName = oMatcher.group(1);
+         if(oMatcher.group(3) != null)
+            sFilesName += " " + oMatcher.group(3); 
          sFilesName = sFilesName.trim();
       }
       else
@@ -284,6 +308,8 @@ public class ZamundaNet extends Plugin
          }
          alSubsunacs.clear();
       }
+      
+
       
       if(alSubssab != null && !alSubssab.isEmpty())
       {
