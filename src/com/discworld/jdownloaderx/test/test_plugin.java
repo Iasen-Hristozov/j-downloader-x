@@ -51,6 +51,13 @@ public class test_plugin
             // TODO Auto-generated method stub
             
          }
+
+         @Override
+         public void deleteFileFromQueue(CFile oFile)
+         {
+            // TODO Auto-generated method stub
+            
+         }
       };
       
       

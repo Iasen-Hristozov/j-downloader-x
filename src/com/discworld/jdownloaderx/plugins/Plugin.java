@@ -122,6 +122,7 @@ public abstract class Plugin
             }
             
             int responseCode = httpConn.getResponseCode();
+            
 
             // always check HTTP response code first
             if (responseCode == HttpURLConnection.HTTP_OK) 
@@ -130,7 +131,9 @@ public abstract class Plugin
                String disposition = httpConn.getHeaderField("Content-Disposition");
 //               String contentType = httpConn.getContentType();
                int contentLength = httpConn.getContentLength();
-
+               String contentType = httpConn.getContentType();
+               if(contentType.equalsIgnoreCase("text/html"))
+                  throw new IOException();
                if (disposition != null) 
                {
                   // extracts file name from header field
@@ -216,14 +219,20 @@ public abstract class Plugin
          {
             e.printStackTrace();
             bResult = false;
+            return false;
          } 
          catch(IOException e)
          {
             e.printStackTrace();
             bResult = false;
-         } 
+            return false;
+         }
+//         finally
+//         {
+            return bResult;   
+//         }
          
-         return bResult;
+         
       }
       
       @Override
@@ -253,13 +262,15 @@ public abstract class Plugin
             {
 //               iDwns = MAX_DWN;
                oDownloader.setFileProgress(oFile, 0);
+               oDownloader.deleteFileFromQueue(oFile);
             }
          } 
          catch(InterruptedException e)
          {
             // TODO Auto-generated catch block
             e.printStackTrace();
-         } catch(ExecutionException e)
+         } 
+         catch(ExecutionException e)
          {
             // TODO Auto-generated catch block
             e.printStackTrace();

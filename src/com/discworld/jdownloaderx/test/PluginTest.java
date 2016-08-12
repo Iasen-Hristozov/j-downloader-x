@@ -147,6 +147,13 @@ public class PluginTest extends JFrame implements ActionListener, IDownloader
    {
       // TODO Auto-generated method stub
       
+   }
+
+   @Override
+   public void deleteFileFromQueue(CFile oFile)
+   {
+      // TODO Auto-generated method stub
+      
    }   
 
 }

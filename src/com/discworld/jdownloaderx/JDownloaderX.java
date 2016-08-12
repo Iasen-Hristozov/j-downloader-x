@@ -64,6 +64,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
     */
    private static final long serialVersionUID = -8419017423255693399L;
 
+//   Logger logger;
+
    public final static int     PNL_NDX_DWN = 0,
                                PNL_NDX_FND = 1;
    
@@ -147,6 +149,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    public JDownloaderX()
    {
       super("JDownloaderX " + (sVersion != null ? sVersion : "" ));
+      
+//      logger = Logger.getLogger(JDownloaderX.class);
       
       initialize();
       
@@ -602,9 +606,18 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
 
    private synchronized void _deleteFile(CFile oFile)
    {
+//      logger.info("Remove " + oFile.getURL());
       vFilesDwn.remove(oFile);
       updateFilesDwnTable();
       lblFilesDwn.setText(String.valueOf(vFilesDwn.size()));
+      _deleteFileFromQueue(oFile);
+      
+//      vFilesCur.remove(oFile);
+   }
+   
+   private synchronized void _deleteFileFromQueue(CFile oFile)
+   {
+//      logger.info("Remove from queue " + oFile.getURL());
       vFilesCur.remove(oFile);
    }
 
@@ -639,7 +652,18 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    {
       vFilesCur.add(oFile);
    }
-
+   
+//   private synchronized int getQueueSize()
+//   {
+//      return vFilesCur.size();
+//   }
+//
+//   private synchronized int getListSize()
+//   {
+//      return vFilesDwn.size();
+//   }
+//   
+   
    private class ProgressCellRender extends JProgressBar implements TableCellRenderer 
       {
          /**
@@ -671,6 +695,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       {
          try
          {
+            int i = 0;
             while(_isStarted())
             {
                if(vFilesDwn.size() == 0)
@@ -680,26 +705,60 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                   break;
                }
                
-               for(CFile oFile: vFilesDwn)
+//               if(getQueueSize() < oSettings.iMaxSimConn && i < getListSize())
+//               logger.info("Queue size " + vFilesCur.size() + " List size " + vFilesDwn.size() + " i " + i);
+               if(vFilesCur.size() >= oSettings.iMaxSimConn)
                {
+                  Thread.sleep(100);
+                  continue;
+               }
+               if(i < vFilesDwn.size())
+               {
+                  CFile oFile = vFilesDwn.get(i);
                   if(!vFilesCur.contains(oFile))
                   {
                      addFile(oFile);
+//                     logger.info("Add file " + oFile.getURL());
                      for(Plugin oPlugin: alPlugins)
                      {
-//                        if(oFile.getURL().contains(oPlugin.getDomain()))
                         if(oPlugin.isMine(oFile.getURL()))
                         {
                            oPlugin.downloadFile(oFile, oSettings.sDownloadFolder);
                            break;
                         }
                      }
-//                     oChitankaPlugin.downloadFile(oFile, DOWNLOAD_FLD);
+                     
                   }
-                  if(vFilesCur.size() >= oSettings.iMaxSimConn)
-                     break;
-                  
+                  i++;
                }
+               else
+               {
+                  i = 0;
+               }
+               
+               
+               
+//               for(CFile oFile: vFilesDwn)
+//               {
+//                  if(vFilesCur.size() < oSettings.iMaxSimConn)
+//                  {
+//                     if(!vFilesCur.contains(oFile))
+//                     {
+//                        addFile(oFile);
+//                        for(Plugin oPlugin: alPlugins)
+//                        {
+//                           if(oPlugin.isMine(oFile.getURL()))
+//                           {
+//                              oPlugin.downloadFile(oFile, oSettings.sDownloadFolder);
+//                              break;
+//                           }
+//                        }
+//                     }
+//                  }
+//                  if(vFilesCur.size() >= oSettings.iMaxSimConn)
+//                     break;
+//                  
+//               }
                
                Thread.sleep(100);
             }
@@ -759,4 +818,9 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       lblFilesDwn.setText(String.valueOf(vFilesDwn.size()));      
    }
 
+   @Override
+   public void deleteFileFromQueue(CFile oFile)
+   {
+      _deleteFileFromQueue(oFile);
+   }
 }

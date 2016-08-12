@@ -11,6 +11,7 @@ public interface IDownloader
    abstract public void setFileProgress(CFile oFile, int progress);
 //   abstract public void addFile(CFile oFile);
    abstract public void deleteFile(CFile oFile);
+   abstract public void deleteFileFromQueue(CFile oFile);
    abstract public void saveFiles();
 //   abstract public void updateFilesFndTable();
 }
