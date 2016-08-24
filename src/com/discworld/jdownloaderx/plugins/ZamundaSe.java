@@ -53,7 +53,7 @@ public class ZamundaSe extends Plugin
                                 ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/(((get|info)\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
                                 ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>"),
 //                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=[\\d\\w]+&amp;)?act=download&amp;attach_id=.+?)((target=_blank)?>)"),
-                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(&amp;act=download&amp;)?(s(id)=[\\d\\w]+&amp;)?(act=download&amp;)?attach_id=.+?)((target=_blank)?>)"),
+                                ptnSubssab = Pattern.compile("(<a href=)((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+&amp;)?(act=download&amp;)?attach_id=.+?)((target=_blank)?>)"),
                                 ptnSubtitrite = Pattern.compile("(http://)?subtitrite.net/subs/\\d+/.*?/");
 
    private String              sTitle, 
