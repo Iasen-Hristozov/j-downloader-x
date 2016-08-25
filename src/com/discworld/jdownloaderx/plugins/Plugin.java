@@ -146,7 +146,9 @@ public abstract class Plugin
                else 
                {
                   // extracts file name from URL
-                  fileName = sURL.substring(sURL.lastIndexOf("/") + 1, sURL.length());
+//                  fileName = sURL.substring(sURL.lastIndexOf("/") + 1, sURL.length());
+                  String URL = httpConn.getURL().toString();
+                  fileName = URL.substring(URL.lastIndexOf("/") + 1, URL.length());
                }
 
 //               System.out.println("Content-Type = " + contentType);
@@ -223,6 +225,7 @@ public abstract class Plugin
          } 
          catch(IOException e)
          {
+            System.out.println("File: " + saveFilePath);
             e.printStackTrace();
             bResult = false;
             return false;
@@ -231,8 +234,6 @@ public abstract class Plugin
 //         {
             return bResult;   
 //         }
-         
-         
       }
       
       @Override

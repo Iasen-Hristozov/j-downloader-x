@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="create-plugin" default="call-build">
+	<target name="call-build">
+		<ant antfile="build_plugin.xml">
+			<property name="plugin-name" value="EasternSpirit" />
+		</ant>
+	</target>
+</project>

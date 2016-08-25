@@ -8,7 +8,7 @@
 
 	<target name="build-all">
 		<!-- <echo message="The first five letters of the alphabet are:"/> -->
-		<for list="Chitanka,ZamundaSe,SubsUnacs,SubsSab,ZamundaNet,ArenaBG,Addic7ed,Subtitrite,Subsland,SlaviShow,Bukvi" param="plugin-name">
+		<for list="Chitanka,ZamundaSe,SubsUnacs,SubsSab,ZamundaNet,ArenaBG,Addic7ed,Subtitrite,Subsland,SlaviShow,Bukvi,EasternSpirit" param="plugin-name">
 			<sequential>
 				<echo>Plugin @{plugin-name}</echo>
 				<ant antfile="build_plugin.xml">

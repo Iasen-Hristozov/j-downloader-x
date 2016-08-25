@@ -44,7 +44,8 @@ public class ZamundaNet extends Plugin
                                INFO_FILE = "info.txt",
                                HTTP = "http://",
                                WWW = "www.",
-                               BUKVI_URL = "http://bukvi.bg";
+                               BUKVI_URL = "http://bukvi.bg",
+                               EASTERN_SPIRIT_URL = "easternspirit.org";
    
 //   private final static String[] DOMAINS = {DOMAIN, "subsland.com"};
    private final static String[] DOMAINS = {DOMAIN};
@@ -69,7 +70,9 @@ public class ZamundaNet extends Plugin
                                 ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
                                 ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)"),
                                 ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/(\\d+/\\w+/)?[\\d\\-]+"),
-                                ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\"");
+                                ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\""),
+                                ptnEasternSpirit = Pattern.compile("<a href=((http:\\/\\/)?(www\\.)?easternspirit\\.org\\/download\\.php\\?view\\.\\d+) target="),
+                                ptnEasternSpiritFile = Pattern.compile("<a href=\\'(request\\.php\\?\\d+)\\'> <img src=\\'e107_images\\/generic\\/lite\\/download.png\\' alt=\\'\\' style=\\'border:0\\' \\/>");
    
    
    private ZamundaNetSettings oZamundaNetSettings;
@@ -85,6 +88,8 @@ public class ZamundaNet extends Plugin
                                sSubslandFile,
                                sBukvi,
                                sBukviFile,
+                               sEasternSpirit,
+                               sEasternSpiritFile,
                                sFilesName,
                                sFolderName;
 
@@ -97,7 +102,8 @@ public class ZamundaNet extends Plugin
                                flSubssab = null,
                                flZamundaSubs = null,
                                flSubsland = null,
-                               flBukvi = null;
+                               flBukvi = null,
+                               flEasternSpirit = null;
    
    private ArrayList<String>   alSubsunacs = new ArrayList<String>(),
                                alSubssab = new ArrayList<String>();
@@ -148,6 +154,7 @@ public class ZamundaNet extends Plugin
       sSubssab = "";
       sSubslandFile = "";
       sBukvi = "";
+      sEasternSpirit = "";
    
       if(oZamundaNetSettings.sCookieUID == null || 
          oZamundaNetSettings.sCookieUID.isEmpty() || 
@@ -218,13 +225,6 @@ public class ZamundaNet extends Plugin
             alSubsunacs.add(sSubsunacs);
          }
          
-         oMatcher = ptnSubssab.matcher(sResponse);
-         while(oMatcher.find())
-         {
-            sSubssab = oMatcher.group(1).replace("&amp;", "&");;
-            alSubssab.add(sSubssab);
-         }         
-
          oMatcher = ptnSubsunacsURL.matcher(sResponse);
          while(oMatcher.find())
          {
@@ -240,6 +240,13 @@ public class ZamundaNet extends Plugin
                alSubsunacs.add("http://" + SUBSUNACS_DOMAIN + s);
             }
          }
+
+         oMatcher = ptnSubssab.matcher(sResponse);
+         while(oMatcher.find())
+         {
+            sSubssab = oMatcher.group(1).replace("&amp;", "&");;
+            alSubssab.add(sSubssab);
+         }         
          
          oMatcher = ptnZamundaSubs.matcher(sResponse);
          if(oMatcher.find())
@@ -264,6 +271,24 @@ public class ZamundaNet extends Plugin
                   sBukviFile = oMatcher.group(1);
                   if(!sBukviFile.contains(BUKVI_URL))
                      sBukviFile = BUKVI_URL + sBukviFile;
+               }
+            }
+         }
+         
+         oMatcher = ptnEasternSpirit.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sEasternSpirit = oMatcher.group(1);
+            String sEasternSpiritResponse = getHttpResponse(sEasternSpirit);
+            
+            if(sEasternSpiritResponse != null)
+            {
+               oMatcher = ptnEasternSpiritFile.matcher(sEasternSpiritResponse);
+               while(oMatcher.find())
+               {
+                  sEasternSpiritFile = oMatcher.group(1);
+                  if(!sEasternSpiritFile.contains(EASTERN_SPIRIT_URL))
+                     sEasternSpiritFile = "http://www." + EASTERN_SPIRIT_URL + "/" +sEasternSpiritFile;
                }
             }
          }
@@ -309,8 +334,6 @@ public class ZamundaNet extends Plugin
          alSubsunacs.clear();
       }
       
-
-      
       if(alSubssab != null && !alSubssab.isEmpty())
       {
          for(String sSubssab : alSubssab)
@@ -338,6 +361,12 @@ public class ZamundaNet extends Plugin
       {
          flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
          vFilesFnd.add(flBukvi);
+      }      
+
+      if(sEasternSpiritFile != null && !sEasternSpiritFile.isEmpty())
+      {
+         flEasternSpirit = new CFile(sFolderName + File.separator, sEasternSpiritFile);
+         vFilesFnd.add(flEasternSpirit);
       }      
       
       return vFilesFnd;
