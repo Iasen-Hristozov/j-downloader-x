@@ -132,7 +132,7 @@ public abstract class Plugin
 //               String contentType = httpConn.getContentType();
                int contentLength = httpConn.getContentLength();
                String contentType = httpConn.getContentType();
-               if(contentType.equalsIgnoreCase("text/html"))
+               if(contentType != null && contentType.equalsIgnoreCase("text/html"))
                   throw new IOException();
                if (disposition != null) 
                {
