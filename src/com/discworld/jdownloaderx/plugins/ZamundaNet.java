@@ -6,10 +6,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -48,11 +50,12 @@ public class ZamundaNet extends Plugin
                                EASTERN_SPIRIT_URL = "easternspirit.org";
    
 //   private final static String[] DOMAINS = {DOMAIN, "subsland.com"};
-   private final static String[] DOMAINS = {DOMAIN};
+   private final static String[] DOMAINS = {DOMAIN, "imgur.com"};
 
    private final static Pattern 
 //                                ptnTitle = Pattern.compile("<h1>(.+?</h1>)"),
-                                ptnTitle = Pattern.compile("<h1>(.*?)<.*?>"),
+//                                ptnTitle = Pattern.compile("<title>(.*?)<\\/title>"),
+                                         ptnTitle = Pattern.compile("<h1(.*?)>(.*?)<\\/.*?>"),
 //                                ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
 //                                ptnTitleParts = Pattern.compile("(.+?)( / .+?)* (\\(\\d+(\\-\\d+)?\\))?"),
                                 ptnTitleParts = Pattern.compile("^(.+?)(\\/.+?)*(\\(\\d+(\\-\\d+)?\\))?([ ]?\\[.+?\\])?$"),
@@ -60,11 +63,14 @@ public class ZamundaNet extends Plugin
                                 ptnMagnetLink = Pattern.compile("/magnetlink/download_go\\.php\\?id=\\d+&m=x"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("img border=(\")?0(\")? src=\"((http://)?img.zamunda.net/bitbucket/(.+?))\""),
+                                ptnImage1 = Pattern.compile("img border=(\\\")?0(\\\")? src=\\\"((http:\\/\\/)?i.imgur.com\\/(.+?))\\\""),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
                                 ptnSubsunacs = Pattern.compile("<a href=((http://)?(www\\.)?subsunacs.net(/){1,2}((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles/.+?)))( target=_blank)?>"),
                                 ptnSubsunacsURL = Pattern.compile("<a href=((http:\\/\\/)?(www\\.)?subsunacs\\.net\\/search\\.php.+?)( target=_blank)?>"),
                                 ptnSubsunacsURLs = Pattern.compile("<a href=\"(\\/subtitles\\/[\\w\\d_\\-]+\\/)?\""),
 //                                ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download&amp;attach_id=.+?)( target=_blank)?>"),
+                                ptnSubssabURL = Pattern.compile("<a href=((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=search(&amp;sid=.+?)?&amp;movie=.+?)( target=_blank)?>"),
+                                ptnSubssabURLs = Pattern.compile("\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&attach_id=.+?)\"( target=\\\"_blank\\\")?"),
                                 ptnSubssab = Pattern.compile("<a href=((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&amp;attach_id=.+?)( target=_blank)?>"),
                                 ptnZamundaSubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
@@ -170,15 +176,30 @@ public class ZamundaNet extends Plugin
       Matcher oMatcher = ptnTitle.matcher(sResponse);
       if(oMatcher.find())
       {
-         sTitle = oMatcher.group(1);
+         sTitle = oMatcher.group(2);
          sTitle = sTitle.replace(":", " -").replace("*", "-").replace("?", "").trim();
       }
 
       if(oZamundaNetSettings.bDownloadTorrent)
       {
          oMatcher = ptnTorrent.matcher(sResponse);
-         if(oMatcher.find())
-            sTorrent = HTTP + WWW + DOMAIN + "/download.php/" + oMatcher.group(1) + "/" + oMatcher.group(2) + ".torrent";
+         try
+         {
+            if(oMatcher.find())
+            {
+               String url = URLEncoder.encode(oMatcher.group(2), "UTF-8");
+               
+               sTorrent = HTTP + WWW + DOMAIN + "/download.php/" + oMatcher.group(1) + "/" + url + ".torrent";
+            }
+//            if(oMatcher.find())
+//               sTorrent = HTTP + WWW + DOMAIN + "/download.php/" + oMatcher.group(1) + "/" + oMatcher.group(2) + ".torrent";
+            
+
+         } catch(UnsupportedEncodingException e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
       }
       
       if(oZamundaNetSettings.bDownloadMagnet)
@@ -203,7 +224,31 @@ public class ZamundaNet extends Plugin
       {
          oMatcher = ptnImage.matcher(sResponse);
          if(oMatcher.find())
-            sImage = oMatcher.group(3);
+         {
+            try
+            {
+               sImage= oMatcher.group(5);
+
+//             sImage = oMatcher.group(3);
+//               if(!sImage.contains("%"))
+//               if(isUrlUtf8Encoded(sImage))
+//               if(isUrlIsoEncoded(sImage))
+               
+                 if(!isValidURI(sImage))
+                  sImage = URLEncoder.encode(sImage, "UTF-8");
+                 
+               sImage = "http://img.zamunda.net/bitbucket/" + sImage;
+            } 
+            catch(UnsupportedEncodingException e)
+            {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+            }
+         }
+         
+         oMatcher = ptnImage1.matcher(sResponse);
+         if(oMatcher.find())
+            sImage= oMatcher.group(3);
       }
 
       if(oZamundaNetSettings.bDownloadDescription)
@@ -246,7 +291,26 @@ public class ZamundaNet extends Plugin
          {
             sSubssab = oMatcher.group(1).replace("&amp;", "&");;
             alSubssab.add(sSubssab);
-         }         
+         }
+         
+         oMatcher = ptnSubssabURL.matcher(sResponse);
+         while(oMatcher.find())
+         {
+
+            String sSubssabURL = oMatcher.group(1).replace("&amp;", "&");
+            
+            String sSubssabRespone = getHttpResponse(sSubssabURL);
+            
+            Matcher m = ptnSubssabURLs.matcher(sSubssabRespone);
+            while(m.find())
+            {
+               String s = m.group(1);
+               s = s.replace("&amp;", "&");
+//               alSubssab.add("http://" + SUBSUNACS_DOMAIN + s);
+               alSubssab.add(s);
+            }
+            
+         }
          
          oMatcher = ptnZamundaSubs.matcher(sResponse);
          if(oMatcher.find())
@@ -605,4 +669,45 @@ public class ZamundaNet extends Plugin
       @XmlElement(name = "cookie_pass", required = true)
       public String sCookiePass;
    }
+
+   
+// final static Pattern ptnUri = Pattern.compile("^([\\w\\d\\.\\-\\?]*(\\%([A-F\\d]{2}))*[\\w\\d\\.\\-\\?]*)*$");
+ final static Pattern ptnUri = Pattern.compile("(?!\\%[A-F\\d]{2})([^\\w\\-\\.\\?]+)");
+          
+ protected static boolean isValidURI(String uri)
+ {
+//    return !Pattern.matches("(?!\\%[A-F\\d]{2})([^\\w\\-\\.\\?]+)", uri);
+    Matcher oMatcher = ptnUri.matcher(uri);
+    if(!oMatcher.find())
+       return true;
+    else
+       return false;
+ }
+ 
+// protected static boolean isUtf8Encoded(String url) 
+// {
+//    return isAlphaNumeric(url);
+// }
+//
+// public static boolean isUrlUtf8Encoded(String url) throws UnsupportedEncodingException 
+// {
+//    return isAlphaNumeric(URLDecoder.decode(url, "UTF-8"));
+// }
+//
+// public static boolean isUrlIsoEncoded(String url)throws UnsupportedEncodingException 
+// {
+//    return isAlphaNumeric(URLDecoder.decode(url, "ISO-8859-1"));
+// }
+//
+// private static boolean isAlphaNumeric(String decode) 
+// {
+//    for (char c : decode.toCharArray()) 
+//    {
+//       if (!Character.isLetterOrDigit(c)) 
+//       {
+//          return false;
+//       }
+//    }
+//    return true;
+// }   
 }

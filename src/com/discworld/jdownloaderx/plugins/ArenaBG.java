@@ -34,11 +34,13 @@ public class ArenaBG extends Plugin
 
    private final static Pattern ptnTitle = Pattern.compile("<title>(.+?) (\\.\\.\\. )?\u0441\u0432\u0430\u043b\u044f\u043d\u0435</title>"),
                                 ptnTorrent = Pattern.compile("/download/key:.+?/"),
-                                ptnImage = Pattern.compile("http://cdn.arenabg.com/resize/500/-/var/assets/posters/.+?\\.jpg"),
+                                ptnImage = Pattern.compile("http(s)?:\\/\\/cdn.arenabg.com\\/resize\\/500\\/-\\/var\\/assets\\/posters\\/([\\d\\-]\\/)?.+?\\.jpg"),
                                 ptnDescription = Pattern.compile("<div class=\"torrent-text\">(.+?)</div>"),
                                 ptnSubsunacs = Pattern.compile("<a href=\"((http://)?subsunacs\\.net/.+?)\""),
                                 ptnAddic7ed = Pattern.compile("href=\"((http://)?(www.)?addic7ed.com/.+?)\""),
                                 ptnSubssab = Pattern.compile("<a href=\"((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download\\&amp;attach_id=\\d+)\"( target=\"_blank\")?>"),
+                                ptnSubssabURL = Pattern.compile("<a href=\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/(index\\.php)?\\?(s=.*?)?(&amp;)?act=search(&amp;sid=.+?)?&amp;movie=.+?)\\\"( target=\\\"_blank\\\")?>"),
+                                ptnSubssabURLs = Pattern.compile("\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&attach_id=.+?)\"( target=\\\"_blank\\\")?"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www\\.)?arenabg.com/[\\w\\d\\-]+?/"),
                                 ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\""),
                                 ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/(\\d+/\\w+/)?[\\d\\-]+"),
@@ -135,7 +137,11 @@ public class ArenaBG extends Plugin
       {
          oMatcher = ptnImage.matcher(sResponse);
          if(oMatcher.find())
+         {
             sImage = oMatcher.group();
+            sImage = sImage.replace("https", "http");
+         }
+         
       }
 
       if(oArenaBGSettings.bDownloadDescription)
@@ -162,6 +168,24 @@ public class ArenaBG extends Plugin
          {
             sSubssab = oMatcher.group(1).replace("&amp;", "&");;
             alSubssab.add(sSubssab);
+         }
+         
+         oMatcher = ptnSubssabURL.matcher(sResponse);
+         while(oMatcher.find())
+         {
+
+            String sSubssabURL = oMatcher.group(1).replace("&amp;", "&");
+            
+            String sSubssabRespone = getHttpResponse(sSubssabURL);
+            
+            Matcher m = ptnSubssabURLs.matcher(sSubssabRespone);
+            while(m.find())
+            {
+               String s = m.group(1);
+               s = s.replace("&amp;", "&");
+//               alSubssab.add("http://" + SUBSUNACS_DOMAIN + s);
+               alSubssab.add(s);
+            }
          }
          
          oMatcher = ptnAddic7ed.matcher(sResponse);

@@ -47,13 +47,14 @@ public class ZamundaSe extends Plugin
                                 ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
                                 ptnTorrent = Pattern.compile("download.php/\\S+\\.(torrent?)"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
-                                ptnImage = Pattern.compile("<img border=\"0\" src=\"(.+?)\">"),
+                                ptnImage = Pattern.compile("<img border=\\\"0\\\" src=\\\"(.+?)\\\">"),
 //                                ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(NFO))"),
                                 ptnSubsunacs = Pattern.compile("(<a href=)((http://)?(www\\.)?subsunacs.net/(((get|info)\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
                                 ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>"),
 //                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=[\\d\\w]+&amp;)?act=download&amp;attach_id=.+?)((target=_blank)?>)"),
-                                ptnSubssab = Pattern.compile("(<a href=)((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+&amp;)?(act=download&amp;)?attach_id=.+?)((target=_blank)?>)"),
+                              //  ptnSubssab = Pattern.compile("(<a href=)((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+&amp;)?(act=download&amp;)?attach_id=.+?)((target=_blank)?>)"),
+                                ptnSubssab = Pattern.compile("((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+(&amp;){1,2})?(act=download&amp;)?(sid=[\\d]+&amp;)?attach_id=.+?) "),
                                 ptnSubtitrite = Pattern.compile("(http://)?subtitrite.net/subs/\\d+/.*?/");
 
    private String              sTitle, 
@@ -175,7 +176,8 @@ public class ZamundaSe extends Plugin
          oMatcher = ptnSubssab.matcher(sResponse);
          if(oMatcher.find())
          {
-            sSubssab = oMatcher.group(2);
+//            sSubssab = oMatcher.group(2);
+            sSubssab = oMatcher.group(1);
             sSubssab = sSubssab.replace("&amp;", "&");
          }
          
@@ -195,12 +197,12 @@ public class ZamundaSe extends Plugin
       if(oMatcher.find())
       {
          sFilesName = oMatcher.group(1) + " " + oMatcher.group(3);   
-         sFilesName = sFilesName.trim();
+         sFilesName = sFilesName.trim().replace("&quot;", "");
       }
       else
          sFilesName = sTitle;
       
-      sFolderName = sTitle.trim().replace("/", "").replace(":", " -");
+      sFolderName = sTitle.trim().replace("/", "").replace(":", " -").replace("&quot;", "");
       
       String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/") + 1);
       oMovieTorrent = new CMovie(sFolderName + File.separator + sTorrentName, "http://" + DOMAIN + "/" + sTorrent, sMagnet, sDescription);
