@@ -75,7 +75,7 @@ public class ZamundaNet extends Plugin
                                 ptnZamundaSubs = Pattern.compile("(<a href=)((http://)?(www\\.)?zamunda\\.net/getsubs\\.php/(.+?))( target=_blank)?>"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
                                 ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)"),
-                                ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/(\\d+/\\w+/)?[\\d\\-]+"),
+                                ptnBukvi = Pattern.compile("(http:\\/\\/)?bukvi\\.bg\\/load\\/(\\d+\\/\\w+\\/)?[\\d\\-]+"),
                                 ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\""),
                                 ptnEasternSpirit = Pattern.compile("<a href=((http:\\/\\/)?(www\\.)?easternspirit\\.org\\/download\\.php\\?view\\.\\d+) target="),
                                 ptnEasternSpiritFile = Pattern.compile("<a href=\\'(request\\.php\\?\\d+)\\'> <img src=\\'e107_images\\/generic\\/lite\\/download.png\\' alt=\\'\\' style=\\'border:0\\' \\/>");
@@ -326,16 +326,21 @@ public class ZamundaNet extends Plugin
             sBukvi = oMatcher.group();
             
             String sBukviResponse = getHttpResponse(sBukvi);
-
+            
             if(sBukviResponse != null)
             {
-               oMatcher = ptnBukviFile.matcher(sBukviResponse);
-               while(oMatcher.find())
+               if(!sBukviResponse.startsWith("Rar!"))
                {
-                  sBukviFile = oMatcher.group(1);
-                  if(!sBukviFile.contains(BUKVI_URL))
-                     sBukviFile = BUKVI_URL + sBukviFile;
+                  oMatcher = ptnBukviFile.matcher(sBukviResponse);
+                  while(oMatcher.find())
+                  {
+                     sBukviFile = oMatcher.group(1);
+                     if(!sBukviFile.contains(BUKVI_URL))
+                        sBukviFile = BUKVI_URL + sBukviFile;
+                  }
                }
+               else
+                  sBukviFile = sBukvi;
             }
          }
          
