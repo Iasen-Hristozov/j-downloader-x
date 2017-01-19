@@ -14,7 +14,7 @@ import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public class Bukvi extends Plugin
 {
-   private final static String DOMAIN = "bukvi.bg";
+   private final static String DOMAIN = "bukvi.";
    
    private final static Pattern ptnTitle = Pattern.compile("<h1><title>(.+?) - \u041a\u0430\u0442\u0430\u043b\u043e\u0433 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438 \u002d \u041a\u0430\u0447\u0432\u0430\u043d\u0435 \u043d\u0430 \u043d\u043e\u0432 \u0444\u0430\u0439\u043b\u0021 \u002d \u0042\u0075\u006b\u0076\u0069\u0042\u0047 \u002d \u0042\u0075\u006c\u0067\u0061\u0072\u0069\u0061\u006e \u0054\u0072\u0061\u006e\u0073\u006c\u0061\u0074\u006f\u0072 \u005a\u006f\u006e\u0065\u0021</title></h1>"),
 //                                ptnURL = Pattern.compile("<a href=\"(.+?)\" onmouseover=\"return overlib('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435');\"");
