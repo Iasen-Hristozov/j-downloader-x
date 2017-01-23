@@ -62,7 +62,7 @@ public class ZamundaNet extends Plugin
                                 ptnTorrent = Pattern.compile("/download_go\\.php\\?id=(\\d+)\"[\\s]*>(.+?)</a>"),
                                 ptnMagnetLink = Pattern.compile("/magnetlink/download_go\\.php\\?id=\\d+&m=x"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
-                                ptnImage = Pattern.compile("img border=(\")?0(\")? src=\"((http://)?img.zamunda.net/bitbucket/(.+?))\""),
+                                ptnImage = Pattern.compile("img border=(\\\")?0(\\\")? src=\"((http:\\/\\/)?img.zamunda.net\\/bitbucket\\/(.+?))\\\""),
                                 ptnImage1 = Pattern.compile("img border=(\\\")?0(\\\")? src=\\\"((http:\\/\\/)?i.imgur.com\\/(.+?))\\\""),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
                                 ptnSubsunacs = Pattern.compile("((http:\\/\\/)?(www\\.)?subsunacs.net(\\/){1,2}((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles\\/.+?\\/)))"),
@@ -227,17 +227,19 @@ public class ZamundaNet extends Plugin
          {
             try
             {
-               sImage= oMatcher.group(5);
+//               sImage = oMatcher.group(5);
+//               String sImageTmp = oMatcher.group(3).substring(oMatcher.group(3).lastIndexOf("/")+1);
+               String sImageTmp = oMatcher.group(5);
 
 //             sImage = oMatcher.group(3);
 //               if(!sImage.contains("%"))
 //               if(isUrlUtf8Encoded(sImage))
 //               if(isUrlIsoEncoded(sImage))
                
-                 if(!isValidURI(sImage))
-                  sImage = URLEncoder.encode(sImage, "UTF-8");
+                 if(!isValidURI(sImageTmp))
+                    sImageTmp = URLEncoder.encode(sImageTmp, "UTF-8");
                  
-               sImage = "http://img.zamunda.net/bitbucket/" + sImage;
+               sImage = "http://img.zamunda.net/bitbucket/" + sImageTmp;
             } 
             catch(UnsupportedEncodingException e)
             {
@@ -677,7 +679,7 @@ public class ZamundaNet extends Plugin
 
    
 // final static Pattern ptnUri = Pattern.compile("^([\\w\\d\\.\\-\\?]*(\\%([A-F\\d]{2}))*[\\w\\d\\.\\-\\?]*)*$");
- final static Pattern ptnUri = Pattern.compile("(?!\\%[A-F\\d]{2})([^\\w\\-\\.\\?]+)");
+ final static Pattern ptnUri = Pattern.compile("(?!\\%[A-F\\d]{2})([^\\w\\-\\.\\?\\(\\)]+)");
           
  protected static boolean isValidURI(String uri)
  {
