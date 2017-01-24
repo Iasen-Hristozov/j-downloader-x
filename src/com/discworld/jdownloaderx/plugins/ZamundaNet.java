@@ -55,7 +55,7 @@ public class ZamundaNet extends Plugin
    private final static Pattern 
 //                                ptnTitle = Pattern.compile("<h1>(.+?</h1>)"),
 //                                ptnTitle = Pattern.compile("<title>(.*?)<\\/title>"),
-                                         ptnTitle = Pattern.compile("<h1(.*?)>(.*?)<\\/.*?>"),
+                                ptnTitle = Pattern.compile("<h1(.*?)>(.*?)<\\/.*?>"),
 //                                ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
 //                                ptnTitleParts = Pattern.compile("(.+?)( / .+?)* (\\(\\d+(\\-\\d+)?\\))?"),
                                 ptnTitleParts = Pattern.compile("^(.+?)(\\/.+?)*(\\(\\d+(\\-\\d+)?\\))?([ ]?\\[.+?\\])?$"),
@@ -74,6 +74,7 @@ public class ZamundaNet extends Plugin
                                 ptnSubssab = Pattern.compile("((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&amp;attach_id=\\d+)"),
                                 ptnZamundaSubs = Pattern.compile("((http:\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.]+))"),
                                 ptnUrlMovie = Pattern.compile("(http://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
+                                ptnSubsland = Pattern.compile("(http:\\/\\/)?(www\\.)?subsland.com\\/subtitles\\.php\\?id=\\d+"),
                                 ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)"),
                                 ptnBukvi = Pattern.compile("(http:\\/\\/)?bukvi\\.bg\\/load\\/(\\d+\\/\\w+\\/)?[\\d\\-]+"),
                                 ptnBukviFile = Pattern.compile("a href=(\\\'|\\\")(((http:\\/\\/)?bukvi(\\.mmcenter)?\\.bg)?\\/load\\/[\\d\\-]+)(\\\"|\\\')><button"),
@@ -317,6 +318,17 @@ public class ZamundaNet extends Plugin
          oMatcher = ptnZamundaSubs.matcher(sResponse);
          if(oMatcher.find())
             sZamundaSubs = oMatcher.group();
+
+         oMatcher = ptnSubsland.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            String sSubslandURL = oMatcher.group().replace("&amp;", "&");
+            String sSubslandRespone = getHttpResponse(sSubslandURL);
+            oMatcher = ptnSubslandFile.matcher(sSubslandRespone);
+            if(oMatcher.find())
+               sSubslandFile = oMatcher.group();
+            
+         }
          
          oMatcher = ptnSubslandFile.matcher(sResponse);
          if(oMatcher.find())
