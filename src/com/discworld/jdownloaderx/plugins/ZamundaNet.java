@@ -62,7 +62,7 @@ public class ZamundaNet extends Plugin
                                 ptnTorrent = Pattern.compile("/download_go\\.php\\?id=(\\d+)\"[\\s]*>(.+?)</a>"),
                                 ptnMagnetLink = Pattern.compile("/magnetlink/download_go\\.php\\?id=\\d+&m=x"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
-                                ptnImage = Pattern.compile("img border=(\")?0(\")? src=\"(((http:\\/\\/)?img(\\d)?.zamunda.net\\/bitbucket\\/([\\d]+\\/)?)([\\w\\.]+))\""),
+                                ptnImage = Pattern.compile("img border=(\")?0(\")? src=\"(((http:\\/\\/)?img(\\d)?.zamunda.net\\/bitbucket\\/([\\d]+\\/)?)([\\w\\.\\-]+))\""),
                                 ptnImage1 = Pattern.compile("img border=(\\\")?0(\\\")? src=\\\"((http:\\/\\/)?i.imgur.com\\/(.+?))\\\""),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
                                 ptnSubsunacs = Pattern.compile("((http:\\/\\/)?(www\\.)?subsunacs.net(\\/){1,2}((info\\.php\\?id=\\d+)|(get\\.php\\?id=\\d+)|(subtitles\\/.+?\\/)))"),
