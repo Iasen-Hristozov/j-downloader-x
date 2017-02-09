@@ -6,12 +6,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -27,6 +25,7 @@ import com.discworld.jdownloaderx.dto.SHttpProperty;
 public abstract class Plugin
 {
    protected final static String HTTP = "http://",
+                                 HTTPS = "https://",
                                  WWW = "www.";   
 //   protected String DOMAIN = "domain";
    protected String DOMAIN = "domain";
@@ -116,13 +115,15 @@ public abstract class Plugin
             url = new URL(sURL);
 
             HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-GB;     rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13 (.NET CLR 3.5.30729)");
+//            httpConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-GB;     rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13 (.NET CLR 3.5.30729)");
+//            httpConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 5.1; rv:19.0) Gecko/20100101 Firefox/19.0");
+            httpConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.88 Safari/537.36 Vivaldi/1.7.735.46");
             if(alHttpProperties != null && !alHttpProperties.isEmpty())
             {
                for(SHttpProperty oHttpProperty : alHttpProperties)
                   httpConn.setRequestProperty(oHttpProperty.name, oHttpProperty.value);
             }
-            
+            httpConn.setRequestProperty("Accept-Charset", "UTF-8");
             int responseCode = httpConn.getResponseCode();
             
 
@@ -132,6 +133,10 @@ public abstract class Plugin
                String fileName = "";
                String disposition = httpConn.getHeaderField("Content-Disposition");
 //               String contentType = httpConn.getContentType();
+//             System.out.println("Content-Type = " + contentType);
+//             System.out.println("Content-Disposition = " + disposition);
+//             System.out.println("Content-Length = " + contentLength);
+//             System.out.println("fileName = " + fileName);
                int contentLength = httpConn.getContentLength();
                String contentType = httpConn.getContentType();
                if(contentType != null && contentType.equalsIgnoreCase("text/html"))
@@ -143,6 +148,7 @@ public abstract class Plugin
                   if (index > 0) 
                   {
                      fileName = disposition.substring(index + 10, disposition.length() - 1);
+                     fileName = new String(fileName.getBytes("ISO8859-1"),"UTF-8").replace(":", "-");
                   }
                } 
                else 
@@ -152,12 +158,6 @@ public abstract class Plugin
                   String URL = httpConn.getURL().toString();
                   fileName = URL.substring(URL.lastIndexOf("/") + 1, URL.length());
                }
-
-//               System.out.println("Content-Type = " + contentType);
-//               System.out.println("Content-Disposition = " + disposition);
-//               System.out.println("Content-Length = " + contentLength);
-//               System.out.println("fileName = " + fileName);
-
                // opens input stream from the HTTP connection
                InputStream inputStream = httpConn.getInputStream();
                File flDwnFolder = new File(sDownloadFolder);
@@ -182,7 +182,6 @@ public abstract class Plugin
                byte[] buffer = new byte[BUFFER_SIZE];
                while ((bytesRead = inputStream.read(buffer)) != -1) 
                {
-//                  System.out.println("bIsStarted = " + String.valueOf(bIsStarted));
                   outputStream.write(buffer, 0, bytesRead);
                   iTotalBytesRead += bytesRead;
 
@@ -194,7 +193,6 @@ public abstract class Plugin
                   else
                   {
 //                     publish(0);
-//                        System.out.println(fileName +": " + 0);
                      
                      bResult = false;
                      break;
@@ -210,7 +208,13 @@ public abstract class Plugin
    
                if(bResult)
                   System.out.println("File " + fileName + " downloaded");
-            } 
+            }
+            else if(responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP)
+            {
+               String Location = httpConn.getHeaderField("Location");
+               System.out.println(Location);
+               bResult = false;
+            }
             else 
             {
                System.out.println("No file to download. Server replied HTTP code: " + responseCode);
@@ -396,6 +400,11 @@ public abstract class Plugin
             in.close();
 
             sResponse = sbResponse.toString();
+         }
+         else if(rc == HttpURLConnection.HTTP_MOVED_TEMP )
+         {
+            String Location = oHTTPConn.getHeaderField("Location");
+            System.out.println(Location);
          }
       } catch(MalformedURLException e)
       {

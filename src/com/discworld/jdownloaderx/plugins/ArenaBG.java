@@ -1,11 +1,19 @@
 package com.discworld.jdownloaderx.plugins;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +36,8 @@ public class ArenaBG extends Plugin
 {
    private final static String DOMAIN = "arenabg.com",
                                SETTINGS_FILE = "arena_bg.xml",
+                               COOKIE_UID_NAME = "uid",
+                               COOKIE_PASS_NAME = "pass",
                                MAGNET_FILE = "magnet.txt",
                                INFO_FILE = "info.txt",
                                BUKVI_URL = "http://bukvi.bg";
@@ -41,10 +51,11 @@ public class ArenaBG extends Plugin
                                 ptnSubssab = Pattern.compile("<a href=\"((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download\\&amp;attach_id=\\d+)\"( target=\"_blank\")?>"),
                                 ptnSubssabURL = Pattern.compile("<a href=\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/(index\\.php)?\\?(s=.*?)?(&amp;)?act=search(&amp;sid=.+?)?&amp;movie=.+?)\\\"( target=\\\"_blank\\\")?>"),
                                 ptnSubssabURLs = Pattern.compile("\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&attach_id=.+?)\"( target=\\\"_blank\\\")?"),
-                                ptnUrlMovie = Pattern.compile("(http://)?(www\\.)?arenabg.com/[\\w\\d\\-]+?/"),
+                                ptnUrlMovie = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.com/[\\w\\d\\-]+?/"),
                                 ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\""),
                                 ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/(\\d+/\\w+/)?[\\d\\-]+"),
-                                ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\"");
+                                ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\""),
+                                ptnProtocolDomain = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.com");
    
    
    private ArenaBGSettings oArenaBGSettings;
@@ -116,8 +127,20 @@ public class ArenaBG extends Plugin
       sAddic7ed = "";
       sBukvi = "";
       sBukviFile = "";
-   
-      String sResponse = getHttpResponse(sURL).replace("\n", "");
+      
+      if(oArenaBGSettings.sCookieUID == null || 
+         oArenaBGSettings.sCookieUID.isEmpty() || 
+         oArenaBGSettings.sCookiePass == null || 
+         oArenaBGSettings.sCookiePass.isEmpty())
+      {
+         loginArenaBG();
+         saveSettings();
+      }
+      
+
+      String sResponse = getArenaBG(sURL).replace("\n", "");
+      
+//      String sResponse = getHttpResponse(sURL).replace("\n", "");
 
       Matcher oMatcher = ptnTitle.matcher(sResponse);
       if(oMatcher.find())
@@ -128,9 +151,15 @@ public class ArenaBG extends Plugin
 
       if(oArenaBGSettings.bDownloadTorrent)
       {
+         oMatcher = ptnProtocolDomain.matcher(sURL);
+         String sProtocolDomain = "";
+         if(oMatcher.find())
+            sProtocolDomain = oMatcher.group();
+         else
+            sProtocolDomain = HTTP + DOMAIN; 
          oMatcher = ptnTorrent.matcher(sResponse);
          if(oMatcher.find())
-            sTorrent = HTTP + DOMAIN + oMatcher.group();
+            sTorrent = sProtocolDomain + oMatcher.group();
       }
 
       if(oArenaBGSettings.bDownloadImage)
@@ -233,8 +262,6 @@ public class ArenaBG extends Plugin
 
       sFilesName = sTitle;
       
-      System.out.println(sFilesName);
-      
       sFolderName = sTitle.replace("/", "").trim();
       String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
       oMovieTorrent = new CMovie(sFolderName + File.separator + sTorrentName, sTorrent, null, sDescription);
@@ -290,9 +317,10 @@ public class ArenaBG extends Plugin
    @Override
    public void downloadFile(CFile oFile, String sDownloadFolder)
    {
-      ArrayList<SHttpProperty> alHttpProperties = null;
+      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
       
-      alHttpProperties = new ArrayList<SHttpProperty>();
+      String sCookies = COOKIE_UID_NAME + "=" + oArenaBGSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oArenaBGSettings.sCookiePass;
+      alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
       alHttpProperties.add(new SHttpProperty("Referer", DOMAIN));
 
       new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
@@ -382,9 +410,119 @@ public class ArenaBG extends Plugin
          e.printStackTrace();
       }         
    }
+   
+   private void saveSettings()
+   {
+      JAXBContext jaxbContext;
+      try
+      {
+         jaxbContext = JAXBContext.newInstance(ArenaBGSettings.class);
+         File file = new File(SETTINGS_FILE);
+         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+         jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+         jaxbMarshaller.marshal(oArenaBGSettings, file);
+         
+      } catch(JAXBException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+   }
+   
+   private void loginArenaBG()
+   {
+      String urlParameters  = String.format("username=%s&password=%s", oArenaBGSettings.sUser, oArenaBGSettings.sPassword);
+      String request        = HTTPS + WWW + DOMAIN + "users/login/";
+      URL url;
+      BufferedReader in;
+      String sResponse;
+      try
+      {
+         url = new URL( request );
+         HttpURLConnection conn= (HttpURLConnection) url.openConnection();
+         
+         conn.setRequestMethod("POST");
+         conn.setDoOutput(true);
+         conn.setUseCaches(false);
+         conn.setInstanceFollowRedirects(false);
+         conn.setRequestProperty("Host", "www.arenabg.com");
+         conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+         conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+         conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+         conn.setRequestProperty("Referer", HTTPS + WWW + DOMAIN);
+         conn.setRequestProperty("Connection", "keep-alive");
+         conn.setDoInput(true);
+
+         conn.setRequestProperty("Content-Length", Integer.toString(urlParameters.length()));
+         conn.connect();
+
+         DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
+         wr.writeBytes(urlParameters);
+         wr.flush();
+         wr.close();
+         
+         if(conn.getResponseCode() == 302)
+         {
+            List<String> cookies = conn.getHeaderFields().get("Set-Cookie");
+            if (cookies != null) 
+            {
+               for(String cookie : cookies)
+               {
+                  cookie = cookie.substring(0, cookie.indexOf(";"));
+                  String cookieName = cookie.substring(0, cookie.indexOf("="));
+                  String cookieValue = cookie.substring(cookie.indexOf("=") + 1, cookie.length());
+                  if(cookieName.equals(COOKIE_UID_NAME))
+                     oArenaBGSettings.sCookieUID = cookieValue;
+                  else if(cookieName.equals(COOKIE_PASS_NAME))
+                     oArenaBGSettings.sCookiePass = cookieValue;
+                     
+                  System.out.println(cookie);
+               }
+            }
+         }
+         if(conn.getResponseCode() == 200)
+         {
+            in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+
+            String inputLine;
+            StringBuffer sbResponse = new StringBuffer();
+
+            while((inputLine = in.readLine()) != null)
+               sbResponse.append(inputLine + "\n");
+            in.close();
+
+            sResponse = sbResponse.toString();
+            
+            System.out.print(sResponse);            
+         }
+         
+      } 
+      catch(MalformedURLException e)
+      {
+         e.printStackTrace();
+      } 
+      catch(ProtocolException e)
+      {
+         e.printStackTrace();
+      } 
+      catch(IOException e)
+      {
+         e.printStackTrace();
+      }
+   }
+   
+   
+   private String getArenaBG(String sURL)
+   {
+      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
+      String sCookies = COOKIE_UID_NAME + "=" + oArenaBGSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oArenaBGSettings.sCookiePass;
+      alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
+      
+      return getHttpResponse(sURL, alHttpProperties);
+   }
  
    @XmlAccessorType(XmlAccessType.FIELD)
-   @XmlType(name = "", propOrder = {"bDownloadTorrent","bDownloadImage","bDownloadDescription","bDownloadSubtitles"})
+   @XmlType(name = "", propOrder = {"bDownloadTorrent","bDownloadImage","bDownloadDescription","bDownloadSubtitles","sUser","sPassword","sCookieUID","sCookiePass"})
    @XmlRootElement(name = "settings")
    static private class ArenaBGSettings
    {
@@ -396,5 +534,15 @@ public class ArenaBG extends Plugin
       public boolean bDownloadDescription = true;
       @XmlElement(name = "download_subtitles", required = true)
       public boolean bDownloadSubtitles = true;
+      @XmlElement(name = "user", required = true)
+      public String sUser = "Rincewind123";
+      @XmlElement(name = "password", required = true)
+      public String sPassword = "suleiman";
+      @XmlElement(name = "cookie_uid", required = true)
+      public String sCookieUID;
+      @XmlElement(name = "cookie_pass", required = true)
+      public String sCookiePass;
+      
+      
    }
 }

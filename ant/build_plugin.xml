@@ -65,6 +65,7 @@
 			<fileset dir="${build}" includes="**/MovieTorrent.class" />
 			<fileset dir="${src}" includes="**/MovieTorrent.java" />
 			<fileset dir="${src}" includes="**/Plugin.java" />
+			<!--<fileset dir="${build}" includes="**/Plugin*.class" />-->
 			<manifest>
 				<attribute name="Built-By" value="${builder}" />
 				<attribute name="Built-On" value="${build-info.current-date}" />
