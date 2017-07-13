@@ -46,7 +46,7 @@ public class ArenaBG extends Plugin
                                 ptnTorrent = Pattern.compile("/download/key:.+?/"),
                                 ptnImage = Pattern.compile("http(s)?:\\/\\/cdn.arenabg.com\\/resize\\/500\\/-\\/var\\/assets\\/posters\\/([\\d\\-]\\/)?.+?\\.jpg"),
                                 ptnDescription = Pattern.compile("<div class=\"torrent-text\">(.+?)</div>"),
-                                ptnSubsunacs = Pattern.compile("<a href=\"((http://)?subsunacs\\.net/.+?)\""),
+                                ptnSubsunacs = Pattern.compile("<a href=\"((http(s)?://)?subsunacs\\.net/.+?)\""),
                                 ptnAddic7ed = Pattern.compile("href=\"((http://)?(www.)?addic7ed.com/.+?)\""),
                                 ptnSubssab = Pattern.compile("<a href=\"((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download\\&amp;attach_id=\\d+)\"( target=\"_blank\")?>"),
                                 ptnSubssabURL = Pattern.compile("<a href=\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/(index\\.php)?\\?(s=.*?)?(&amp;)?act=search(&amp;sid=.+?)?&amp;movie=.+?)\\\"( target=\\\"_blank\\\")?>"),
@@ -510,7 +510,6 @@ public class ArenaBG extends Plugin
          e.printStackTrace();
       }
    }
-   
    
    private String getArenaBG(String sURL)
    {

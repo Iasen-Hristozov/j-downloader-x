@@ -156,7 +156,7 @@ public abstract class Plugin
                   // extracts file name from URL
 //                  fileName = sURL.substring(sURL.lastIndexOf("/") + 1, sURL.length());
                   String URL = httpConn.getURL().toString();
-                  fileName = URL.substring(URL.lastIndexOf("/") + 1, URL.length());
+                  fileName = URL.substring((URL.lastIndexOf("/") > URL.lastIndexOf("=") ? URL.lastIndexOf("/") : URL.lastIndexOf("=")) + 1, URL.length());
                }
                // opens input stream from the HTTP connection
                InputStream inputStream = httpConn.getInputStream();
@@ -213,7 +213,9 @@ public abstract class Plugin
             {
                String Location = httpConn.getHeaderField("Location");
                System.out.println(Location);
-               bResult = false;
+               oFile.setURL(Location);
+               bResult = doInBackground();
+//               bResult = false;
             }
             else 
             {

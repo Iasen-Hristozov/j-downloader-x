@@ -1,6 +1,7 @@
 package com.discworld.jdownloaderx.plugins;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -15,6 +16,8 @@ import com.discworld.jdownloaderx.dto.SHttpProperty;
 public class SubsUnacs extends Plugin
 {
    private final static String DOMAIN = "subsunacs.net",
+                               HTTP = "http://",
+                               HTTPS = "https://",
                                DWN = "http://subsunacs.net/get.php?id="; 
                                
    private final static Pattern ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
@@ -109,8 +112,28 @@ public class SubsUnacs extends Plugin
       Matcher oMatcher = ptnID.matcher(oFile.getURL());
       if(oMatcher.find())
          oFile.setURL(DWN + oMatcher.group(6));
+      if(!oFile.getURL().contains(HTTP) && !oFile.getURL().contains(HTTPS))
+         oFile.setURL(HTTP + oFile.getURL());
       
-      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+//      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+      
+      String sFolderName = oFile.getName().substring(0, oFile.getName().lastIndexOf(File.separator));
+      File f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + "subsunacs.txt");
+      try
+      {
+         f.getParentFile().mkdirs();
+         f.createNewFile();
+         FileOutputStream fos = new FileOutputStream(f);
+         fos.write(oFile.getURL().getBytes());
+         fos.close();
+         
+         super.doneDownloadFile(oFile, sDownloadFolder, f.getParentFile().toString());
+         
+      }
+      catch(IOException e)
+      {
+         e.printStackTrace();
+      }
    }
 
    @Override
