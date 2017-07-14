@@ -18,7 +18,8 @@ public class SubsUnacs extends Plugin
    private final static String DOMAIN = "subsunacs.net",
                                HTTP = "http://",
                                HTTPS = "https://",
-                               DWN = "http://subsunacs.net/get.php?id="; 
+                               DWN = "http://subsunacs.net/get.php?id=",
+                               FILE_NAME = "subsunacs.txt"; 
                                
    private final static Pattern ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnURL = Pattern.compile("<div id=\"buttonBox\"><a href=\"(.+?)\""),
@@ -118,7 +119,7 @@ public class SubsUnacs extends Plugin
 //      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
       
       String sFolderName = oFile.getName().substring(0, oFile.getName().lastIndexOf(File.separator));
-      File f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + "subsunacs.txt");
+      File f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + FILE_NAME);
       try
       {
          f.getParentFile().mkdirs();
