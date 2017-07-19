@@ -55,7 +55,9 @@ public class ZamundaSe extends Plugin
 //                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=[\\d\\w]+&amp;)?act=download&amp;attach_id=.+?)((target=_blank)?>)"),
                               //  ptnSubssab = Pattern.compile("(<a href=)((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+&amp;)?(act=download&amp;)?attach_id=.+?)((target=_blank)?>)"),
                                 ptnSubssab = Pattern.compile("((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+(&amp;){1,2})?(act=download&amp;)?(sid=[\\d]+&amp;)?attach_id=.+?) "),
-                                ptnSubtitrite = Pattern.compile("(http://)?subtitrite.net/subs/\\d+/.*?/");
+                                ptnSubtitrite = Pattern.compile("(http://)?subtitrite.net/subs/\\d+/.*?/"),
+                                ptnAddic7ed = Pattern.compile("((http:\\/\\/)?(www.)?addic7ed.com\\/\\S*)"),
+                                ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\"");
 
    private String              sTitle, 
                                sMagnet,
@@ -66,8 +68,11 @@ public class ZamundaSe extends Plugin
                                sZelkasubs,
                                sSubssab,
                                sSutitrite,
+                               sAddic7ed,
                                sFilesName,
                                sFolderName;
+   
+   ArrayList<String> alAddic7ed = new ArrayList<String>();
    
    private CMovie        oMovieTorrent = null;
 
@@ -77,8 +82,8 @@ public class ZamundaSe extends Plugin
                                flSubsunacs = null,
                                flSubssab = null,
                                flZelkasubs = null,
-                               flSubtitrite = null;
-
+                               flSubtitrite = null,
+                               flAddic7ed = null;
 
    public ZamundaSe()
    {
@@ -184,6 +189,21 @@ public class ZamundaSe extends Plugin
          oMatcher = ptnSubtitrite.matcher(sResponse);
          if(oMatcher.find())
             sSutitrite = oMatcher.group();
+         
+         oMatcher = ptnAddic7ed.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sAddic7ed = oMatcher.group(0);
+            
+            String sAddic7edRespone = getHttpResponse(sAddic7ed);
+
+            if(sAddic7edRespone != null)
+            {
+               oMatcher = ptnUrlAddic7ed.matcher(sAddic7edRespone);
+               while(oMatcher.find())
+                  alAddic7ed.add(HTTP + "addic7ed.com" + oMatcher.group(1));
+            }
+         }
       }
 
       return sTitle;
@@ -239,6 +259,16 @@ public class ZamundaSe extends Plugin
          flSubtitrite = new CFile(sFolderName + File.separator, sSutitrite);
          vFilesFnd.add(flSubtitrite);
       }
+      
+      if(alAddic7ed != null && !alAddic7ed.isEmpty())
+      {
+         for(String sAddic7ed : alAddic7ed)
+         {
+            flAddic7ed = new CFile(sFolderName + File.separator, sAddic7ed);
+            vFilesFnd.add(flAddic7ed);
+         }
+         alAddic7ed.clear();
+      }      
    
       return vFilesFnd;
    }
