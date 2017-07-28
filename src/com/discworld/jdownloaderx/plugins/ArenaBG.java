@@ -48,7 +48,7 @@ public class ArenaBG extends Plugin
                                 ptnDescription = Pattern.compile("<div class=\"torrent-text\">(.+?)</div>"),
                                 ptnSubsunacs = Pattern.compile("<a href=\"((http(s)?://)?subsunacs\\.net/.+?)\""),
                                 ptnAddic7ed = Pattern.compile("href=\"((http://)?(www.)?addic7ed.com/.+?)\""),
-                                ptnSubssab = Pattern.compile("<a href=\"((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?act=download\\&amp;attach_id=\\d+)\"( target=\"_blank\")?>"),
+                                ptnSubssab = Pattern.compile("(http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=[\\w\\d]+&amp;)?act=download\\&amp;attach_id=\\d+"),
                                 ptnSubssabURL = Pattern.compile("<a href=\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/(index\\.php)?\\?(s=.*?)?(&amp;)?act=search(&amp;sid=.+?)?&amp;movie=.+?)\\\"( target=\\\"_blank\\\")?>"),
                                 ptnSubssabURLs = Pattern.compile("\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&attach_id=.+?)\"( target=\\\"_blank\\\")?"),
                                 ptnUrlMovie = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.com/[\\w\\d\\-]+?/"),
@@ -195,7 +195,7 @@ public class ArenaBG extends Plugin
          oMatcher = ptnSubssab.matcher(sResponse);
          while(oMatcher.find())
          {
-            sSubssab = oMatcher.group(1).replace("&amp;", "&");;
+            sSubssab = oMatcher.group(0).replace("&amp;", "&");;
             alSubssab.add(sSubssab);
          }
          
