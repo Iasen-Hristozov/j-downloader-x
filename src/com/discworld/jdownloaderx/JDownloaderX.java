@@ -36,18 +36,25 @@ import javax.swing.JTextField;
 
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.ClipboardListener;
+import com.discworld.jdownloaderx.dto.DownloaderPassClass;
 import com.discworld.jdownloaderx.dto.FileUtils;
 import com.discworld.jdownloaderx.dto.IDownloader;
 import com.discworld.jdownloaderx.dto.JABXList;
-import com.discworld.jdownloaderx.plugins.Plugin;
+import com.discworld.jdownloaderx.dto.Plugin;
+import com.discworld.jdownloaderx.plugins.EasternSpirit;
+import com.sun.tools.classfile.Attribute.Factory;
 
 import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ScrollPaneConstants;
 import javax.swing.JLabel;
@@ -73,6 +80,10 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                                SETTINGS = "settings.xml",
                                PLUGIN_FOLDER = "plugins",
                                PLUGIN_SUFFIX = ".jar";
+   
+   private final static Pattern ptnDomain = Pattern.compile("^(?:.*:\\/\\/)?([^:\\/]*).*$"); // Group 1
+//   private final static Pattern ptnDomain = Pattern.compile("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$"); // Group 3
+   private final static int DOMAIN_GROUP = 1; 
    
    private static String sVersion;
    
@@ -103,9 +114,9 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
    Settings oSettings;
 
-   Vector<CFile> vFilesDwn,
-                 vFilesFnd,
-                 vFilesCur;
+   Vector<CFile> downloadFiles,
+                 foundFiles,
+                 downloadFilesQueue;
    
    private static ArrayList<Plugin> alPlugins = new ArrayList<Plugin>();
    private JPanel pnlFilesDwnStatus;
@@ -154,45 +165,13 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       
       initialize();
       
-      vFilesCur = new Vector<CFile>();
-      
-      Runnable checkContent = new Runnable()
-      {
-         @Override
-         public void run()
-         {
-            String sContent = oClipboardListener.getContent();
-            if(sContent == null)
-               return;
-            
-            for(Plugin oPlugin: alPlugins)
-            {
-               if(oPlugin.isMine(sContent))
-               {
-                  ArrayList<String> alURLs = oPlugin.parseContent(sContent);
-                  txtURL.setText(String.join(",", alURLs));
-                  
-                  for(String sURL : alURLs)
-                     oPlugin.vParseUrl(sURL);
-                  break;
-               }
-            }      
-         }
-      };      
-      
-      oClipboardListener = new ClipboardListener(checkContent);
-      oClipboardListener.itisNotEnough();
-      oClipboardListener.start();
-      
-      loadSettings();
-      
-      loadFiles();
-      
-      oFileDownloadTableModel.setValues(vFilesDwn);
-      updateFilesDwnTable();
+      downloadFilesQueue = new Vector<CFile>();
       
       //===============================================================
       // Loading plugins
+      
+      DownloaderPassClass.setDownloader(this);
+      
       new File(PLUGIN_FOLDER).mkdirs();
       
 //      Policy.setPolicy(new PluginPolicy());
@@ -210,7 +189,58 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       {
          // TODO Auto-generated catch block
          e.printStackTrace();
-      }            
+      }                  
+      
+      Runnable checkContent = new Runnable()
+      {
+         @Override
+         public void run()
+         {
+            String sContent = oClipboardListener.getContent();
+            if(sContent == null)
+               return;
+            
+            Matcher matcher = ptnDomain.matcher(sContent);
+            if(matcher.find())
+            {
+//               String s = matcher.group(1);
+               Plugin plugin = PluginFactory.getInstance().getPlugin(matcher.group(DOMAIN_GROUP));
+               if(plugin != null) 
+               {
+                  ArrayList<String> alURLs = plugin.parseContent(sContent);
+                  txtURL.setText(String.join(",", alURLs));
+                  for(String sURL : alURLs)
+                     plugin.parseUrl(sURL);
+               }
+            }
+            
+//            for(Plugin oPlugin: alPlugins)
+//            {
+//               if(oPlugin.isMine(sContent))
+//               {
+//                  ArrayList<String> alURLs = oPlugin.parseContent(sContent);
+//                  txtURL.setText(String.join(",", alURLs));
+//                  
+//                  for(String sURL : alURLs)
+//                     oPlugin.parseUrl(sURL);
+//                  break;
+//               }
+//            }      
+         }
+      };      
+      
+      oClipboardListener = new ClipboardListener(checkContent);
+      oClipboardListener.itisNotEnough();
+      oClipboardListener.start();
+      
+      loadSettings();
+      
+      loadFiles();
+      
+      oFileDownloadTableModel.setValues(downloadFiles);
+      updateFilesDwnTable();
+      
+
    }
 
    @Override
@@ -234,9 +264,9 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
 //      vFilesFnd.addAll(alFilesFnd);
       boolean isNew = false;
       for(CFile oFile : alFilesFnd)
-         if(!vFilesFnd.contains(oFile))
+         if(!foundFiles.contains(oFile))
          {
-            vFilesFnd.add(oFile);
+            foundFiles.add(oFile);
             isNew = true;
          }
    
@@ -316,8 +346,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       ListSelectionModel listSelectionModel = tblFilesDwn.getSelectionModel();
       listSelectionModel.addListSelectionListener(new SharedListSelectionHandler(lblFilesDwnSel));
       tblFilesDwn.setSelectionModel(listSelectionModel);
-      vFilesDwn = new Vector<CFile>();
-      oFileDownloadTableModel = new FileDownloadTableModel(vFilesDwn);
+      downloadFiles = new Vector<CFile>();
+      oFileDownloadTableModel = new FileDownloadTableModel(downloadFiles);
       tblFilesDwn.setModel(oFileDownloadTableModel);
       tblFilesDwn.getColumn("Progress").setCellRenderer(new ProgressCellRender());
       
@@ -372,8 +402,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       listSelectionModel = tblFilesUrl.getSelectionModel();
       listSelectionModel.addListSelectionListener(new SharedListSelectionHandler(lblFilesFndSel));
       tblFilesUrl.setSelectionModel(listSelectionModel);
-      vFilesFnd = new Vector<CFile>();
-      oFileURLsTableModel = new FileURLsTableModel(vFilesFnd);
+      foundFiles = new Vector<CFile>();
+      oFileURLsTableModel = new FileURLsTableModel(foundFiles);
       tblFilesUrl.setModel(oFileURLsTableModel);
       
       JScrollPane spFilesUrl = new JScrollPane(tblFilesUrl);
@@ -444,13 +474,12 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
          {
 //             System.out.println(fEntry.getName());
              
-             if(!fEntry.getName().endsWith(PLUGIN_SUFFIX))
-                continue;
+            if(!fEntry.getName().endsWith(PLUGIN_SUFFIX))
+               continue;
              
-             ClassLoader oClassLoader = URLClassLoader.newInstance(new URL[] { fEntry.toURL() });
-             Plugin oPlugin = (Plugin) oClassLoader.loadClass(FileUtils.getClassName(fEntry.getAbsolutePath())).newInstance();
-             oPlugin.setDownloader(this);
-             alPlugins.add(oPlugin);
+            ClassLoader oClassLoader = URLClassLoader.newInstance(new URL[] { fEntry.toURL() });
+            Plugin plugin = (Plugin) oClassLoader.loadClass(FileUtils.getClassName(fEntry.getAbsolutePath())).newInstance();
+            alPlugins.add(plugin);
          }
       }      
    }
@@ -494,9 +523,9 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
          Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
          JABXList<CFile> Files = (JABXList<CFile>)jaxbUnmarshaller.unmarshal(file);
    
-         vFilesDwn.clear();
+         downloadFiles.clear();
          
-         vFilesDwn = new Vector<CFile>(Files.getValues());
+         downloadFiles = new Vector<CFile>(Files.getValues());
       } 
       catch (JAXBException e) 
       {
@@ -518,10 +547,10 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
    private void vAdd()
    {
-      for(CFile oFile : vFilesFnd)
+      for(CFile oFile : foundFiles)
       {
-         if(!vFilesDwn.contains(oFile))
-            vFilesDwn.add(oFile);
+         if(!downloadFiles.contains(oFile))
+            downloadFiles.add(oFile);
       }
 
       _saveFiles();
@@ -529,7 +558,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       updateFilesDwnTable();
       tabbedPane.setSelectedIndex(PNL_NDX_DWN);
 
-      vFilesFnd.removeAllElements();
+      foundFiles.removeAllElements();
       updateFilesFndTable();
    }
    
@@ -546,7 +575,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
             
 //            for(int i = 0; i < tiRowNdxs.length; i++)
             for(int i = tiRowNdxs.length-1; i >= 0; i--)
-               vFilesDwn.remove(tiRowNdxs[i]);
+               downloadFiles.remove(tiRowNdxs[i]);
             updateFilesDwnTable();
             
             _saveFiles();
@@ -560,7 +589,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
             
 //            for(int i = 0; i < tiRowNdxs.length; i++)
             for(int i = tiRowNdxs.length-1; i >= 0; i--)
-               vFilesFnd.remove(tiRowNdxs[i]);
+               foundFiles.remove(tiRowNdxs[i]);
             updateFilesFndTable();
          break;
       }      
@@ -584,14 +613,23 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
    private void vParseURL(String sURL) throws IOException
    {
-      for(Plugin oPlugin: alPlugins)
+      Matcher matcher = ptnDomain.matcher(sURL);
+      if(matcher.find())
       {
-         if(oPlugin.isMine(sURL))
-         {
-            oPlugin.vParseUrl(sURL);
-            break;
-         }
-      }      
+//         String s = matcher.group(1);
+         Plugin plugin = PluginFactory.getInstance().getPlugin(matcher.group(DOMAIN_GROUP));
+         if(plugin != null)
+            plugin.parseUrl(sURL);
+      }
+      
+//      for(Plugin oPlugin: alPlugins)
+//      {
+//         if(oPlugin.isMine(sURL))
+//         {
+//            oPlugin.parseUrl(sURL);
+//            break;
+//         }
+//      }      
    }
    
    public synchronized boolean _isStarted()
@@ -607,9 +645,9 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    private synchronized void _deleteFile(CFile oFile)
    {
 //      logger.info("Remove " + oFile.getURL());
-      vFilesDwn.remove(oFile);
+      downloadFiles.remove(oFile);
       updateFilesDwnTable();
-      lblFilesDwn.setText(String.valueOf(vFilesDwn.size()));
+      lblFilesDwn.setText(String.valueOf(downloadFiles.size()));
       _deleteFileFromQueue(oFile);
       
 //      vFilesCur.remove(oFile);
@@ -618,7 +656,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    private synchronized void _deleteFileFromQueue(CFile oFile)
    {
 //      logger.info("Remove from queue " + oFile.getURL());
-      vFilesCur.remove(oFile);
+      downloadFilesQueue.remove(oFile);
    }
 
    private synchronized void _saveFiles()
@@ -629,7 +667,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
          JAXBContext jaxbContext = JAXBContext.newInstance(JABXList.class, CFile.class);
          Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
    
-         JABXList<CFile> Files = new JABXList<CFile>(vFilesDwn);
+         JABXList<CFile> Files = new JABXList<CFile>(downloadFiles);
          
          // output pretty printed
          jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
@@ -650,19 +688,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
 
    private synchronized void addFile(CFile oFile)
    {
-      vFilesCur.add(oFile);
+      downloadFilesQueue.add(oFile);
    }
-   
-//   private synchronized int getQueueSize()
-//   {
-//      return vFilesCur.size();
-//   }
-//
-//   private synchronized int getListSize()
-//   {
-//      return vFilesDwn.size();
-//   }
-//   
    
    private class ProgressCellRender extends JProgressBar implements TableCellRenderer 
       {
@@ -698,36 +725,42 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
             int i = 0;
             while(_isStarted())
             {
-               if(vFilesDwn.size() == 0)
+               if(downloadFiles.size() == 0)
                {
                   vToggleButton();
                   setIsStarted(false);
                   break;
                }
                
-//               if(getQueueSize() < oSettings.iMaxSimConn && i < getListSize())
 //               logger.info("Queue size " + vFilesCur.size() + " List size " + vFilesDwn.size() + " i " + i);
-               if(vFilesCur.size() >= oSettings.iMaxSimConn)
+               if(downloadFilesQueue.size() >= oSettings.iMaxSimConn)
                {
                   Thread.sleep(100);
                   continue;
                }
-               if(i < vFilesDwn.size())
+               if(i < downloadFiles.size())
                {
-                  CFile oFile = vFilesDwn.get(i);
-                  if(!vFilesCur.contains(oFile))
+                  CFile oFile = downloadFiles.get(i);
+                  if(!downloadFilesQueue.contains(oFile))
                   {
                      addFile(oFile);
 //                     logger.info("Add file " + oFile.getURL());
-                     for(Plugin oPlugin: alPlugins)
+                     Matcher matcher = ptnDomain.matcher(oFile.getURL());
+                     if(matcher.find())
                      {
-                        if(oPlugin.isMine(oFile.getURL()))
-                        {
-                           oPlugin.downloadFile(oFile, oSettings.sDownloadFolder);
-                           break;
-                        }
+                        Plugin plugin = PluginFactory.getInstance().getPlugin(matcher.group(DOMAIN_GROUP));
+                        if(plugin != null)
+                           plugin.downloadFile(oFile, oSettings.sDownloadFolder);
                      }
                      
+//                     for(Plugin oPlugin: alPlugins)
+//                     {
+//                        if(oPlugin.isMine(oFile.getURL()))
+//                        {
+//                           oPlugin.downloadFile(oFile, oSettings.sDownloadFolder);
+//                           break;
+//                        }
+//                     }
                   }
                   i++;
                }
@@ -735,30 +768,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                {
                   i = 0;
                }
-               
-               
-               
-//               for(CFile oFile: vFilesDwn)
-//               {
-//                  if(vFilesCur.size() < oSettings.iMaxSimConn)
-//                  {
-//                     if(!vFilesCur.contains(oFile))
-//                     {
-//                        addFile(oFile);
-//                        for(Plugin oPlugin: alPlugins)
-//                        {
-//                           if(oPlugin.isMine(oFile.getURL()))
-//                           {
-//                              oPlugin.downloadFile(oFile, oSettings.sDownloadFolder);
-//                              break;
-//                           }
-//                        }
-//                     }
-//                  }
-//                  if(vFilesCur.size() >= oSettings.iMaxSimConn)
-//                     break;
-//                  
-//               }
                
                Thread.sleep(100);
             }
@@ -809,18 +818,40 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    private void updateFilesFndTable()
    {
       oFileURLsTableModel.fireTableDataChanged();
-      lblFilesFnd.setText(String.valueOf(vFilesFnd.size()));
+      lblFilesFnd.setText(String.valueOf(foundFiles.size()));
    }
    
    private void updateFilesDwnTable()
    {
       oFileDownloadTableModel.fireTableDataChanged();
-      lblFilesDwn.setText(String.valueOf(vFilesDwn.size()));      
+      lblFilesDwn.setText(String.valueOf(downloadFiles.size()));      
    }
 
    @Override
    public void deleteFileFromQueue(CFile oFile)
    {
       _deleteFileFromQueue(oFile);
+   }
+
+   private HashMap<String, Plugin> m_RegisteredProducts = new HashMap<String, Plugin>();
+   
+   public void registerProduct(String pluginID, Plugin p)    
+   {
+      m_RegisteredProducts.put(pluginID, p);
+   }
+   
+   public Plugin createProduct(String pluginID)
+   {
+//      ((Product)m_RegisteredProducts.get(pluginID)).createProduct();
+      return (Plugin) m_RegisteredProducts.get(pluginID);
+   }
+
+   @Override
+   public void checkContetsVsPlugins(String sPath, String sContents)
+   {
+      Plugin plugin = PluginFactory.getInstance().getPlugin("www.easternspirit.org");
+//      plugin.checkContetWithPlugin(sPath, sContents);
+      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+      updateFilesFndTable();
    }
 }

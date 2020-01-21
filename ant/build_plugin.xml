@@ -4,6 +4,7 @@
 	<property file="${plugin-name}.properties" />
 	<property name="src" value="${basedir}/../src" />
 	<property name="src_ext" value="${src}/com/discworld/jdownloaderx/plugins/" />
+	<property name="src_main" value="${src}/com/discworld/jdownloaderx/" />
 	<property name="src_dto" value="${src}/com/discworld/jdownloaderx/dto/" />
 	<property name="dst" value="${basedir}/../plugins/" />
 	<property name="build" value="${basedir}/../build" />
@@ -29,27 +30,38 @@
 		<mkdir dir="${build}" />
 	</target>
 
+	
 	<target name="compile-dto" depends="prepare">
 		<javac destdir="${build}" srcdir="${src_dto}" includeantruntime="true">
 			<include name="CFile.java" />
-			<include name="CMovie.java" />
-			<include name="CRPTDump.java" />
+			<include name="Movie.java" />
+			<include name="RPTDump.java" />
 			<include name="IDownloader.java" />
 			<include name="FileUtils.java" />
 			<include name="ExtractFile.java" />
 			<include name="UnzipUtility.java" />
 			<include name="SHttpProperty.java" />
 			<include name="Book.java" />
+			<include name="DownloaderPassClass.java" />
+			<include name="Plugin.java" />
 		</javac>
 	</target>
-
+	
+	<!--
    <target name="compile-base-class" depends="compile-dto">
       <javac destdir="${build}" srcdir="${src_ext}" includeantruntime="true">
          <include name="Plugin.java" />
       </javac>
    </target>
+   -->
 	
-	<target name="compile-plugin" depends="compile-base-class">
+   <target name="compile-main" depends="compile-dto">
+      <javac destdir="${build}" srcdir="${src_main}" includeantruntime="true">
+         <include name="PluginFactory.java" />
+      </javac>
+   </target>
+	
+	<target name="compile-plugin" depends="compile-main">
 		<javac destdir="${build}" srcdir="${src_ext}" includeantruntime="true" debug="true" classpath="${build}/com/discworld/jdownloaderx/dto" debuglevel="lines,vars,source">
 			<include name="${plugin-name}.java" />
 		</javac>
