@@ -203,7 +203,6 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
             Matcher matcher = ptnDomain.matcher(sContent);
             if(matcher.find())
             {
-//               String s = matcher.group(1);
                Plugin plugin = PluginFactory.getInstance().getPlugin(matcher.group(DOMAIN_GROUP));
                if(plugin != null) 
                {

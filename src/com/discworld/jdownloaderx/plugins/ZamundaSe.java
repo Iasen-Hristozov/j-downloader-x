@@ -25,10 +25,13 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import com.discworld.jdownloaderx.PluginFactory;
 import com.discworld.jdownloaderx.dto.CFile;
-import com.discworld.jdownloaderx.dto.CMovie;
+import com.discworld.jdownloaderx.dto.Movie;
+import com.discworld.jdownloaderx.dto.DownloaderPassClass;
 import com.discworld.jdownloaderx.dto.FileUtils;
 import com.discworld.jdownloaderx.dto.IDownloader;
+import com.discworld.jdownloaderx.dto.Plugin;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public class ZamundaSe extends Plugin
@@ -39,9 +42,10 @@ public class ZamundaSe extends Plugin
                                COOKIE_PASS_NAME = "pass",
                                SETTINGS_FILE = "zamunda_se.xml",
                                MAGNET_FILE = "magnet.txt",
-                               INFO_FILE = "info.txt";
+                               INFO_FILE = "info.txt",
+                               BUKVI_URL = "http://bukvi.bg";
 
-   private final static String[] DOMAINS = {DOMAIN, "zamunda.se"};
+//   private final static String[] DOMAINS = {DOMAIN, "zamunda.se"};
 
    private final static Pattern ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
                                 ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
@@ -57,7 +61,9 @@ public class ZamundaSe extends Plugin
                                 ptnSubssab = Pattern.compile("((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+(&amp;){1,2})?(act=download&amp;)?(sid=[\\d]+&amp;)?attach_id=.+?) "),
                                 ptnSubtitrite = Pattern.compile("(http://)?subtitrite.net/subs/\\d+/.*?/"),
                                 ptnAddic7ed = Pattern.compile("((http:\\/\\/)?(www.)?addic7ed.com\\/\\S*)"),
-                                ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\"");
+                                ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\""),
+                                ptnBukvi = Pattern.compile("(http:\\/\\/)?bukvi\\.bg\\/load\\/(\\d+\\/\\w+\\/)?[\\d\\-]+"),
+                                ptnBukviFile = Pattern.compile("a href=(\\\'|\\\")(((http:\\/\\/)?bukvi(\\.mmcenter)?\\.bg)?\\/load\\/[\\d\\-]+)(\\\"|\\\')><button");
 
    private String              sTitle, 
                                sMagnet,
@@ -69,21 +75,31 @@ public class ZamundaSe extends Plugin
                                sSubssab,
                                sSutitrite,
                                sAddic7ed,
+                               sBukvi,
+                               sBukviFile,
                                sFilesName,
                                sFolderName;
    
    ArrayList<String> alAddic7ed = new ArrayList<String>();
    
-   private CMovie        oMovieTorrent = null;
+   private Movie        oMovieTorrent = null;
 
    private ZamundaSeSettings   oZamundaSeSettings;
+
+   static 
+   {
+      PluginFactory.getInstance().registerPlugin(DOMAIN, new ZamundaSe(DownloaderPassClass.getDownloader()));
+      PluginFactory.getInstance().registerPlugin("zamunda.se", new ZamundaSe(DownloaderPassClass.getDownloader()));
+      PluginFactory.getInstance().registerPlugin("img.zamunda.se", new ZamundaSe(DownloaderPassClass.getDownloader()));
+   }
    
    private CFile               flImage = null,
                                flSubsunacs = null,
                                flSubssab = null,
                                flZelkasubs = null,
                                flSubtitrite = null,
-                               flAddic7ed = null;
+                               flAddic7ed = null,
+                               flBukvi = null;
 
    public ZamundaSe()
    {
@@ -112,7 +128,7 @@ public class ZamundaSe extends Plugin
    }
 
    @Override
-   protected String inBackgroundHttpParse(String sURL)
+   protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       sMagnet = "";
       sTorrent = "";
@@ -135,7 +151,7 @@ public class ZamundaSe extends Plugin
 
       Matcher oMatcher = ptnTitle.matcher(sResponse);
       if(oMatcher.find())
-         sTitle = oMatcher.group(2);
+         sTitle = oMatcher.group(2).trim().replace("/", "").replace(":", " -").replace("&quot;", "");
 
       if(oZamundaSeSettings.bDownloadTorrent)
       {
@@ -164,7 +180,7 @@ public class ZamundaSe extends Plugin
          if(oMatcher.find())
          {
             sDescription = oMatcher.group(2);
-            sDescription = sDescription.replace("<br />", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
+            sDescription = sDescription.replace("<br />", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "").replaceAll("\n\n", "\n").trim();
          }
       }
 
@@ -204,7 +220,33 @@ public class ZamundaSe extends Plugin
                   alAddic7ed.add(HTTP + "addic7ed.com" + oMatcher.group(1));
             }
          }
+         
+         oMatcher = ptnBukvi.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sBukvi = oMatcher.group();
+            
+            String sBukviResponse = getHttpResponse(sBukvi);
+            
+            if(sBukviResponse != null)
+            {
+               if(!sBukviResponse.startsWith("Rar!"))
+               {
+                  oMatcher = ptnBukviFile.matcher(sBukviResponse);
+                  while(oMatcher.find())
+                  {
+                     sBukviFile = oMatcher.group(2);
+                     if(!sBukviFile.contains("http://bukvi."))
+                        sBukviFile = BUKVI_URL + sBukviFile;
+                  }
+               }
+               else
+                  sBukviFile = sBukvi;
+            }
+         }
       }
+      
+      downloader.checkContetsVsPlugins(sTitle, sResponse);
 
       return sTitle;
    }
@@ -222,10 +264,10 @@ public class ZamundaSe extends Plugin
       else
          sFilesName = sTitle;
       
-      sFolderName = sTitle.trim().replace("/", "").replace(":", " -").replace("&quot;", "");
+      sFolderName = sTitle;
       
       String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/") + 1);
-      oMovieTorrent = new CMovie(sFolderName + File.separator + sTorrentName, "http://" + DOMAIN + "/" + sTorrent, sMagnet, sDescription);
+      oMovieTorrent = new Movie(sFolderName + File.separator + sTorrentName, "http://" + DOMAIN + "/" + sTorrent, sMagnet, sDescription);
       vFilesFnd.add(oMovieTorrent);
       
       if(sImage != null && !sImage.isEmpty())
@@ -268,7 +310,13 @@ public class ZamundaSe extends Plugin
             vFilesFnd.add(flAddic7ed);
          }
          alAddic7ed.clear();
-      }      
+      }
+      
+      if(sBukviFile != null && !sBukviFile.isEmpty())
+      {
+         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
+         vFilesFnd.add(flBukvi);
+      }            
    
       return vFilesFnd;
    }
@@ -284,16 +332,16 @@ public class ZamundaSe extends Plugin
    }
 
    @Override
-   protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
-      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
       
       FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + oFile.getName());
-      if(oFile instanceof CMovie)
+      if(oFile instanceof Movie)
       {
          try
          {
-            CMovie oMovie = (CMovie) oFile;
+            Movie oMovie = (Movie) oFile;
             sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
             File f;
             FileOutputStream fos;
@@ -376,7 +424,7 @@ public class ZamundaSe extends Plugin
       String request        = HTTP + WWW + DOMAIN + "/takelogin.php";
       URL url;
       BufferedReader in;
-      String sResponse;
+//      String sResponse;
       try
       {
          url = new URL( request );
@@ -431,7 +479,7 @@ public class ZamundaSe extends Plugin
                sbResponse.append(inputLine + "\n");
             in.close();
 
-            sResponse = sbResponse.toString();
+//            sResponse = sbResponse.toString();
          }
       } catch(MalformedURLException e)
       {
@@ -448,7 +496,7 @@ public class ZamundaSe extends Plugin
       }
    }
    
-   private String getZelka(String sURL)
+   private String getZelka(String sURL) throws Exception
    {
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
       String sCookies = COOKIE_UID_NAME + "=" + oZamundaSeSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oZamundaSeSettings.sCookiePass;
@@ -457,14 +505,14 @@ public class ZamundaSe extends Plugin
       return getHttpResponse(sURL, alHttpProperties);
    }
    
-   @Override
-   public boolean isMine(String sURL)
-   {
-      for(String sDomain : DOMAINS)
-         if(sURL.contains(sDomain))
-            return true;
-      return false;
-   }
+//   @Override
+//   public boolean isMine(String sURL)
+//   {
+//      for(String sDomain : DOMAINS)
+//         if(sURL.contains(sDomain))
+//            return true;
+//      return false;
+//   }
 
    @XmlAccessorType(XmlAccessType.FIELD)
    @XmlType(name = "", propOrder = {"bDownloadTorrent","bDownloadMagnet","bDownloadImage","bDownloadDescription","bDownloadSubtitles", "sUser","sPassword","sCookieUID","sCookiePass"})

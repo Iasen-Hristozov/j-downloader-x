@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.discworld.jdownloaderx.PluginFactory;
 import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.DownloaderPassClass;
 import com.discworld.jdownloaderx.dto.IDownloader;
+import com.discworld.jdownloaderx.dto.Plugin;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public class SubsUnacs extends Plugin
@@ -23,11 +26,16 @@ public class SubsUnacs extends Plugin
                                
    private final static Pattern ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnURL = Pattern.compile("<div id=\"buttonBox\"><a href=\"(.+?)\""),
-                                ptnID = Pattern.compile("http://(www\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?"),
-                                ptnURLs = Pattern.compile("<a href=\"(\\/subtitles\\/[\\w\\d_\\-]+\\/)?\"");
+                                ptnID = Pattern.compile("http(s?)://(www\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?");
+//                                ptnURLs = Pattern.compile("<a href=\"(\\/subtitles\\/[\\w\\d_\\-]+\\/)?\"");
    
    private String              sTitle,
                                sUrl;
+
+   static
+   {
+      PluginFactory.getInstance().registerPlugin(DOMAIN, new SubsUnacs(DownloaderPassClass.getDownloader()));
+   }      
    
    public SubsUnacs()
    {
@@ -40,25 +48,8 @@ public class SubsUnacs extends Plugin
    }
 
    @Override
-   protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void loadSettings()
    {
-      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
-      try
-      {
-         File f;
-         if(oFile.getName().endsWith(File.separator))
-            f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator)+ 1));
-         else
-            f = new File(sDownloadFolder + File.separator + oFile.getName());
-         f.getParentFile().mkdirs();
-         File source = new File(saveFilePath);
-         Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      } 
-      catch(IOException e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
    }
 
    @Override
@@ -100,46 +91,66 @@ public class SubsUnacs extends Plugin
    }
    
    @Override
-   protected void loadSettings()
-   {
-   }
-   
+      public void downloadFile(CFile oFile, String sDownloadFolder)
+      {
+   //      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
+   //      alHttpProperties.add(new SHttpProperty("Referer", DOMAIN));
+         
+         Matcher oMatcher = ptnID.matcher(oFile.getURL());
+         if(oMatcher.find())
+            oFile.setURL(DWN + oMatcher.group(7));
+         if(!oFile.getURL().contains(HTTP) && !oFile.getURL().contains(HTTPS))
+            oFile.setURL(HTTP + oFile.getURL());
+         
+         ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
+         alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
+         
+         new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+         
+//         String sFolderName = oFile.getName().substring(0, oFile.getName().lastIndexOf(File.separator));
+//         File f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + FILE_NAME);
+//         try
+//         {
+//            f.getParentFile().mkdirs();
+//            f.createNewFile();
+//            FileOutputStream fos = new FileOutputStream(f);
+//            fos.write(oFile.getURL().getBytes());
+//            fos.close();
+//            
+//            super.doneDownloadFile(oFile, sDownloadFolder, f.getParentFile().toString());
+//            
+//         }
+//         catch(IOException e)
+//         {
+//            e.printStackTrace();
+//         }
+      }
+
    @Override
-   public void downloadFile(CFile oFile, String sDownloadFolder)
+   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
-      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-//      alHttpProperties.add(new SHttpProperty("Referer", DOMAIN));
-      
-      Matcher oMatcher = ptnID.matcher(oFile.getURL());
-      if(oMatcher.find())
-         oFile.setURL(DWN + oMatcher.group(6));
-      if(!oFile.getURL().contains(HTTP) && !oFile.getURL().contains(HTTPS))
-         oFile.setURL(HTTP + oFile.getURL());
-      
-//      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
-      
-      String sFolderName = oFile.getName().substring(0, oFile.getName().lastIndexOf(File.separator));
-      File f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + FILE_NAME);
+      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
       try
       {
+         File f;
+         if(oFile.getName().endsWith(File.separator))
+            f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator)+ 1));
+         else
+            f = new File(sDownloadFolder + File.separator + oFile.getName());
          f.getParentFile().mkdirs();
-         f.createNewFile();
-         FileOutputStream fos = new FileOutputStream(f);
-         fos.write(oFile.getURL().getBytes());
-         fos.close();
-         
-         super.doneDownloadFile(oFile, sDownloadFolder, f.getParentFile().toString());
-         
-      }
+         File source = new File(saveFilePath);
+         Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      } 
       catch(IOException e)
       {
+         // TODO Auto-generated catch block
          e.printStackTrace();
       }
    }
 
-   @Override
-   public boolean isMine(String sURL)
-   {
-      return sURL.contains(DOMAIN);
-   }
+//   @Override
+//   public boolean isMine(String sURL)
+//   {
+//      return sURL.contains(DOMAIN);
+//   }
 }

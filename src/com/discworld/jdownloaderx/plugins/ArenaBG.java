@@ -27,9 +27,12 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import com.discworld.jdownloaderx.PluginFactory;
 import com.discworld.jdownloaderx.dto.CFile;
-import com.discworld.jdownloaderx.dto.CMovie;
+import com.discworld.jdownloaderx.dto.Movie;
+import com.discworld.jdownloaderx.dto.DownloaderPassClass;
 import com.discworld.jdownloaderx.dto.IDownloader;
+import com.discworld.jdownloaderx.dto.Plugin;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public class ArenaBG extends Plugin
@@ -43,7 +46,7 @@ public class ArenaBG extends Plugin
                                BUKVI_URL = "http://bukvi.bg";
 
    private final static Pattern ptnTitle = Pattern.compile("<title>(.+?) (\\.\\.\\. )?\u0441\u0432\u0430\u043b\u044f\u043d\u0435</title>"),
-                                ptnTorrent = Pattern.compile("/download/key:.+?/"),
+                                ptnTorrent = Pattern.compile("/(download|get)/key:.+?/"),
                                 ptnImage = Pattern.compile("http(s)?:\\/\\/cdn.arenabg.com\\/resize\\/500\\/-\\/var\\/assets\\/posters\\/([\\d\\-]\\/)?.+?\\.jpg"),
                                 ptnDescription = Pattern.compile("<div class=\"torrent-text\">(.+?)</div>"),
                                 ptnSubsunacs = Pattern.compile("<a href=\"((http(s)?://)?subsunacs\\.net/.+?)\""),
@@ -76,7 +79,7 @@ public class ArenaBG extends Plugin
                      alSubsunacs = new ArrayList<String>(),
                      alSubssab = new ArrayList<String>();
    
-   private CMovie        oMovieTorrent = null;
+   private Movie        oMovieTorrent = null;
    
    private CFile               flImage = null,
                                flSubsunacs = null,
@@ -84,7 +87,12 @@ public class ArenaBG extends Plugin
                                flAddic7ed = null,
                                flBukvi = null;
 
-
+   static
+   {
+      PluginFactory.getInstance().registerPlugin(DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
+      PluginFactory.getInstance().registerPlugin("cdn." + DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
+   }
+   
    public ArenaBG()
    {
       super();
@@ -95,11 +103,11 @@ public class ArenaBG extends Plugin
       super(oDownloader);
    }
 
-   @Override
-   public boolean isMine(String sURL)
-   {
-      return sURL.contains(DOMAIN);
-   }
+//   @Override
+//   public boolean isMine(String sURL)
+//   {
+//      return sURL.contains(DOMAIN);
+//   }
 
    @Override
    public ArrayList<String> parseContent(String sContent)
@@ -117,7 +125,7 @@ public class ArenaBG extends Plugin
    }
 
    @Override
-   protected String inBackgroundHttpParse(String sURL)
+   protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       sTorrent = "";
       sImage = "";
@@ -179,7 +187,7 @@ public class ArenaBG extends Plugin
          if(oMatcher.find())
          {
             sDescription = oMatcher.group(1);
-            sDescription = sDescription.replaceAll("<br[\\s]*/>", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "");
+            sDescription = sDescription.replaceAll("<br[\\s]*/>", "\n").replace("&nbsp;", " ").replaceAll("<.*?>", "").replaceAll("\n\n", "\n").trim();
          }
       }
 
@@ -206,13 +214,12 @@ public class ArenaBG extends Plugin
             String sSubssabURL = oMatcher.group(1).replace("&amp;", "&");
             
             String sSubssabRespone = getHttpResponse(sSubssabURL);
-            
             Matcher m = ptnSubssabURLs.matcher(sSubssabRespone);
             while(m.find())
             {
                String s = m.group(1);
                s = s.replace("&amp;", "&");
-//               alSubssab.add("http://" + SUBSUNACS_DOMAIN + s);
+//                  alSubssab.add("http://" + SUBSUNACS_DOMAIN + s);
                alSubssab.add(s);
             }
          }
@@ -264,7 +271,7 @@ public class ArenaBG extends Plugin
       
       sFolderName = sTitle.replace("/", "").trim();
       String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
-      oMovieTorrent = new CMovie(sFolderName + File.separator + sTorrentName, sTorrent, null, sDescription);
+      oMovieTorrent = new Movie(sFolderName + File.separator + sTorrentName, sTorrent, null, sDescription);
       vFilesFnd.add(oMovieTorrent);
       
       if(sImage != null && !sImage.isEmpty())
@@ -327,18 +334,18 @@ public class ArenaBG extends Plugin
    }
 
    @Override
-   protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
       
-      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
       
       try
       {
          File f;
 
-         if(oFile instanceof CMovie)
+         if(oFile instanceof Movie)
          {
-            CMovie oMovie = (CMovie) oFile;
+            Movie oMovie = (Movie) oFile;
 
             sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
             
@@ -511,7 +518,7 @@ public class ArenaBG extends Plugin
       }
    }
    
-   private String getArenaBG(String sURL)
+   private String getArenaBG(String sURL) throws Exception
    {
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
       String sCookies = COOKIE_UID_NAME + "=" + oArenaBGSettings.sCookieUID + "; " + COOKIE_PASS_NAME + "=" + oArenaBGSettings.sCookiePass;

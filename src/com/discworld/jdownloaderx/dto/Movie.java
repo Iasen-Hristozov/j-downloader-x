@@ -4,19 +4,19 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "movie")
-public class CMovie extends CFile
+public class Movie extends CFile
 {
    @XmlElement(name = "magnet", required = true)
    private String sMagnet;
    @XmlElement(name = "info", required = true)
    private String sInfo;
 
-   public CMovie()
+   public Movie()
    {
       
    }
    
-   public CMovie(String sName, String sURL, String sMagnet, String sInfo)
+   public Movie(String sName, String sURL, String sMagnet, String sInfo)
    {
       super(sName, sURL);
       this.sMagnet = sMagnet;

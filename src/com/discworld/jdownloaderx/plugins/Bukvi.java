@@ -8,8 +8,11 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.discworld.jdownloaderx.PluginFactory;
 import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.IDownloader;
+import com.discworld.jdownloaderx.dto.DownloaderPassClass;
+import com.discworld.jdownloaderx.dto.Plugin;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public class Bukvi extends Plugin
@@ -24,6 +27,11 @@ public class Bukvi extends Plugin
    private String              sTitle,
                                sUrl;
    
+   static {
+      PluginFactory.getInstance().registerPlugin("bukvi.bg", new Bukvi(DownloaderPassClass.getDownloader()));
+      PluginFactory.getInstance().registerPlugin("bukvi.mmcenter.bg", new Bukvi(DownloaderPassClass.getDownloader()));
+   }
+   
    public Bukvi()
    {
       super();
@@ -34,11 +42,11 @@ public class Bukvi extends Plugin
       super(oDownloader);
    }
 
-   @Override
-   public boolean isMine(String sURL)
-   {
-      return sURL.contains(DOMAIN);
-   }
+//   @Override
+//   public boolean isMine(String sURL)
+//   {
+//      return sURL.contains(DOMAIN);
+//   }
 
    @Override
    public ArrayList<String> parseContent(String sContent)
@@ -56,7 +64,7 @@ public class Bukvi extends Plugin
    }
 
    @Override
-   protected String inBackgroundHttpParse(String sURL)
+   protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       String sBukviResponse = getHttpResponse(sURL);
    
@@ -102,9 +110,9 @@ public class Bukvi extends Plugin
    }
 
    @Override
-   protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
-      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
       try
       {
          File f;

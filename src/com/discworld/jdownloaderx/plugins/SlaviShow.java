@@ -12,13 +12,16 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.discworld.jdownloaderx.PluginFactory;
 import com.discworld.jdownloaderx.dto.CFile;
-import com.discworld.jdownloaderx.dto.CRPTDump;
+import com.discworld.jdownloaderx.dto.RPTDump;
+import com.discworld.jdownloaderx.dto.DownloaderPassClass;
 import com.discworld.jdownloaderx.dto.IDownloader;
+import com.discworld.jdownloaderx.dto.Plugin;
 
 public class SlaviShow extends Plugin
 {
-   private final static String DOMAIN = "slavishow.com",
+   private final static String DOMAIN = "www.slavishow.com",
                                RTMP_DUMP_CMD = "rtmpdump.exe -v -r \"rtmp://video.slavishow.com/slavishow/\" -a \"slavishow/\" -f \"WIN 13,0,0,214\" -W \"http://www.slavishow.com/content/themes/slavishow/swf/flowplayer.commercial-3.2.18.swf\" -p \"%s\" -y \"slavishow/%s\" --tcUrl \"rtmp://video.slavishow.com/slavishow/\" -R --buffer 2000 -o \"%s%s\"",
                                RTMP_DUMP_PATH = "plugins" + File.separator,
                                lat = "A B V G D E J Z I Y K L M N O P R S T U F H C Ch Sh Sht Y Yu Ya a b v g d e j z i y k l m n o p r s t u f h c ch sh sht y y y yu ya",
@@ -39,6 +42,10 @@ public class SlaviShow extends Plugin
    
    private RTMPDumpThread      oRTMPDumpThread;
    
+   static
+   {
+      PluginFactory.getInstance().registerPlugin(DOMAIN, new SlaviShow(DownloaderPassClass.getDownloader()));
+   }
    
    public SlaviShow()
    {
@@ -50,11 +57,11 @@ public class SlaviShow extends Plugin
       super(oDownloader);
    }
 
-   @Override
-   public boolean isMine(String sURL)
-   {
-      return sURL.contains(DOMAIN);
-   }
+//   @Override
+//   public boolean isMine(String sURL)
+//   {
+//      return sURL.contains(DOMAIN);
+//   }
 
    @Override
    public ArrayList<String> parseContent(String sContent)
@@ -72,11 +79,11 @@ public class SlaviShow extends Plugin
    }
 
    @Override
-   protected String inBackgroundHttpParse(String sURL)
+   protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       String sResponse = null;
-      try
-      {
+//      try
+//      {
          this.sURL = sURL; 
          
          Matcher oMatcher = ptnName.matcher(sURL);
@@ -87,7 +94,8 @@ public class SlaviShow extends Plugin
          
          String sNameEnc = URLEncoder.encode(sName, "UTF-8");
          
-         sURLEnc = HTTP + WWW + DOMAIN + "/" + sNameEnc + "/";
+//         sURLEnc = HTTP + WWW + DOMAIN + "/" + sNameEnc + "/";
+         sURLEnc = HTTP + DOMAIN + "/" + sNameEnc + "/";
          
          sResponse = getHttpResponse(sURLEnc);
 
@@ -105,11 +113,11 @@ public class SlaviShow extends Plugin
 
          sNameLat = cyr2lat(sName);
          
-      } 
-      catch(UnsupportedEncodingException e)
-      {
-         e.printStackTrace();
-      }
+//      } 
+//      catch(UnsupportedEncodingException e)
+//      {
+//         e.printStackTrace();
+//      }
 
       return sResponse;
    }
@@ -119,7 +127,7 @@ public class SlaviShow extends Plugin
    {
       ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
 
-      CFile oMovie = new CRPTDump(sNameLat+".flv", sURL, sMP4, sURLEnc); 
+      CFile oMovie = new RPTDump(sNameLat+".flv", sURL, sMP4, sURLEnc); 
       vFilesFnd.add(oMovie);
       
       return vFilesFnd;
@@ -128,13 +136,13 @@ public class SlaviShow extends Plugin
    @Override
    public void downloadFile(CFile oFile, String sDownloadFolder)
    {
-      if (oFile instanceof CRPTDump) 
+      if (oFile instanceof RPTDump) 
       {
          
          File flDownload = new File(sDownloadFolder);
          flDownload.mkdirs();
          
-         final String sRTMPDumpCmd = String.format(RTMP_DUMP_CMD, ((CRPTDump)oFile).getURLEnc(), ((CRPTDump)oFile).getMp4(), flDownload.getAbsolutePath() + File.separator, oFile.getName());
+         final String sRTMPDumpCmd = String.format(RTMP_DUMP_CMD, ((RPTDump)oFile).getURLEnc(), ((RPTDump)oFile).getMp4(), flDownload.getAbsolutePath() + File.separator, oFile.getName());
          System.out.print(sRTMPDumpCmd);
          
          String sRTMPDump = RTMP_DUMP_PATH + sRTMPDumpCmd;
@@ -146,7 +154,7 @@ public class SlaviShow extends Plugin
                   sRTMPDump 
          };
          
-         oRTMPDumpThread = new RTMPDumpThread(cmd, oDownloader, oFile);
+         oRTMPDumpThread = new RTMPDumpThread(cmd, downloader, oFile);
          oRTMPDumpThread.start();
          
          
@@ -155,9 +163,9 @@ public class SlaviShow extends Plugin
    }
 
    @Override
-   protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
-      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
    }
 
    @Override

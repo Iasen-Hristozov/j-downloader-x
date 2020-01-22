@@ -3,8 +3,6 @@ package com.discworld.jdownloaderx.plugins;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
@@ -14,24 +12,24 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 
+import com.discworld.jdownloaderx.PluginFactory;
 import com.discworld.jdownloaderx.dto.Book;
 import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.DownloaderPassClass;
 import com.discworld.jdownloaderx.dto.ExtractFile;
 import com.discworld.jdownloaderx.dto.FileUtils;
+import com.discworld.jdownloaderx.dto.IDownloader;
+import com.discworld.jdownloaderx.dto.Plugin;
 
 public class Chitanka extends Plugin
 {
    private final static String 
           DOMAIN = "chitanka.info",
           URL_DWN_BGN = "http://" + DOMAIN,
-          URL_BOOK = "http://chitanka\\.info/((book)|(text))/\\d*",
           EXT_FB2 = ".fb2",
           EXT_EPUB = ".epub",
           EXT_SFB = ".sfb",
@@ -45,6 +43,7 @@ public class Chitanka extends Plugin
                                 ptnAuthorTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnTitle = Pattern.compile("<a class=\"selflink\" itemprop=\"name\" data-edit=\"/admin/(book|text)/\\d+/edit\">(.+?)</a>"),
                                 ptnVolume = Pattern.compile("<h2><span>(.+?)</span></h2>"),
+                                ptnUrlBook = Pattern.compile("(http(s?)://)?chitanka\\.info/((book)|(text))/\\d*"),
                                 ptnUrlFb2 = Pattern.compile(String.format(URL, "fb2.zip", "fb2")),
                                 ptnUrlEpub = Pattern.compile(String.format(URL, "epub", "epub")),
                                 ptnUrlTxt = Pattern.compile(String.format(URL, "txt.zip", "txt")),
@@ -66,17 +65,31 @@ public class Chitanka extends Plugin
    
    
    private ChitankaSettings oChitankaSettings;
-
-   @Override
-   public boolean isMine(String sURL)
+   
+   static
    {
-      return sURL.contains(DOMAIN);
+      PluginFactory.getInstance().registerPlugin(DOMAIN, new Chitanka(DownloaderPassClass.getDownloader()));
    }
+
+   public Chitanka()
+   {
+      super();
+   }
+   
+   public Chitanka(IDownloader oDownloader)
+   {
+      super(oDownloader);
+   }
+   
+//   @Override
+//   public boolean isMine(String sURL)
+//   {
+//      return sURL.contains(DOMAIN);
+//   }
 
    @Override
    public ArrayList<String> parseContent(String sContent)
    {
-      Pattern ptnUrlBook = Pattern.compile(URL_BOOK);
       ArrayList<String> alUrlBooks = new ArrayList<String>();
       
       Matcher m = ptnUrlBook.matcher(sContent);
@@ -90,7 +103,7 @@ public class Chitanka extends Plugin
    }
 
    @Override
-   protected String inBackgroundHttpParse(String sURL)
+   protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       sAuthor = null;
       sTitle = null;
@@ -170,11 +183,11 @@ public class Chitanka extends Plugin
    }
 
    @Override
-   protected void doneDownloadFile(CFile oFile, 
+   protected void downloadFileDone(CFile oFile, 
                                    String sDownloadFolder,
                                    String saveFilePath)
    {
-      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
       String sSavePath;
       if(oFile instanceof Book)
       {

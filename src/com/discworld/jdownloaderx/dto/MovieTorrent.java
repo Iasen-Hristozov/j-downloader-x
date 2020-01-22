@@ -1,8 +1,6 @@
-package com.discworld.jdownloaderx.plugins;
+package com.discworld.jdownloaderx.dto;
 
 import javax.xml.bind.annotation.XmlRootElement;
-
-import com.discworld.jdownloaderx.dto.CFile;
 
 @XmlRootElement(name = "movie_torrent")
 public class MovieTorrent extends CFile

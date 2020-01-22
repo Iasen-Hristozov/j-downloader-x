@@ -4,19 +4,19 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "rpt_dump")
-public class CRPTDump extends CFile
+public class RPTDump extends CFile
 {
    @XmlElement(name = "mp4", required = true)
    private String sMp4;
    @XmlElement(name = "url_enc", required = true)
    private String sURLEnc;
 
-   public CRPTDump()
+   public RPTDump()
    {
       super();
    }
 
-   public CRPTDump(String sName, String sURL, String sMp4, String sURLEnc)
+   public RPTDump(String sName, String sURL, String sMp4, String sURLEnc)
    {
       super(sName, sURL);
       this.sMp4 = sMp4;

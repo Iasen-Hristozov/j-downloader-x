@@ -58,12 +58,19 @@ public class test_plugin
             // TODO Auto-generated method stub
             
          }
+
+         @Override
+         public void checkContetsVsPlugins(String sPath, String sContents)
+         {
+            // TODO Auto-generated method stub
+            
+         }
       };
       
       
       ZamundaSe oZamundaSePlugin = new ZamundaSe(oDownloader);
       
-      oZamundaSePlugin.vParseUrl("http://zelka.org/details.php?id=454728");
+      oZamundaSePlugin.parseUrl("http://zelka.org/details.php?id=454728");
       
 //      (new HTTPParser()).execute();
       

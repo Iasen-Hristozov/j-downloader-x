@@ -8,8 +8,11 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.discworld.jdownloaderx.PluginFactory;
 import com.discworld.jdownloaderx.dto.CFile;
+import com.discworld.jdownloaderx.dto.DownloaderPassClass;
 import com.discworld.jdownloaderx.dto.IDownloader;
+import com.discworld.jdownloaderx.dto.Plugin;
 import com.discworld.jdownloaderx.dto.SHttpProperty;
 
 public class Subtitrite extends Plugin
@@ -21,6 +24,11 @@ public class Subtitrite extends Plugin
    
    private String              sTitle,
                                sUrl;
+
+   static
+   {
+      PluginFactory.getInstance().registerPlugin(DOMAIN, new Subtitrite(DownloaderPassClass.getDownloader()));
+   }      
    
    public Subtitrite()
    {
@@ -32,11 +40,11 @@ public class Subtitrite extends Plugin
       super(oDownloader);
    }
 
-   @Override
-   public boolean isMine(String sURL)
-   {
-      return sURL.contains(DOMAIN);
-   }
+//   @Override
+//   public boolean isMine(String sURL)
+//   {
+//      return sURL.contains(DOMAIN);
+//   }
 
    @Override
    public ArrayList<String> parseContent(String sContent)
@@ -86,9 +94,9 @@ public class Subtitrite extends Plugin
    }
 
    @Override
-   protected void doneDownloadFile(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
    {
-      super.doneDownloadFile(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
       try
       {
          File f;
