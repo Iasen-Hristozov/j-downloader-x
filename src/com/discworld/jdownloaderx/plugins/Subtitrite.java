@@ -27,7 +27,7 @@ public class Subtitrite extends Plugin
 
    static
    {
-      PluginFactory.getInstance().registerPlugin(DOMAIN, new Subtitrite(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(DOMAIN, new Subtitrite(DownloaderPassClass.getDownloader()));
    }      
    
    public Subtitrite()
@@ -89,7 +89,7 @@ public class Subtitrite extends Plugin
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
       alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
       
-      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
 //      new DownloadFile(oFile, sDownloadFolder).execute();
    }
 

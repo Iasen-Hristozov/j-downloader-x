@@ -44,7 +44,7 @@ public class SlaviShow extends Plugin
    
    static
    {
-      PluginFactory.getInstance().registerPlugin(DOMAIN, new SlaviShow(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(DOMAIN, new SlaviShow(DownloaderPassClass.getDownloader()));
    }
    
    public SlaviShow()
@@ -241,8 +241,8 @@ public class SlaviShow extends Plugin
          }
          finally
          {
-            oDownloader.deleteFile(oFile);
-            oDownloader.saveFiles();
+            oDownloader.deleteFileFromLists(oFile);
+            oDownloader.saveFilesList();
          }
       }
    }

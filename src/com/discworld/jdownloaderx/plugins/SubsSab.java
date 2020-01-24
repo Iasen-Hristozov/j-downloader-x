@@ -20,14 +20,15 @@ public class SubsSab extends Plugin
    private final static String DOMAIN = "subs.sab.bz";
    
    private final static Pattern ptnTitle = Pattern.compile("<big>(<.+?>)?(.+?)</big>"),
-                                ptnURL = Pattern.compile("\u0421\u0412\u0410\u041b\u0418 \u0421\u0423\u0411\u0422\u0418\u0422\u0420\u0418\u0422\u0415&nbsp;</a><center><br/><br/><fb:like href=\"(.+?)\"");
+                                ptnURL = Pattern.compile("\u0421\u0412\u0410\u041b\u0418 \u0421\u0423\u0411\u0422\u0418\u0422\u0420\u0418\u0422\u0415&nbsp;</a><center><br/><br/><fb:like href=\"(.+?)\""),
+                                ptnSubssabFileUlr = Pattern.compile("((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+(&amp;){1,2})?(act=download&amp;)?(sid=[\\d]+&amp;)?attach_id=.+?)(\\s|\\\")");
    
    private String              sTitle,
                                sUrl;
    
    static
    {
-      PluginFactory.getInstance().registerPlugin(DOMAIN, new SubsSab(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(DOMAIN, new SubsSab(DownloaderPassClass.getDownloader()));
    }   
    
    public SubsSab()
@@ -89,33 +90,45 @@ public class SubsSab extends Plugin
    }
 
    @Override
-   public void downloadFile(CFile oFile, String sDownloadFolder)
+   public void downloadFile(CFile file, String sDownloadFolder)
    {
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
+      alHttpProperties.add(new SHttpProperty("Referer", file.getURL()));
       
-      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+      new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
    }
 
    @Override
-   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
    {
-      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(file, sDownloadFolder, saveFilePath);
       try
       {
-         File f;
-         if(oFile.getName().endsWith(File.separator))
-            f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator)+ 1));
-         else
-            f = new File(sDownloadFolder + File.separator + oFile.getName());
-         f.getParentFile().mkdirs();
-         File source = new File(saveFilePath);
-         Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      } 
+         super.moveFileToSavePath(file, sDownloadFolder, saveFilePath);
+      }
       catch(IOException e)
       {
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
    }
+   
+   @Override
+   protected Pattern getUrlPattern()
+   {
+      return ptnSubssabFileUlr;
+   }
+
+   @Override
+   protected Pattern getFileUrlPattern()
+   {
+      return ptnSubssabFileUlr;
+   }
+   
+   @Override
+   protected void createCookiesCollection(ArrayList<SHttpProperty> alHttpProperties)
+   {
+      alHttpProperties.add(new SHttpProperty("Referer", DOMAIN));
+   }   
+   
 }

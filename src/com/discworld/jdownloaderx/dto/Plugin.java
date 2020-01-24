@@ -12,6 +12,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -22,28 +24,40 @@ import javax.swing.SwingWorker;
 
 public abstract class Plugin
 {
-   private static final String CHARSET_WIN_1251 = "windows-1251";
-
-   private static final String CHARSET_UTF_8 = "UTF-8";
-
-   private static final String CHARSET_CP1251 = "Cp1251";
+   private static final int TYPE_TEXT = 1,
+                            TYPE_ZIP = 2;
+   
+   private static final String CHARSET_WIN_1251 = "windows-1251",
+                               CHARSET_UTF_8 = "UTF-8",
+                               CHARSET_CP1251 = "Cp1251",
+                               CHARSET_ISO8859 = "ISO8859-1";
+   
+   private static final String CONTENT_TYPE_APP_ZIP = "application/zip",
+                               CONTENT_TYPE_APP_RAR = "application/x-rar-compressed",
+                               CONTENT_TYPE_APP_DWN = "application/download",
+                               CONTENT_TYPE_TXT_HTML = "text/html";
+   
 
    protected final static String HTTP = "http://",
             HTTPS = "https://",
             WWW = "www.",
-            USR_AGN_MOZZILA = "Mozilla/5.0",
+            USER_AGENT = "Mozilla/5.0",
             USR_AGN_ALL = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.88 Safari/537.36 Vivaldi/1.7.735.46",
             // USR_AGN_ALL =
             // "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-GB;     rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13 (.NET CLR 3.5.30729)"
             // USR_AGN_ALL =
             // "Mozilla/5.0 (Windows NT 5.1; rv:19.0) Gecko/20100101 Firefox/19.0"
             REQ_PROP_USER_AGENT = "User-Agent",
-            REQ_PROP_ACCEPT_CHARSET = "Accept-Charset";
+            REQ_PROP_ACCEPT_CHARSET = "Accept-Charset",
+            HDR_FLD_LOCATION = "Location",
+            HDR_FLD_CNT_DSP = "Content-Disposition",
+            HDR_FLD_CNT_TYPE = "Content-Type",
+            HDR_FLD_CNT_tYPE = "Content-type";
 
    protected String DOMAIN = "domain";
 
    protected IDownloader downloader;
-
+   
    public Plugin()
    {
       loadSettings();
@@ -94,8 +108,9 @@ public abstract class Plugin
       }
    }
 
-   protected class DownloadFile extends SwingWorker<Boolean, Integer>
+   protected class DownloadFileThread extends SwingWorker<Boolean, Integer>
    {
+
 
       private static final int BUFFER_SIZE = 4096;
 
@@ -105,13 +120,13 @@ public abstract class Plugin
 
       private ArrayList<SHttpProperty> alHttpProperties = null;
 
-      public DownloadFile(CFile file, String sDownloadFolder)
+      public DownloadFileThread(CFile file, String sDownloadFolder)
       {
          this.file = file;
          this.sDownloadFolder = sDownloadFolder;
       }
 
-      public DownloadFile(CFile file,
+      public DownloadFileThread(CFile file,
                           String sDownloadFolder,
                           ArrayList<SHttpProperty> alHttpProperties)
       {
@@ -161,15 +176,14 @@ public abstract class Plugin
             if(responseCode == HttpURLConnection.HTTP_OK)
             {
                String contentType = httpURLConnection.getContentType();
-               if(contentType != null
-                  && contentType.equalsIgnoreCase("text/html"))
+               if(contentType != null && contentType.equalsIgnoreCase(CONTENT_TYPE_TXT_HTML))
                   throw new Exception("Wrong content type: " + contentType);
                bResult = writeHttpResponseToFile(httpURLConnection);
             }
             else if(responseCode == HttpURLConnection.HTTP_MOVED_PERM
                     || responseCode == HttpURLConnection.HTTP_MOVED_TEMP)
             {
-               String sNewURL = httpURLConnection.getHeaderField("Location");
+               String sNewURL = httpURLConnection.getHeaderField(HDR_FLD_LOCATION);
                file.setURL(sNewURL);
                bResult = getResponse();
             }
@@ -195,8 +209,7 @@ public abstract class Plugin
       private void initHttpURLConnection(HttpURLConnection httpURLConnection)
       {
          httpURLConnection.setRequestProperty(REQ_PROP_USER_AGENT, USR_AGN_ALL);
-         httpURLConnection.setRequestProperty(REQ_PROP_ACCEPT_CHARSET,
-                                              CHARSET_UTF_8);
+         httpURLConnection.setRequestProperty(REQ_PROP_ACCEPT_CHARSET, CHARSET_UTF_8);
          if(alHttpProperties != null && !alHttpProperties.isEmpty())
          {
             for(SHttpProperty oHttpProperty : alHttpProperties)
@@ -274,12 +287,7 @@ public abstract class Plugin
       private String extractFileName(HttpURLConnection httpURLConnection) throws UnsupportedEncodingException
       {
          String fileName;
-         String disposition = httpURLConnection.getHeaderField("Content-Disposition");
-         // String contentType = httpConn.getContentType();
-         // System.out.println("Content-Type = " + contentType);
-         // System.out.println("Content-Disposition = " + disposition);
-         // System.out.println("Content-Length = " + contentLength);
-         // System.out.println("fileName = " + fileName);
+         String disposition = httpURLConnection.getHeaderField(HDR_FLD_CNT_DSP);
          if(disposition != null)
          {
             // extracts file name from header field
@@ -298,10 +306,8 @@ public abstract class Plugin
          int index = disposition.indexOf("filename=");
          if(index > 0)
          {
-            fileName = disposition.substring(index + 10,
-                                             disposition.length() - 1);
-            fileName = new String(fileName.getBytes("ISO8859-1"), CHARSET_UTF_8).replace(":",
-                                                                                         "-");
+            fileName = disposition.substring(index + 10, disposition.length() - 1);
+            fileName = new String(fileName.getBytes(CHARSET_ISO8859), CHARSET_UTF_8).replace(":", "-");
          }
          return fileName;
       }
@@ -359,14 +365,28 @@ public abstract class Plugin
 
    abstract protected ArrayList<CFile> doneHttpParse(String sResult);
 
-   protected void downloadFileDone(CFile oFile,
+   protected void downloadFileDone(CFile file,
                                    String sDownloadFolder,
                                    String saveFilePath)
    {
-      downloader.deleteFile(oFile);
+      downloader.deleteFileFromLists(file);
 
-      downloader.saveFiles();
+      downloader.saveFilesList();
    }
+   
+   protected void moveFileToSavePath(CFile file,
+                                   String sDownloadFolder,
+                                   String saveFilePath) throws IOException 
+   {
+      File f;
+      if(file.getName().endsWith(File.separator))
+         f = new File(sDownloadFolder + File.separator + file.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator)+ 1));
+      else
+         f = new File(sDownloadFolder + File.separator + file.getName());
+      f.getParentFile().mkdirs();
+      File source = new File(saveFilePath);
+      Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+   }   
 
    public void parseUrl(String sURL)
    {
@@ -387,21 +407,21 @@ public abstract class Plugin
 
    public void downloadFile(CFile oFile, String sDownloadFolder)
    {
-      new DownloadFile(oFile, sDownloadFolder).execute();
+      new DownloadFileThread(oFile, sDownloadFolder).execute();
    }
 
    public void downloadFile(CFile oFile,
                             String sDownloadFolder,
                             ArrayList<SHttpProperty> alHttpProperties)
    {
-      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
    abstract public ArrayList<String> parseContent(String sContent);
 
    public String getDomain()
    {
-      return DOMAIN;
+      return "";
    }
 
    abstract protected void loadSettings();
@@ -430,7 +450,7 @@ public abstract class Plugin
       else if(iResponseCode == HttpURLConnection.HTTP_MOVED_TEMP
               || iResponseCode == HttpURLConnection.HTTP_MOVED_PERM)
       {
-         String sNewURL = httpURLConnection.getHeaderField("Location");
+         String sNewURL = httpURLConnection.getHeaderField(HDR_FLD_LOCATION);
          return getHttpResponse(sNewURL, alHttpProperties);
       }
       else
@@ -449,12 +469,11 @@ public abstract class Plugin
    private void createHttpURLConncectionHeader(ArrayList<SHttpProperty> alHttpProperties,
                                                HttpURLConnection httpURLConnection)
    {
-      httpURLConnection.setRequestProperty("User-Agent", USR_AGN_MOZZILA);
+      httpURLConnection.setRequestProperty(REQ_PROP_USER_AGENT, USER_AGENT);
       if(alHttpProperties != null && !alHttpProperties.isEmpty())
       {
          for(SHttpProperty oHttpProperty : alHttpProperties)
-            httpURLConnection.setRequestProperty(oHttpProperty.name,
-                                                 oHttpProperty.value);
+            httpURLConnection.setRequestProperty(oHttpProperty.name, oHttpProperty.value);
       }
    }
 
@@ -480,8 +499,8 @@ public abstract class Plugin
       final Pattern pattern = Pattern.compile("charset=\"?(\\w+\\-\\d+)\"?");
 
       List<String> cookies;
-      if((cookies = httpURLConnection.getHeaderFields().get("Content-Type")) == null)
-         cookies = httpURLConnection.getHeaderFields().get("Content-type");
+      if((cookies = httpURLConnection.getHeaderFields().get(HDR_FLD_CNT_TYPE)) == null)
+         cookies = httpURLConnection.getHeaderFields().get(HDR_FLD_CNT_tYPE);
       Matcher matcher = pattern.matcher(cookies.get(0));
       if(matcher.find())
       {
@@ -494,13 +513,171 @@ public abstract class Plugin
          return CHARSET_CP1251;
    }
 
-   /*
-    * TODO Make it abstract
-    */
    public ArrayList<CFile> checkContetWithPlugin(String sPath, String sContent)
    {
-      return new ArrayList<CFile>();
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+
+      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
+      createCookiesCollection(alHttpProperties);
+      
+      Matcher matcher = getUrlPattern().matcher(sContent);
+      while(matcher.find())
+      {
+         String sURL = matcher.group(1).replaceAll("&amp;", "&");
+         try
+         {
+            alFilesFound.addAll(getFilesFromUrl(sPath, alHttpProperties, sURL));
+         }
+         catch(Exception e)
+         {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
+      }
+      
+      return alFilesFound;
    }
+
+   protected void checkAddHttpProperty(ArrayList<SHttpProperty> alHttpProperties, SHttpProperty newHttpProperty)
+   {
+      boolean isHttpPropertyFound = false;
+      for(SHttpProperty httpProperty: alHttpProperties)
+      {
+         if(httpProperty.name.equalsIgnoreCase(newHttpProperty.name))
+         {
+            httpProperty.value = newHttpProperty.value;
+            isHttpPropertyFound = true;
+            break;
+         }
+      }
+      if(!isHttpPropertyFound)
+         alHttpProperties.add(newHttpProperty);
+   }
+   
+   protected ArrayList<CFile> getFilesFromUrl(String sPath,
+                                            ArrayList<SHttpProperty> alHttpProperties,
+                                            String sURL) throws Exception
+   {
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+      byte type = getUrlContentType(sURL, alHttpProperties);
+      switch(type)
+      {
+         case TYPE_TEXT:
+            alFilesFound.addAll(getFilesUrlsFormUrl(sPath, sURL, alHttpProperties));
+         break;
+            
+         case TYPE_ZIP:
+            CFile file = createFile(sPath, sURL);
+            alFilesFound.add(file);
+         break;
+      }
+      return alFilesFound;
+   }
+   
+   private ArrayList<CFile> getFilesUrlsFormUrl(String sPath, 
+                                                String sURL, 
+                                                ArrayList<SHttpProperty> alHttpProperties) throws Exception
+   {            
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+      
+      String sHttpResponse = getHttpResponse(sURL, alHttpProperties);
+      
+      Matcher matcher = getFileUrlPattern().matcher(sHttpResponse);
+      while(matcher.find())
+      {
+         String sNewURL = matcher.group(1).replaceAll("&amp;", "&");
+         if(!sNewURL.contains(getDomain()))
+            sNewURL = HTTPS + getDomain() + sNewURL;
+         alFilesFound.addAll(getFilesFromUrl(sPath, alHttpProperties, sNewURL));
+      }
+      return alFilesFound;
+   }
+   
+   private byte getUrlContentType(String sURL, ArrayList<SHttpProperty> alHttpProperties) throws Exception
+   {
+      HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(sURL).openConnection();
+
+//      createRequestHeader(alHttpProperties, httpURLConnection);
+      initHttpUrlConnection(httpURLConnection, alHttpProperties);
+    
+      int responseCode = httpURLConnection.getResponseCode();
+    
+      if(responseCode == HttpURLConnection.HTTP_OK)
+      {
+         String contentType = httpURLConnection.getContentType();
+         if(contentType == null)
+            throw new Exception("Null content type");
+
+         if(contentType.contains(CONTENT_TYPE_TXT_HTML))
+            return TYPE_TEXT;
+         else if(contentType.contains(CONTENT_TYPE_APP_ZIP)
+                  || contentType.contains(CONTENT_TYPE_APP_RAR)
+                  || contentType.contains(CONTENT_TYPE_APP_DWN))
+         {
+            return TYPE_ZIP;
+         }
+         else
+            throw new Exception("Unknown content type: " + contentType);
+      }
+      else if(responseCode == HttpURLConnection.HTTP_MOVED_TEMP
+               || responseCode == HttpURLConnection.HTTP_MOVED_PERM)
+         {
+            sURL = httpURLConnection.getHeaderField(HDR_FLD_LOCATION);
+            return getUrlContentType(sURL, alHttpProperties);
+         }
+      else
+         throw new Exception("Http request response code: " + responseCode);
+   }
+   
+   private CFile createFile(String sPath, String sURL)
+   {
+      return new CFile(sPath + File.separator, sURL);
+   }
+
+//   private void createRequestHeader(ArrayList<SHttpProperty> alHttpProperties,
+//                                    HttpURLConnection httpURLConnection) throws ProtocolException
+//   {
+//      httpURLConnection.setRequestMethod("GET");
+//
+//      //header
+//      httpURLConnection.setRequestProperty("User-Agent", USER_AGENT);
+//      if(alHttpProperties != null && !alHttpProperties.isEmpty())
+//      {
+//         for(SHttpProperty httpProperty : alHttpProperties)
+//            httpURLConnection.setRequestProperty(httpProperty.name, httpProperty.value);
+//      }
+//   }
+   
+   protected void createCookiesCollection(ArrayList<SHttpProperty> alHttpProperties)
+   {}
+   
+   /*
+    * TODO Make them abstract
+    */
+//   public ArrayList<CFile> checkContetWithPlugin(String sPath, String sContent)
+//   {
+//      return new ArrayList<CFile>();
+//   }
+   
+   protected Pattern getUrlPattern()
+   {
+      return null;
+   }
+
+   protected Pattern getFileUrlPattern()
+   {
+      return null;
+   }
+   
+//   protected int getUrlPatternGroupId()
+//   {
+//      return 0;
+//   }
+//      
+//   protected int getFileUrlPatternGroupId()
+//   {
+//      return 0;
+//   }
    
    protected static class Logger
    {

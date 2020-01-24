@@ -27,7 +27,7 @@ public class Subsland extends Plugin
    
    static
    {
-      PluginFactory.getInstance().registerPlugin(DOMAIN, new Subsland(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(DOMAIN, new Subsland(DownloaderPassClass.getDownloader()));
    }
    
    public Subsland()
@@ -89,7 +89,7 @@ public class Subsland extends Plugin
 //      alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
       
 //      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
-      new DownloadFile(oFile, sDownloadFolder).execute();
+      new DownloadFileThread(oFile, sDownloadFolder).execute();
    }
 
    @Override

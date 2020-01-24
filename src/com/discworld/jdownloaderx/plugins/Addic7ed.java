@@ -1,9 +1,6 @@
 package com.discworld.jdownloaderx.plugins;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,14 +19,16 @@ public class Addic7ed extends Plugin
    
    
    private final static Pattern ptnTitle = Pattern.compile("<span class=\"titulo\">(.+?)<small>"),
-                                ptnURL = Pattern.compile("href=\"(/(original|updated)/.+?)\"");
-   
+                                ptnURL = Pattern.compile("href=\\\"(\\/(original|updated)\\/.+?)\\\""),
+                                ptnAddic7edUrl = Pattern.compile("((http:\\/\\/)?(www.)?addic7ed.com\\/\\S*)"),
+                                ptnAddic7edFileUrl = Pattern.compile("href=\\\"(\\/(original|updated)\\/.+?)\\\"");
+
    private String              sTitle,
                                sUrl;
    
    static 
    {
-      PluginFactory.getInstance().registerPlugin(DOMAIN, new Addic7ed(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(DOMAIN, new Addic7ed(DownloaderPassClass.getDownloader()));
    }
    
    public Addic7ed()
@@ -96,23 +95,16 @@ public class Addic7ed extends Plugin
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
       alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
       
-      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
    @Override
-   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
    {
-      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(file, sDownloadFolder, saveFilePath);
       try
       {
-         File f;
-         if(oFile.getName().endsWith(File.separator))
-            f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator)+ 1));
-         else
-            f = new File(sDownloadFolder + File.separator + oFile.getName());
-         f.getParentFile().mkdirs();
-         File source = new File(saveFilePath);
-         Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         super.moveFileToSavePath(file, sDownloadFolder, saveFilePath);
       } 
       catch(IOException e)
       {
@@ -125,4 +117,17 @@ public class Addic7ed extends Plugin
    protected void loadSettings()
    {
    }
+
+   @Override
+   protected Pattern getUrlPattern()
+   {
+      return ptnAddic7edUrl;
+   }
+
+   @Override
+   protected Pattern getFileUrlPattern()
+   {
+      return ptnAddic7edFileUrl;
+   }
+
 }

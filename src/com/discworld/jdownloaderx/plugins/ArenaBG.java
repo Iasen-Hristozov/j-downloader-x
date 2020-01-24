@@ -89,9 +89,10 @@ public class ArenaBG extends Plugin
 
    static
    {
-      PluginFactory.getInstance().registerPlugin(DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
-      PluginFactory.getInstance().registerPlugin("cdn." + DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin("cdn." + DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
    }
+   
    
    public ArenaBG()
    {
@@ -108,7 +109,7 @@ public class ArenaBG extends Plugin
 //   {
 //      return sURL.contains(DOMAIN);
 //   }
-
+   
    @Override
    public ArrayList<String> parseContent(String sContent)
    {
@@ -330,7 +331,7 @@ public class ArenaBG extends Plugin
       alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
       alHttpProperties.add(new SHttpProperty("Referer", DOMAIN));
 
-      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
    @Override

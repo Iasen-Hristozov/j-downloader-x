@@ -68,7 +68,7 @@ public class Chitanka extends Plugin
    
    static
    {
-      PluginFactory.getInstance().registerPlugin(DOMAIN, new Chitanka(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(DOMAIN, new Chitanka(DownloaderPassClass.getDownloader()));
    }
 
    public Chitanka()

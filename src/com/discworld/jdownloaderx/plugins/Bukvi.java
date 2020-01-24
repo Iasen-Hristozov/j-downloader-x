@@ -21,15 +21,17 @@ public class Bukvi extends Plugin
    
    private final static Pattern ptnTitle = Pattern.compile("<h1><title>(.+?) - \u041a\u0430\u0442\u0430\u043b\u043e\u0433 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438 \u002d \u041a\u0430\u0447\u0432\u0430\u043d\u0435 \u043d\u0430 \u043d\u043e\u0432 \u0444\u0430\u0439\u043b\u0021 \u002d \u0042\u0075\u006b\u0076\u0069\u0042\u0047 \u002d \u0042\u0075\u006c\u0067\u0061\u0072\u0069\u0061\u006e \u0054\u0072\u0061\u006e\u0073\u006c\u0061\u0074\u006f\u0072 \u005a\u006f\u006e\u0065\u0021</title></h1>"),
 //                                ptnURL = Pattern.compile("<a href=\"(.+?)\" onmouseover=\"return overlib('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435');\"");
-                                ptnUrl = Pattern.compile("(http://)?bukvi.bg/load/\\d+/\\w+/[\\d\\-]+"),
-                                ptnUrlFile = Pattern.compile("<a href=\"((http://)?bukvi.bg/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\"");
+                                ptnUrl = Pattern.compile("((http:\\/\\/)?bukvi.bg\\/load\\/\\d+(\\/\\w+)?(/[\\d\\-]+)?)"),
+//                                ptnUrlFile = Pattern.compile("<a href=\"((http://)?bukvi.bg/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\"");
+                                ptnUrlFile = Pattern.compile("<a href=\\\"((http:\\/\\/)?bukvi(.mmcenter)?.bg\\/load\\/[\\d\\-]+)\\\"");
+   
    
    private String              sTitle,
                                sUrl;
    
    static {
-      PluginFactory.getInstance().registerPlugin("bukvi.bg", new Bukvi(DownloaderPassClass.getDownloader()));
-      PluginFactory.getInstance().registerPlugin("bukvi.mmcenter.bg", new Bukvi(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin("bukvi.bg", new Bukvi(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin("bukvi.mmcenter.bg", new Bukvi(DownloaderPassClass.getDownloader()));
    }
    
    public Bukvi()
@@ -106,23 +108,16 @@ public class Bukvi extends Plugin
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
       alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
       
-      new DownloadFile(oFile, sDownloadFolder, alHttpProperties).execute();
+      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
    @Override
-   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
    {
-      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+      super.downloadFileDone(file, sDownloadFolder, saveFilePath);
       try
       {
-         File f;
-         if(oFile.getName().endsWith(File.separator))
-            f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator)+ 1));
-         else
-            f = new File(sDownloadFolder + File.separator + oFile.getName());
-         f.getParentFile().mkdirs();
-         File source = new File(saveFilePath);
-         Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         super.moveFileToSavePath(file, sDownloadFolder, saveFilePath);
       } 
       catch(IOException e)
       {
@@ -135,4 +130,17 @@ public class Bukvi extends Plugin
    protected void loadSettings()
    {
    }
+   
+   @Override
+   protected Pattern getUrlPattern()
+   {
+      return ptnUrl;
+   }
+
+   @Override
+   protected Pattern getFileUrlPattern()
+   {
+      return ptnUrlFile;
+   }
+   
 }
