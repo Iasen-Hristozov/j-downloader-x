@@ -41,22 +41,22 @@ public class ZamundaNet extends Plugin
 {
    
    private final static String DOMAIN = "www.zamunda.net",
-                               SUBSUNACS_DOMAIN = "subsunacs.net",
+//                               SUBSUNACS_DOMAIN = "subsunacs.net",
                                COOKIE_UID_NAME = "uid",
                                COOKIE_PASS_NAME = "pass",
                                SETTINGS_FILE = "zamunda_net.xml",
                                MAGNET_FILE = "magnet.txt",
                                INFO_FILE = "info.txt",
 //                               HTTP = "http://",
-                               HTTPS = "https://",
+                               HTTPS = "https://";
 //                               WWW = "www.",
-                               BUKVI_URL = "http://bukvi.bg",
-                               EASTERN_SPIRIT_URL = "easternspirit.org";
+//                               BUKVI_URL = "http://bukvi.bg",
+//                               EASTERN_SPIRIT_URL = "easternspirit.org";
    
 //   private final static String[] DOMAINS = {DOMAIN, "subsland.com"};
 //   private final static String[] DOMAINS = {DOMAIN, "imgur.com"};
 
-   private final static Pattern 
+   private final static Pattern ptnURL = Pattern.compile("((http(s?)://)?(www.)?zamunda\\.net/banan\\?id=\\d+)"),
 //                                ptnTitle = Pattern.compile("<h1>(.+?</h1>)"),
 //                                ptnTitle = Pattern.compile("<title>(.*?)<\\/title>"),
                                 ptnTitle = Pattern.compile("<h1(.*?)>(.*?)<\\/.*?>"),
@@ -80,10 +80,9 @@ public class ZamundaNet extends Plugin
 //                                ptnSubssabURL = Pattern.compile("<a href=((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=search(&amp;sid=.+?)?&amp;movie=.+?)( target=_blank)?>"),
 //                                ptnSubssabURLs = Pattern.compile("\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&attach_id=.+?)\"( target=\\\"_blank\\\")?"),
 //                                ptnSubssab = Pattern.compile("((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&amp;attach_id=\\d+)"),
-                                ptnZamundaSubs = Pattern.compile("((http:\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.]+))"),
-                                ptnUrlMovie = Pattern.compile("(http(s?)://)?(www.)?zamunda\\.net/banan\\?id=\\d+"),
-                                ptnSubsland = Pattern.compile("(http:\\/\\/)?(www\\.)?subsland.com\\/subtitles\\.php\\?id=\\d+"),
-                                ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)");
+                                ptnZamundaSubs = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.]+))");
+//                                ptnSubsland = Pattern.compile("(http:\\/\\/)?(www\\.)?subsland.com\\/subtitles\\.php\\?id=\\d+"),
+//                                ptnSubslandFile = Pattern.compile("(http://)?subsland\\.com/downloadsubtitles/(.+?)(\\.rar)|(\\.zip)");
 //                                ptnBukvi = Pattern.compile("(http:\\/\\/)?bukvi\\.bg\\/load\\/(\\d+\\/\\w+\\/)?[\\d\\-]+"),
 //                                ptnBukviFile = Pattern.compile("a href=(\\\'|\\\")(((http:\\/\\/)?bukvi(\\.mmcenter)?\\.bg)?\\/load\\/[\\d\\-]+)(\\\"|\\\')><button"),
 //                                ptnEasternSpirit = Pattern.compile("<a href=((http:\\/\\/)?(www\\.)?easternspirit\\.org\\/download\\.php\\?view\\.\\d+) target="),
@@ -99,14 +98,14 @@ public class ZamundaNet extends Plugin
                                sTorrent,
                                sImage,
                                sDescription,
-                               sSubsunacs,
+//                               sSubsunacs,
                                sZamundaSubs,
-                               sSubssab,
-                               sSubslandFile,
-                               sBukvi,
-                               sBukviFile,
-                               sEasternSpirit,
-                               sEasternSpiritFile,
+//                               sSubssab,
+//                               sSubslandFile,
+//                               sBukvi,
+//                               sBukviFile,
+//                               sEasternSpirit,
+//                               sEasternSpiritFile,
                                sFilesName,
                                sFolderName;
 
@@ -115,15 +114,15 @@ public class ZamundaNet extends Plugin
    private Movie        oMovieTorrent = null;
    
    private CFile               flImage = null,
-                               flSubsunacs = null,
-                               flSubssab = null,
-                               flZamundaSubs = null,
-                               flSubsland = null,
-                               flBukvi = null,
-                               flEasternSpirit = null;
+//                               flSubsunacs = null,
+//                               flSubssab = null,
+                               flZamundaSubs = null;
+//                               flSubsland = null;
+//                               flBukvi = null,
+//                               flEasternSpirit = null;
    
-   private ArrayList<String>   alSubsunacs = new ArrayList<String>(),
-                               alSubssab = new ArrayList<String>();
+//   private ArrayList<String>   alSubsunacs = new ArrayList<String>(),
+//                               alSubssab = new ArrayList<String>();
 
    static 
    {
@@ -152,33 +151,18 @@ public class ZamundaNet extends Plugin
 //   }
 
    @Override
-   public ArrayList<String> parseContent(String sContent)
-   {
-      ArrayList<String> alUrlMovies = new ArrayList<String>();
-   
-      Matcher m = ptnUrlMovie.matcher(sContent);
-      while(m.find())
-      {
-         String s = m.group();
-         alUrlMovies.add(s);
-      }
-   
-      return alUrlMovies;
-   }
-
-   @Override
    protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       sMagnet = "";
       sTorrent = "";
       sImage = "";
       sDescription = "";
-      sSubsunacs = "";
+//      sSubsunacs = "";
       sZamundaSubs = "";
-      sSubssab = "";
-      sSubslandFile = "";
-      sBukvi = "";
-      sEasternSpirit = "";
+//      sSubssab = "";
+//      sSubslandFile = "";
+//      sBukvi = "";
+//      sEasternSpirit = "";
    
       if(oZamundaNetSettings.sCookieUID == null || 
          oZamundaNetSettings.sCookieUID.isEmpty() || 
@@ -329,20 +313,20 @@ public class ZamundaNet extends Plugin
          if(oMatcher.find())
             sZamundaSubs = oMatcher.group();
 
-         oMatcher = ptnSubsland.matcher(sResponse);
-         if(oMatcher.find())
-         {
-            String sSubslandURL = oMatcher.group().replace("&amp;", "&");
-            String sSubslandRespone = getHttpResponse(sSubslandURL);
-            oMatcher = ptnSubslandFile.matcher(sSubslandRespone);
-            if(oMatcher.find())
-               sSubslandFile = oMatcher.group();
-            
-         }
-         
-         oMatcher = ptnSubslandFile.matcher(sResponse);
-         if(oMatcher.find())
-            sSubslandFile = oMatcher.group();
+//         oMatcher = ptnSubsland.matcher(sResponse);
+//         if(oMatcher.find())
+//         {
+//            String sSubslandURL = oMatcher.group().replace("&amp;", "&");
+//            String sSubslandRespone = getHttpResponse(sSubslandURL);
+//            oMatcher = ptnSubslandFile.matcher(sSubslandRespone);
+//            if(oMatcher.find())
+//               sSubslandFile = oMatcher.group();
+//            
+//         }
+//         
+//         oMatcher = ptnSubslandFile.matcher(sResponse);
+//         if(oMatcher.find())
+//            sSubslandFile = oMatcher.group();
 
 //         oMatcher = ptnBukvi.matcher(sResponse);
 //         if(oMatcher.find())
@@ -428,25 +412,25 @@ public class ZamundaNet extends Plugin
          vFilesFnd.add(flImage);
       }
       
-      if(alSubsunacs != null && !alSubsunacs.isEmpty())
-      {
-         for(String sSubsunacs : alSubsunacs)
-         {
-            flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
-            vFilesFnd.add(flSubsunacs);
-         }
-         alSubsunacs.clear();
-      }
-      
-      if(alSubssab != null && !alSubssab.isEmpty())
-      {
-         for(String sSubssab : alSubssab)
-         {
-            flSubssab= new CFile(sFolderName + File.separator, sSubssab);
-            vFilesFnd.add(flSubssab);
-         }
-         alSubssab.clear();
-      }
+//      if(alSubsunacs != null && !alSubsunacs.isEmpty())
+//      {
+//         for(String sSubsunacs : alSubsunacs)
+//         {
+//            flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
+//            vFilesFnd.add(flSubsunacs);
+//         }
+//         alSubsunacs.clear();
+//      }
+//      
+//      if(alSubssab != null && !alSubssab.isEmpty())
+//      {
+//         for(String sSubssab : alSubssab)
+//         {
+//            flSubssab= new CFile(sFolderName + File.separator, sSubssab);
+//            vFilesFnd.add(flSubssab);
+//         }
+//         alSubssab.clear();
+//      }
    
       if(sZamundaSubs != null && !sZamundaSubs.isEmpty())
       {
@@ -455,27 +439,24 @@ public class ZamundaNet extends Plugin
          vFilesFnd.add(flZamundaSubs);
       }
       
-      if(sSubslandFile != null && !sSubslandFile.isEmpty())
-      {
-         flSubsland = new CFile(sFolderName + File.separator, sSubslandFile);
-         vFilesFnd.add(flSubsland);
-      }      
+//      if(sSubslandFile != null && !sSubslandFile.isEmpty())
+//      {
+//         flSubsland = new CFile(sFolderName + File.separator, sSubslandFile);
+//         vFilesFnd.add(flSubsland);
+//      }      
+//
+//      if(sBukviFile != null && !sBukviFile.isEmpty())
+//      {
+//         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
+//         vFilesFnd.add(flBukvi);
+//      }      
+//
+//      if(sEasternSpiritFile != null && !sEasternSpiritFile.isEmpty())
+//      {
+//         flEasternSpirit = new CFile(sFolderName + File.separator, sEasternSpiritFile);
+//         vFilesFnd.add(flEasternSpirit);
+//      }      
 
-      if(sBukviFile != null && !sBukviFile.isEmpty())
-      {
-         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
-         vFilesFnd.add(flBukvi);
-      }      
-
-      if(sEasternSpiritFile != null && !sEasternSpiritFile.isEmpty())
-      {
-         flEasternSpirit = new CFile(sFolderName + File.separator, sEasternSpiritFile);
-         vFilesFnd.add(flEasternSpirit);
-      }      
-      
-
-
-      
       return vFilesFnd;
    }
 
@@ -492,23 +473,25 @@ public class ZamundaNet extends Plugin
    }
 
    @Override
-   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
    {
-      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+      downloader.deleteFileFromLists(file);
+
+      downloader.saveFilesList();
       
       try
       {
          File f;
 
-         if(oFile instanceof Movie)
+         if(file instanceof Movie)
          {
-            Movie oMovie = (Movie) oFile;
+            Movie oMovie = (Movie) file;
             sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
             
             if(oMovie.getName().endsWith(File.separator))
-               f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
+               f = new File(sDownloadFolder + File.separator + file.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
             else
-               f = new File(sDownloadFolder + File.separator + oFile.getName());
+               f = new File(sDownloadFolder + File.separator + file.getName());
             f.getParentFile().mkdirs();
             File source = new File(saveFilePath);
             Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -535,10 +518,10 @@ public class ZamundaNet extends Plugin
          } 
          else
          {
-            if(oFile.getName().endsWith(File.separator))
-               f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
+            if(file.getName().endsWith(File.separator))
+               f = new File(sDownloadFolder + File.separator + file.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
             else
-               f = new File(sDownloadFolder + File.separator + oFile.getName());
+               f = new File(sDownloadFolder + File.separator + file.getName());
             f.getParentFile().mkdirs();
             File source = new File(saveFilePath);
             Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -722,5 +705,24 @@ public class ZamundaNet extends Plugin
     Matcher oMatcher = ptnUri.matcher(uri);
     return !oMatcher.find();
  }
+
+@Override
+protected Pattern getUrlPattern()
+{
+   return ptnURL;
+}
+
+@Override
+protected Pattern getFileUrlPattern()
+{
+   // TODO Auto-generated method stub
+   return null;
+}
+
+@Override
+protected Pattern getTitlePattern()
+{
+   return ptnTitle;
+}
  
 }

@@ -1,9 +1,5 @@
 package com.discworld.jdownloaderx.plugins;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,8 +22,8 @@ public class Bukvi extends Plugin
                                 ptnUrlFile = Pattern.compile("<a href=\\\"((http:\\/\\/)?bukvi(.mmcenter)?.bg\\/load\\/[\\d\\-]+)\\\"");
    
    
-   private String              sTitle,
-                               sUrl;
+//   private String              sTitle,
+//                               sUrl;
    
    static {
       PluginFactory.registerPlugin("bukvi.bg", new Bukvi(DownloaderPassClass.getDownloader()));
@@ -51,23 +47,9 @@ public class Bukvi extends Plugin
 //   }
 
    @Override
-   public ArrayList<String> parseContent(String sContent)
-   {
-      ArrayList<String> alUrlMovies = new ArrayList<String>();
-   
-      Matcher m = ptnUrl.matcher(sContent);
-      while(m.find())
-      {
-         String s = m.group();
-         alUrlMovies.add(s);
-      }
-   
-      return alUrlMovies;
-   }
-
-   @Override
    protected String inBackgroundHttpParse(String sURL) throws Exception
    {
+      String sUrl;
       String sBukviResponse = getHttpResponse(sURL);
    
       if(sBukviResponse != null)
@@ -84,22 +66,12 @@ public class Bukvi extends Plugin
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
       sResult = sResult.replace("\n", "");
-   
-      ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
+      String sUrl = getFileUrl(sResult);
+      String sTitle = getTitle(sResult) + ".rar";
 
-//      Matcher oMatcher = ptnUrl.matcher(sResult);
-//      if(oMatcher.find())
-//         sUrl = oMatcher.group();
-////         sUrl = oMatcher.group(1);
-      
-      Matcher oMatcher = ptnTitle.matcher(sResult);
-      if(oMatcher.find())
-         sTitle = oMatcher.group(1);
-         sTitle = sTitle.replace("/", "-") + ".rar";
-   
-      vFilesFnd.add(new CFile(sTitle, sUrl));
-   
-      return vFilesFnd;
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+      alFilesFound.add(new CFile(sTitle, sUrl));
+      return alFilesFound;
    }
 
    @Override
@@ -109,21 +81,6 @@ public class Bukvi extends Plugin
       alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
       
       new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
-   }
-
-   @Override
-   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
-   {
-      super.downloadFileDone(file, sDownloadFolder, saveFilePath);
-      try
-      {
-         super.moveFileToSavePath(file, sDownloadFolder, saveFilePath);
-      } 
-      catch(IOException e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
    }
 
    @Override
@@ -141,6 +98,12 @@ public class Bukvi extends Plugin
    protected Pattern getFileUrlPattern()
    {
       return ptnUrlFile;
+   }
+
+   @Override
+   protected Pattern getTitlePattern()
+   {
+      return ptnTitle;
    }
    
 }

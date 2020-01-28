@@ -363,7 +363,7 @@ public abstract class Plugin
       return getHttpResponse(sURL);
    }
 
-   abstract protected ArrayList<CFile> doneHttpParse(String sResult);
+//   abstract protected ArrayList<CFile> doneHttpParse(String sResult);
 
    protected void downloadFileDone(CFile file,
                                    String sDownloadFolder,
@@ -372,6 +372,16 @@ public abstract class Plugin
       downloader.deleteFileFromLists(file);
 
       downloader.saveFilesList();
+      
+      try
+      {
+         moveFileToSavePath(file, sDownloadFolder, saveFilePath);
+      }
+      catch(IOException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
    }
    
    protected void moveFileToSavePath(CFile file,
@@ -417,8 +427,20 @@ public abstract class Plugin
       new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
-   abstract public ArrayList<String> parseContent(String sContent);
-
+   public ArrayList<String> getURLsFromContent(String sContent)
+   {
+      ArrayList<String> alURLs = new ArrayList<String>();
+   
+      Matcher m = getUrlPattern().matcher(sContent);
+      while(m.find())
+      {
+         String s = m.group(1);
+         alURLs.add(s);
+      }
+   
+      return alURLs;
+   }
+   
    public String getDomain()
    {
       return "";
@@ -651,23 +673,22 @@ public abstract class Plugin
    protected void createCookiesCollection(ArrayList<SHttpProperty> alHttpProperties)
    {}
    
-   /*
-    * TODO Make them abstract
-    */
 //   public ArrayList<CFile> checkContetWithPlugin(String sPath, String sContent)
 //   {
 //      return new ArrayList<CFile>();
 //   }
    
-   protected Pattern getUrlPattern()
-   {
-      return null;
-   }
+   
+   abstract protected Pattern getUrlPattern();
 
-   protected Pattern getFileUrlPattern()
-   {
-      return null;
-   }
+   abstract protected Pattern getFileUrlPattern();
+
+   /*
+    * TODO Make them abstract
+    */
+
+   
+   abstract protected Pattern getTitlePattern();
    
 //   protected int getUrlPatternGroupId()
 //   {
@@ -679,6 +700,36 @@ public abstract class Plugin
 //      return 0;
 //   }
    
+   protected ArrayList<CFile> doneHttpParse(String sResult)
+   {
+      sResult = sResult.replace("\n", "");
+      String sUrl = getFileUrl(sResult);
+      String sTitle = getTitle(sResult).trim();
+
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+      alFilesFound.add(new CFile(sTitle + File.separator, sUrl));
+   
+      return alFilesFound;
+   }
+
+protected String getTitle(String sResult)
+{
+   String sTitle = "";
+   Matcher matcher = getTitlePattern().matcher(sResult);
+   if(matcher.find())
+      sTitle = matcher.group(1).replace("/", "-").trim();
+   return sTitle;
+}
+
+   protected String getFileUrl(String sResult)
+   {
+      String sURL = "";
+      Matcher matcher = getFileUrlPattern().matcher(sResult);
+      if(matcher.find())
+         sURL = matcher.group();
+      return sURL;
+   }
+
    protected static class Logger
    {
       protected static void log(String text)

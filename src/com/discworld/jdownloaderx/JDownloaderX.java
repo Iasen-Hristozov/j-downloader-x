@@ -203,7 +203,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
                Plugin plugin = PluginFactory.getPlugin(matcher.group(DOMAIN_GROUP));
                if(plugin != null) 
                {
-                  ArrayList<String> alURLs = plugin.parseContent(sContent);
+                  ArrayList<String> alURLs = plugin.getURLsFromContent(sContent);
                   txtURL.setText(String.join(",", alURLs));
                   for(String sURL : alURLs)
                      plugin.parseUrl(sURL);

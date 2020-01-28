@@ -2,9 +2,7 @@ package com.discworld.jdownloaderx.plugins;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,7 +41,7 @@ public class Chitanka extends Plugin
                                 ptnAuthorTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnTitle = Pattern.compile("<a class=\"selflink\" itemprop=\"name\" data-edit=\"/admin/(book|text)/\\d+/edit\">(.+?)</a>"),
                                 ptnVolume = Pattern.compile("<h2><span>(.+?)</span></h2>"),
-                                ptnUrlBook = Pattern.compile("(http(s?)://)?chitanka\\.info/((book)|(text))/\\d*"),
+                                ptnUrlBook = Pattern.compile("((http(s?)://)?chitanka\\.info/((book)|(text))/\\d*)"),
                                 ptnUrlFb2 = Pattern.compile(String.format(URL, "fb2.zip", "fb2")),
                                 ptnUrlEpub = Pattern.compile(String.format(URL, "epub", "epub")),
                                 ptnUrlTxt = Pattern.compile(String.format(URL, "txt.zip", "txt")),
@@ -76,9 +74,9 @@ public class Chitanka extends Plugin
       super();
    }
    
-   public Chitanka(IDownloader oDownloader)
+   public Chitanka(IDownloader downloader)
    {
-      super(oDownloader);
+      super(downloader);
    }
    
 //   @Override
@@ -86,21 +84,6 @@ public class Chitanka extends Plugin
 //   {
 //      return sURL.contains(DOMAIN);
 //   }
-
-   @Override
-   public ArrayList<String> parseContent(String sContent)
-   {
-      ArrayList<String> alUrlBooks = new ArrayList<String>();
-      
-      Matcher m = ptnUrlBook.matcher(sContent);
-      while (m.find()) 
-      {
-          String s = m.group();
-          alUrlBooks.add(s);
-      }      
-      
-      return alUrlBooks;
-   }
 
    @Override
    protected String inBackgroundHttpParse(String sURL) throws Exception
@@ -169,17 +152,17 @@ public class Chitanka extends Plugin
    {
 //      CFile oBook = null;
       Book oBook = null;
-      ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
       for(int i = 0; i < URLS.length; i++)
       {
          if(oChitankaSettings.bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
          {
             oBook = new Book(sResult + EXTS[i], URL_DWN_BGN + sUrls[i], sAuthor, sTitle, sVolume);
-            vFilesFnd.add(oBook);
+            alFilesFound.add(oBook);
          }
       }
       
-      return vFilesFnd;
+      return alFilesFound;
    }
 
    @Override
@@ -240,21 +223,11 @@ public class Chitanka extends Plugin
                FileUtils.renameFile(oFolder.getPath(), sSavePath);
             }         
          } 
-         catch(InterruptedException e)
+         catch(Exception e)
          {
             // TODO Auto-generated catch block
             e.printStackTrace();
          } 
-         catch(ExecutionException e)
-         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         } 
-//         catch(IOException e)
-//         {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//         }
       }
       else
       {
@@ -324,5 +297,24 @@ public class Chitanka extends Plugin
          bDownloads[4] = bDownloadPDF; 
          bDownloads[5] = bDownloadDJVU;
       }
+   }
+
+   @Override
+   protected Pattern getUrlPattern()
+   {
+      return ptnUrlBook;
+   }
+
+   @Override
+   protected Pattern getFileUrlPattern()
+   {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   protected Pattern getTitlePattern()
+   {
+      return ptnTitle;
    }
 }

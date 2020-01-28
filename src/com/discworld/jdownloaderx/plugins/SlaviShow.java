@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -64,7 +63,7 @@ public class SlaviShow extends Plugin
 //   }
 
    @Override
-   public ArrayList<String> parseContent(String sContent)
+   public ArrayList<String> getURLsFromContent(String sContent)
    {
       ArrayList<String> alUrlMovies = new ArrayList<String>();
    
@@ -316,5 +315,25 @@ public class SlaviShow extends Plugin
             ioe.printStackTrace();
          }
       }
+   }
+
+   @Override
+   protected Pattern getUrlPattern()
+   {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   protected Pattern getFileUrlPattern()
+   {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   protected Pattern getTitlePattern()
+   {
+      return ptnName;
    }   
 }

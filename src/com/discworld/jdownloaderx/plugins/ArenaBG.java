@@ -111,7 +111,7 @@ public class ArenaBG extends Plugin
 //   }
    
    @Override
-   public ArrayList<String> parseContent(String sContent)
+   public ArrayList<String> getURLsFromContent(String sContent)
    {
       ArrayList<String> alUrlMovies = new ArrayList<String>();
    
@@ -335,18 +335,19 @@ public class ArenaBG extends Plugin
    }
 
    @Override
-   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
    {
-      
-      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+      downloader.deleteFileFromLists(file);
+
+      downloader.saveFilesList();
       
       try
       {
          File f;
 
-         if(oFile instanceof Movie)
+         if(file instanceof Movie)
          {
-            Movie oMovie = (Movie) oFile;
+            Movie oMovie = (Movie) file;
 
             sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
             
@@ -376,10 +377,10 @@ public class ArenaBG extends Plugin
          } 
          else
          {
-            if(oFile.getName().endsWith(File.separator))
-               f = new File(sDownloadFolder + File.separator + oFile.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
+            if(file.getName().endsWith(File.separator))
+               f = new File(sDownloadFolder + File.separator + file.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
             else
-               f = new File(sDownloadFolder + File.separator + oFile.getName());
+               f = new File(sDownloadFolder + File.separator + file.getName());
             f.getParentFile().mkdirs();
             File source = new File(saveFilePath);
             Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -551,5 +552,23 @@ public class ArenaBG extends Plugin
       public String sCookiePass;
       
       
+   }
+
+   @Override
+   protected Pattern getUrlPattern()
+   {
+      return null;
+   }
+
+   @Override
+   protected Pattern getFileUrlPattern()
+   {
+      return null;
+   }
+
+   @Override
+   protected Pattern getTitlePattern()
+   {
+      return ptnTitle;
    }
 }

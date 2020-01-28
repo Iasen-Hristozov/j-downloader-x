@@ -1,9 +1,6 @@
 package com.discworld.jdownloaderx.plugins;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,15 +37,15 @@ public class EasternSpirit extends Plugin
    
    private final static Pattern ptnTitle = Pattern.compile("<h3 class=\"title\">(.+?)\\["),
 //                                ptnURL = Pattern.compile("<a href=\\'(request\\.php\\?\\d+)\\'> <img src=\\'e107_images\\/generic\\/lite\\/download.png\\' alt=\\'\\' style=\\'border:0\\' \\/>");
-                                  ptnURL = Pattern.compile("http:\\/\\/www\\.easternspirit\\.org\\/forum\\/index\\.php\\?\\/files\\/file\\/[\\d\\w\\-]+\\/&amp\\;do=download&amp\\;csrfKey=[\\d\\w]+"),
-                                  ptnEasternSpiritUrl = Pattern.compile("(http:\\/\\/www\\.easternspirit\\.org\\/forum\\/index\\.php\\?\\/files\\/file\\/[\\d\\w\\-]+\\/)"),
-                                  ptnEasternSpiritFileUrl = Pattern.compile("<a href='(http:\\/\\/www\\.easternspirit\\.org\\/forum\\/index\\.php\\?\\/files\\/file\\/[\\d\\w\\-]+\\/&amp;do=download&amp;(r=[\\d]+&amp;)?(confirm=1&amp;)?(t=1&amp;)?csrfKey=[\\w\\d]+)' class='ipsButton");
+//                                  ptnURL = Pattern.compile("(http:\\/\\/www\\.easternspirit\\.org\\/forum\\/index\\.php\\?\\/files\\/file\\/[\\d\\w\\-]+\\/&amp\\;do=download&amp\\;csrfKey=[\\d\\w]+)"),
+                                  ptnURL = Pattern.compile("(http:\\/\\/www\\.easternspirit\\.org\\/forum\\/index\\.php\\?\\/files\\/file\\/[\\d\\w\\-]+\\/)"),
+                                  ptnFileURL = Pattern.compile("<a href='(http:\\/\\/www\\.easternspirit\\.org\\/forum\\/index\\.php\\?\\/files\\/file\\/[\\d\\w\\-]+\\/&amp;do=download&amp;(r=[\\d]+&amp;)?(confirm=1&amp;)?(t=1&amp;)?csrfKey=[\\w\\d]+)' class='ipsButton");
 
 //   private static final int TYPE_TEXT = 1,
 //                            TYPE_ZIP = 2;
    
-   private String              sTitle,
-                               sUrl;
+//   private String              sTitle,
+//                               sUrl;
    
    private EasternSpiritSettings easternSpiritSettings;
    
@@ -74,14 +71,14 @@ public class EasternSpirit extends Plugin
 //   }
 
    @Override
-   public ArrayList<String> parseContent(String sContent)
+   public ArrayList<String> getURLsFromContent(String sContent)
    {
       ArrayList<String> alUrlMovies = new ArrayList<String>();
    
-      Matcher m = ptnURL.matcher(sContent);
+      Matcher m = ptnFileURL.matcher(sContent);
       while(m.find())
       {
-         String s = m.group(0);
+         String s = m.group(1);
          s = "http://" + DOMAIN + s;
          alUrlMovies.add(s);
       }
@@ -93,25 +90,14 @@ public class EasternSpirit extends Plugin
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
       sResult = sResult.replace("\n", "");
+      String sUrl = getFileUrl(sResult);
+      sUrl = "http://" + DOMAIN + sUrl;
+      String sTitle = getTitle(sResult);
+
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+      alFilesFound.add(new CFile(sTitle, sUrl));
    
-      ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
-      Matcher oMatcher = ptnURL.matcher(sResult);
-      if(oMatcher.find())
-      {
-         sUrl = oMatcher.group(0);
-         sUrl = "http://" + DOMAIN + sUrl;
-      }      
-      
-      oMatcher = ptnTitle.matcher(sResult);
-      if(oMatcher.find())
-      {
-         sTitle = oMatcher.group(1);
-         sTitle = sTitle.trim();
-      }      
-   
-      vFilesFnd.add(new CFile(sTitle, sUrl));
-   
-      return vFilesFnd;
+      return alFilesFound;
    }
 
    @Override
@@ -121,21 +107,6 @@ public class EasternSpirit extends Plugin
       createCookiesCollection(alHttpProperties);
       
       new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
-   }
-
-   @Override
-   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
-   {
-      super.downloadFileDone(file, sDownloadFolder, saveFilePath);
-      try
-      {
-         super.moveFileToSavePath(file, sDownloadFolder, saveFilePath);
-      } 
-      catch(IOException e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
    }
 
    @Override
@@ -182,13 +153,13 @@ public class EasternSpirit extends Plugin
    @Override
    protected Pattern getUrlPattern()
    {
-      return ptnEasternSpiritUrl;
+      return ptnURL;
    }
 
    @Override
    protected Pattern getFileUrlPattern()
    {
-      return ptnEasternSpiritFileUrl;
+      return ptnFileURL;
    }
 
    
@@ -290,6 +261,12 @@ public class EasternSpirit extends Plugin
                       + COOKIE_PASS + "=" + easternSpiritSettings.sCookiePass  + "; " 
                       + COOKIE_SESSION_FRONT + "=" + easternSpiritSettings.sCookieSessionFront ;
       alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
+   }
+
+   @Override
+   protected Pattern getTitlePattern()
+   {
+      return ptnTitle;
    }
 
 //   private void createRequestHeader(ArrayList<SHttpProperty> alHttpProperties,

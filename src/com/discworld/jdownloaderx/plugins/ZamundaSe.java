@@ -37,7 +37,7 @@ import com.discworld.jdownloaderx.dto.SHttpProperty;
 public class ZamundaSe extends Plugin
 {
    private final static String DOMAIN = "zelka.org",
-                               URL = "(http://)?zelka\\.org/details\\.php\\?id=(\\d)*",
+//                               URL = "(http://)?zelka\\.org/details\\.php\\?id=(\\d)*",
                                COOKIE_UID_NAME = "uid",
                                COOKIE_PASS_NAME = "pass",
                                SETTINGS_FILE = "zamunda_se.xml",
@@ -47,7 +47,8 @@ public class ZamundaSe extends Plugin
 
 //   private final static String[] DOMAINS = {DOMAIN, "zamunda.se"};
 
-   private final static Pattern ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
+   private final static Pattern ptnURL = Pattern.compile("((http://)?zelka\\.org/details\\.php\\?id=(\\d)*)"),
+                                ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
                                 ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
                                 ptnTorrent = Pattern.compile("download.php/\\S+\\.(torrent?)"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
@@ -70,13 +71,13 @@ public class ZamundaSe extends Plugin
                                sTorrent,
                                sImage,
                                sDescription,
-                               sSubsunacs,
+//                               sSubsunacs,
                                sZelkasubs,
-                               sSubssab,
+//                               sSubssab,
                                sSutitrite,
 //                               sAddic7ed,
 //                               sBukvi,
-                               sBukviFile,
+//                               sBukviFile,
                                sFilesName,
                                sFolderName;
    
@@ -94,37 +95,21 @@ public class ZamundaSe extends Plugin
    }
    
    private CFile               flImage = null,
-                               flSubsunacs = null,
-                               flSubssab = null,
+//                               flSubsunacs = null,
+//                               flSubssab = null,
                                flZelkasubs = null,
-                               flSubtitrite = null,
-                               flAddic7ed = null,
-                               flBukvi = null;
+                               flSubtitrite = null;
+//                               flAddic7ed = null,
+//                               flBukvi = null;
 
    public ZamundaSe()
    {
       super();
    }
    
-   public ZamundaSe(IDownloader oDownloader)
+   public ZamundaSe(IDownloader downloader)
    {
-      super(oDownloader);
-   }
-
-   @Override
-   public ArrayList<String> parseContent(String sContent)
-   {
-      Pattern ptnUrlMovie = Pattern.compile(URL);
-      ArrayList<String> alUrlMovies = new ArrayList<String>();
-   
-      Matcher m = ptnUrlMovie.matcher(sContent);
-      while(m.find())
-      {
-         String s = m.group();
-         alUrlMovies.add(s);
-      }
-   
-      return alUrlMovies;
+      super(downloader);
    }
 
    @Override
@@ -134,9 +119,9 @@ public class ZamundaSe extends Plugin
       sTorrent = "";
       sImage = "";
       sDescription = "";
-      sSubsunacs = "";
+//      sSubsunacs = "";
       sZelkasubs = "";
-      sSubssab = "";
+//      sSubssab = "";
 
       if(oZamundaSeSettings.sCookieUID == null || 
          oZamundaSeSettings.sCookieUID.isEmpty() || 
@@ -278,17 +263,17 @@ public class ZamundaSe extends Plugin
          vFilesFnd.add(flImage);
       }
       
-      if(sSubsunacs != null && !sSubsunacs.isEmpty())
-      {
-         flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
-         vFilesFnd.add(flSubsunacs);
-      }
-      
-      if(sSubssab != null && !sSubssab.isEmpty())
-      {
-         flSubssab= new CFile(sFolderName + File.separator, sSubssab);
-         vFilesFnd.add(flSubssab);
-      }
+//      if(sSubsunacs != null && !sSubsunacs.isEmpty())
+//      {
+//         flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
+//         vFilesFnd.add(flSubsunacs);
+//      }
+//      
+//      if(sSubssab != null && !sSubssab.isEmpty())
+//      {
+//         flSubssab= new CFile(sFolderName + File.separator, sSubssab);
+//         vFilesFnd.add(flSubssab);
+//      }
    
       if(sZelkasubs != null && !sZelkasubs.isEmpty())
       {
@@ -303,21 +288,21 @@ public class ZamundaSe extends Plugin
          vFilesFnd.add(flSubtitrite);
       }
       
-      if(alAddic7ed != null && !alAddic7ed.isEmpty())
-      {
-         for(String sAddic7ed : alAddic7ed)
-         {
-            flAddic7ed = new CFile(sFolderName + File.separator, sAddic7ed);
-            vFilesFnd.add(flAddic7ed);
-         }
-         alAddic7ed.clear();
-      }
+//      if(alAddic7ed != null && !alAddic7ed.isEmpty())
+//      {
+//         for(String sAddic7ed : alAddic7ed)
+//         {
+//            flAddic7ed = new CFile(sFolderName + File.separator, sAddic7ed);
+//            vFilesFnd.add(flAddic7ed);
+//         }
+//         alAddic7ed.clear();
+//      }
       
-      if(sBukviFile != null && !sBukviFile.isEmpty())
-      {
-         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
-         vFilesFnd.add(flBukvi);
-      }            
+//      if(sBukviFile != null && !sBukviFile.isEmpty())
+//      {
+//         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
+//         vFilesFnd.add(flBukvi);
+//      }            
    
       return vFilesFnd;
    }
@@ -333,16 +318,18 @@ public class ZamundaSe extends Plugin
    }
 
    @Override
-   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
    {
-      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+      downloader.deleteFileFromLists(file);
+
+      downloader.saveFilesList();
       
-      FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + oFile.getName());
-      if(oFile instanceof Movie)
+      FileUtils.renameFile(saveFilePath, sDownloadFolder + File.separator + file.getName());
+      if(file instanceof Movie)
       {
          try
          {
-            Movie oMovie = (Movie) oFile;
+            Movie oMovie = (Movie) file;
             sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
             File f;
             FileOutputStream fos;
@@ -538,5 +525,24 @@ public class ZamundaSe extends Plugin
       public String sCookieUID;
       @XmlElement(name = "cookie_pass", required = true)
       public String sCookiePass;
+   }
+
+   @Override
+   protected Pattern getUrlPattern()
+   {
+      return ptnURL;
+   }
+
+   @Override
+   protected Pattern getFileUrlPattern()
+   {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   protected Pattern getTitlePattern()
+   {
+      return ptnTitle;
    }
 }
