@@ -35,6 +35,7 @@ public abstract class Plugin
    private static final String CONTENT_TYPE_APP_ZIP = "application/zip",
                                CONTENT_TYPE_APP_RAR = "application/x-rar-compressed",
                                CONTENT_TYPE_APP_DWN = "application/download",
+                               CONTENT_TYPE_APP_OCT = "application/octet-stream",
                                CONTENT_TYPE_TXT_HTML = "text/html";
    
 
@@ -49,10 +50,12 @@ public abstract class Plugin
             // "Mozilla/5.0 (Windows NT 5.1; rv:19.0) Gecko/20100101 Firefox/19.0"
             REQ_PROP_USER_AGENT = "User-Agent",
             REQ_PROP_ACCEPT_CHARSET = "Accept-Charset",
+            REQ_PROP_REFERER = "Referer",
             HDR_FLD_LOCATION = "Location",
             HDR_FLD_CNT_DSP = "Content-Disposition",
             HDR_FLD_CNT_TYPE = "Content-Type",
             HDR_FLD_CNT_tYPE = "Content-type";
+
 
    protected String DOMAIN = "domain";
 
@@ -481,14 +484,14 @@ public abstract class Plugin
       }
    }
 
-   private void initHttpUrlConnection(HttpURLConnection httpURLConnection,
+   protected void initHttpUrlConnection(HttpURLConnection httpURLConnection,
                                       ArrayList<SHttpProperty> alHttpProperties) throws ProtocolException
    {
       httpURLConnection.setRequestMethod("GET");
-      createHttpURLConncectionHeader(alHttpProperties, httpURLConnection);
+      createHttpURLConnectionHeader(alHttpProperties, httpURLConnection);
    }
-
-   private void createHttpURLConncectionHeader(ArrayList<SHttpProperty> alHttpProperties,
+   
+   protected void createHttpURLConnectionHeader(ArrayList<SHttpProperty> alHttpProperties,
                                                HttpURLConnection httpURLConnection)
    {
       httpURLConnection.setRequestProperty(REQ_PROP_USER_AGENT, USER_AGENT);
@@ -540,7 +543,7 @@ public abstract class Plugin
       ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
 
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      createCookiesCollection(alHttpProperties);
+      prepareHttpRequestHeader(alHttpProperties);
       
       Matcher matcher = getUrlPattern().matcher(sContent);
       while(matcher.find())
@@ -634,7 +637,8 @@ public abstract class Plugin
             return TYPE_TEXT;
          else if(contentType.contains(CONTENT_TYPE_APP_ZIP)
                   || contentType.contains(CONTENT_TYPE_APP_RAR)
-                  || contentType.contains(CONTENT_TYPE_APP_DWN))
+                  || contentType.contains(CONTENT_TYPE_APP_DWN)
+                  || contentType.contains(CONTENT_TYPE_APP_OCT))
          {
             return TYPE_ZIP;
          }
@@ -670,7 +674,7 @@ public abstract class Plugin
 //      }
 //   }
    
-   protected void createCookiesCollection(ArrayList<SHttpProperty> alHttpProperties)
+   protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
    {}
    
 //   public ArrayList<CFile> checkContetWithPlugin(String sPath, String sContent)

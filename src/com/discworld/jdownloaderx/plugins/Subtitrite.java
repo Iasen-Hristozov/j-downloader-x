@@ -46,7 +46,7 @@ public class Subtitrite extends Plugin
    {
       file.setURL(file.getURL().replaceAll("/subs/", "/download/"));
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      alHttpProperties.add(new SHttpProperty("Referer", file.getURL()));
+      alHttpProperties.add(new SHttpProperty(REQ_PROP_REFERER, file.getURL()));
       
       new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
    }

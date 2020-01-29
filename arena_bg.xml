@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <settings>
     <download_torrent>true</download_torrent>
+    <download_magnet>true</download_magnet>
     <download_image>true</download_image>
     <download_description>true</download_description>
     <download_subtitles>true</download_subtitles>

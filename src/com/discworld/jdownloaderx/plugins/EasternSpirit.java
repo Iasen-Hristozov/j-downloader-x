@@ -64,49 +64,17 @@ public class EasternSpirit extends Plugin
       super(downloader);
    }
 
-//   @Override
-//   public boolean isMine(String sURL)
-//   {
-//      return sURL.contains(DOMAIN);
-//   }
-
-   @Override
-   public ArrayList<String> getURLsFromContent(String sContent)
+   @XmlAccessorType(XmlAccessType.FIELD)
+   @XmlType(name = "", propOrder = {"sCookieUID","sCookiePass", "sCookieSessionFront"})
+   @XmlRootElement(name = "settings")
+   static private class EasternSpiritSettings
    {
-      ArrayList<String> alUrlMovies = new ArrayList<String>();
-   
-      Matcher m = ptnFileURL.matcher(sContent);
-      while(m.find())
-      {
-         String s = m.group(1);
-         s = "http://" + DOMAIN + s;
-         alUrlMovies.add(s);
-      }
-   
-      return alUrlMovies;
-   }
-
-   @Override
-   protected ArrayList<CFile> doneHttpParse(String sResult)
-   {
-      sResult = sResult.replace("\n", "");
-      String sUrl = getFileUrl(sResult);
-      sUrl = "http://" + DOMAIN + sUrl;
-      String sTitle = getTitle(sResult);
-
-      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-      alFilesFound.add(new CFile(sTitle, sUrl));
-   
-      return alFilesFound;
-   }
-
-   @Override
-   public void downloadFile(CFile file, String sDownloadFolder)
-   {
-      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      createCookiesCollection(alHttpProperties);
-      
-      new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
+      @XmlElement(name = "cookie_uid", required = true)
+      public String sCookieUID;
+      @XmlElement(name = "cookie_pass", required = true)
+      public String sCookiePass;
+      @XmlElement(name = "cookie_session_front", required = true)
+      public String sCookieSessionFront;
    }
 
    @Override
@@ -136,34 +104,52 @@ public class EasternSpirit extends Plugin
          e1.printStackTrace();
       }               
    }
-   
-   @XmlAccessorType(XmlAccessType.FIELD)
-   @XmlType(name = "", propOrder = {"sCookieUID","sCookiePass", "sCookieSessionFront"})
-   @XmlRootElement(name = "settings")
-   static private class EasternSpiritSettings
-   {
-      @XmlElement(name = "cookie_uid", required = true)
-      public String sCookieUID;
-      @XmlElement(name = "cookie_pass", required = true)
-      public String sCookiePass;
-      @XmlElement(name = "cookie_session_front", required = true)
-      public String sCookieSessionFront;
-   }
-   
-   @Override
-   protected Pattern getUrlPattern()
-   {
-      return ptnURL;
-   }
 
-   @Override
-   protected Pattern getFileUrlPattern()
-   {
-      return ptnFileURL;
-   }
-
-   
 //   @Override
+//   public boolean isMine(String sURL)
+//   {
+//      return sURL.contains(DOMAIN);
+//   }
+
+   @Override
+   public ArrayList<String> getURLsFromContent(String sContent)
+   {
+      ArrayList<String> alUrlMovies = new ArrayList<String>();
+   
+      Matcher m = ptnFileURL.matcher(sContent);
+      while(m.find())
+      {
+         String sURL = HTTP + DOMAIN + m.group(1);
+         alUrlMovies.add(sURL);
+      }
+   
+      return alUrlMovies;
+   }
+
+   @Override
+   protected ArrayList<CFile> doneHttpParse(String sResult)
+   {
+      sResult = sResult.replace("\n", "");
+      String sUrl = getFileUrl(sResult);
+      sUrl = HTTP + DOMAIN + sUrl;
+      String sTitle = getTitle(sResult);
+
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+      alFilesFound.add(new CFile(sTitle, sUrl));
+   
+      return alFilesFound;
+   }
+
+   @Override
+   public void downloadFile(CFile file, String sDownloadFolder)
+   {
+      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
+      prepareHttpRequestHeader(alHttpProperties);
+      
+      new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
+   }
+
+   //   @Override
 //   public ArrayList<CFile> checkContetWithPlugin(String sPath, String sContent)
 //   {
 //      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
@@ -255,13 +241,25 @@ public class EasternSpirit extends Plugin
 //   }
    
    @Override
-   protected void createCookiesCollection(ArrayList<SHttpProperty> alHttpProperties)
+   protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
    {
       String sCookies = COOKIE_UID + "=" + easternSpiritSettings.sCookieUID + "; " 
                       + COOKIE_PASS + "=" + easternSpiritSettings.sCookiePass  + "; " 
                       + COOKIE_SESSION_FRONT + "=" + easternSpiritSettings.sCookieSessionFront ;
       alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
    }
+
+   @Override
+   protected Pattern getUrlPattern()
+   {
+      return ptnURL;
+   }
+
+   @Override
+protected Pattern getFileUrlPattern()
+{
+   return ptnFileURL;
+}
 
    @Override
    protected Pattern getTitlePattern()

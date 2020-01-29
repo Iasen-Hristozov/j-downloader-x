@@ -1,7 +1,6 @@
 package com.discworld.jdownloaderx.plugins;
 
 import java.util.ArrayList;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.discworld.jdownloaderx.PluginFactory;
@@ -62,7 +61,7 @@ public class SubsSab extends Plugin
    public void downloadFile(CFile file, String sDownloadFolder)
    {
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      alHttpProperties.add(new SHttpProperty("Referer", file.getURL()));
+      alHttpProperties.add(new SHttpProperty(REQ_PROP_REFERER, file.getURL()));
       
       new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
    }
@@ -80,7 +79,7 @@ public class SubsSab extends Plugin
    }
    
    @Override
-   protected void createCookiesCollection(ArrayList<SHttpProperty> alHttpProperties)
+   protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
    {
       alHttpProperties.add(new SHttpProperty("Referer", DOMAIN));
    }

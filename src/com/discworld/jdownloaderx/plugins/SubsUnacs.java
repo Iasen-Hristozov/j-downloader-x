@@ -74,21 +74,33 @@ public class SubsUnacs extends Plugin
    }
    
    @Override
-   public void downloadFile(CFile oFile, String sDownloadFolder)
+   public void downloadFile(CFile file, String sDownloadFolder)
    {
-      Matcher oMatcher = ptnID.matcher(oFile.getURL());
+      Matcher oMatcher = ptnID.matcher(file.getURL());
       if(oMatcher.find())
-         oFile.setURL(DWN + oMatcher.group(7));
-      if(!oFile.getURL().contains(HTTP) && !oFile.getURL().contains(HTTPS))
-         oFile.setURL(HTTPS + oFile.getURL());
+         file.setURL(DWN + oMatcher.group(7));
+      if(!file.getURL().contains(HTTP) && !file.getURL().contains(HTTPS))
+         file.setURL(HTTPS + file.getURL());
       
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
+      alHttpProperties.add(new SHttpProperty(REQ_PROP_REFERER, file.getURL()));
       
-      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
+      new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
       
    }
    
+   @Override
+   protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
+   {
+      alHttpProperties.add(new SHttpProperty(REQ_PROP_REFERER, HTTPS+DOMAIN));
+   }
+
+   @Override
+   public String getDomain()
+   {
+      return DOMAIN;
+   }
+
    @Override
    protected Pattern getUrlPattern()
    {
@@ -99,18 +111,6 @@ public class SubsUnacs extends Plugin
    protected Pattern getFileUrlPattern()
    {
       return ptnFileURL;
-   }
-   
-   @Override
-   public String getDomain()
-   {
-      return DOMAIN;
-   }
-   
-   @Override
-   protected void createCookiesCollection(ArrayList<SHttpProperty> alHttpProperties)
-   {
-      alHttpProperties.add(new SHttpProperty("Referer", HTTPS+DOMAIN));
    }
 
    @Override

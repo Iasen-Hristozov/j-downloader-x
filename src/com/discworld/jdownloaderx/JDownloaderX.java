@@ -854,6 +854,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
       plugin = PluginFactory.getPlugin("subsunacs.net");
       foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+      plugin = PluginFactory.getPlugin("yavka.net");
+      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
       
       updateFilesFndTable();
    }

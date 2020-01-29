@@ -42,22 +42,23 @@ public class ArenaBG extends Plugin
                                COOKIE_UID_NAME = "uid",
                                COOKIE_PASS_NAME = "pass",
                                MAGNET_FILE = "magnet.txt",
-                               INFO_FILE = "info.txt",
-                               BUKVI_URL = "http://bukvi.bg";
+                               INFO_FILE = "info.txt";
+//                               BUKVI_URL = "http://bukvi.bg";
 
    private final static Pattern ptnTitle = Pattern.compile("<title>(.+?) (\\.\\.\\. )?\u0441\u0432\u0430\u043b\u044f\u043d\u0435</title>"),
                                 ptnTorrent = Pattern.compile("/(download|get)/key:.+?/"),
+                                ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("http(s)?:\\/\\/cdn.arenabg.com\\/resize\\/500\\/-\\/var\\/assets\\/posters\\/([\\d\\-]\\/)?.+?\\.jpg"),
                                 ptnDescription = Pattern.compile("<div class=\"torrent-text\">(.+?)</div>"),
-                                ptnSubsunacs = Pattern.compile("<a href=\"((http(s)?://)?subsunacs\\.net/.+?)\""),
-                                ptnAddic7ed = Pattern.compile("href=\"((http://)?(www.)?addic7ed.com/.+?)\""),
-                                ptnSubssab = Pattern.compile("(http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=[\\w\\d]+&amp;)?act=download\\&amp;attach_id=\\d+"),
-                                ptnSubssabURL = Pattern.compile("<a href=\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/(index\\.php)?\\?(s=.*?)?(&amp;)?act=search(&amp;sid=.+?)?&amp;movie=.+?)\\\"( target=\\\"_blank\\\")?>"),
-                                ptnSubssabURLs = Pattern.compile("\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&attach_id=.+?)\"( target=\\\"_blank\\\")?"),
+//                                ptnSubsunacs = Pattern.compile("<a href=\"((http(s)?://)?subsunacs\\.net/.+?)\""),
+//                                ptnAddic7ed = Pattern.compile("href=\"((http://)?(www.)?addic7ed.com/.+?)\""),
+//                                ptnSubssab = Pattern.compile("(http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=[\\w\\d]+&amp;)?act=download\\&amp;attach_id=\\d+"),
+//                                ptnSubssabURL = Pattern.compile("<a href=\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/(index\\.php)?\\?(s=.*?)?(&amp;)?act=search(&amp;sid=.+?)?&amp;movie=.+?)\\\"( target=\\\"_blank\\\")?>"),
+//                                ptnSubssabURLs = Pattern.compile("\\\"((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(s=.*?)?(&amp;)?act=download(&amp;sid=.+?)?&attach_id=.+?)\"( target=\\\"_blank\\\")?"),
                                 ptnUrlMovie = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.com/[\\w\\d\\-]+?/"),
-                                ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\""),
-                                ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/(\\d+/\\w+/)?[\\d\\-]+"),
-                                ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\""),
+//                                ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\""),
+//                                ptnBukvi = Pattern.compile("(http://)?bukvi.bg/load/(\\d+/\\w+/)?[\\d\\-]+"),
+//                                ptnBukviFile = Pattern.compile("<a href=\"(((http://)?bukvi.bg)?/load/[\\d\\-]+)\" onmouseover=\"return overlib\\('\u0421\u0432\u0430\u043b\u0438 \u0441\u0443\u0431\u0442\u0438\u0442\u0440\u0438\u0442\u0435\'\\);\""),
                                 ptnProtocolDomain = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.com");
    
    
@@ -67,25 +68,26 @@ public class ArenaBG extends Plugin
                                sTorrent,
                                sImage,
                                sDescription,
-                               sSubsunacs,
-                               sSubssab,
-                               sAddic7ed,
-                               sBukvi,
-                               sBukviFile,
+                               sMagnet,
+//                               sSubsunacs,
+//                               sSubssab,
+//                               sAddic7ed,
+//                               sBukvi,
+//                               sBukviFile,
                                sFilesName,
                                sFolderName;
 
-   ArrayList<String> alAddic7ed = new ArrayList<String>(),
-                     alSubsunacs = new ArrayList<String>(),
-                     alSubssab = new ArrayList<String>();
+//   ArrayList<String> alAddic7ed = new ArrayList<String>(),
+//                     alSubsunacs = new ArrayList<String>(),
+//                     alSubssab = new ArrayList<String>();
    
    private Movie        oMovieTorrent = null;
    
-   private CFile               flImage = null,
-                               flSubsunacs = null,
-                               flSubssab = null,
-                               flAddic7ed = null,
-                               flBukvi = null;
+   private CFile               flImage = null;
+//                               flSubsunacs = null,
+//                               flSubssab = null,
+//                               flAddic7ed = null,
+//                               flBukvi = null;
 
    static
    {
@@ -131,11 +133,12 @@ public class ArenaBG extends Plugin
       sTorrent = "";
       sImage = "";
       sDescription = "";
-      sSubsunacs = "";
-      sSubssab = "";
-      sAddic7ed = "";
-      sBukvi = "";
-      sBukviFile = "";
+      sMagnet = "";
+//      sSubsunacs = "";
+//      sSubssab = "";
+//      sAddic7ed = "";
+//      sBukvi = "";
+//      sBukviFile = "";
       
       if(oArenaBGSettings.sCookieUID == null || 
          oArenaBGSettings.sCookieUID.isEmpty() || 
@@ -170,6 +173,15 @@ public class ArenaBG extends Plugin
          if(oMatcher.find())
             sTorrent = sProtocolDomain + oMatcher.group();
       }
+      
+      if(oArenaBGSettings.bDownloadMagnet)
+      {
+         oMatcher = ptnMagnet.matcher(sResponse);
+         if(oMatcher.find())
+         {
+            sMagnet = oMatcher.group();
+         }
+      }
 
       if(oArenaBGSettings.bDownloadImage)
       {
@@ -194,72 +206,74 @@ public class ArenaBG extends Plugin
 
       if(oArenaBGSettings.bDownloadSubtitles)
       {
-         oMatcher = ptnSubsunacs.matcher(sResponse);
-         while(oMatcher.find())
-         {
-            sSubsunacs = oMatcher.group(1);
-            alSubsunacs.add(sSubsunacs);
-         }
-         
-         oMatcher = ptnSubssab.matcher(sResponse);
-         while(oMatcher.find())
-         {
-            sSubssab = oMatcher.group(0).replace("&amp;", "&");;
-            alSubssab.add(sSubssab);
-         }
-         
-         oMatcher = ptnSubssabURL.matcher(sResponse);
-         while(oMatcher.find())
-         {
-
-            String sSubssabURL = oMatcher.group(1).replace("&amp;", "&");
-            
-            String sSubssabRespone = getHttpResponse(sSubssabURL);
-            Matcher m = ptnSubssabURLs.matcher(sSubssabRespone);
-            while(m.find())
-            {
-               String s = m.group(1);
-               s = s.replace("&amp;", "&");
-//                  alSubssab.add("http://" + SUBSUNACS_DOMAIN + s);
-               alSubssab.add(s);
-            }
-         }
-         
-         oMatcher = ptnAddic7ed.matcher(sResponse);
-         if(oMatcher.find())
-         {
-            sAddic7ed = oMatcher.group(1);
-            
-            String sAddic7edRespone = getHttpResponse(sAddic7ed);
-
-            if(sAddic7edRespone != null)
-            {
-               oMatcher = ptnUrlAddic7ed.matcher(sAddic7edRespone);
-               while(oMatcher.find())
-                  alAddic7ed.add(HTTP + "addic7ed.com" + oMatcher.group(1));
-            }
-         }
-         
-         oMatcher = ptnBukvi.matcher(sResponse);
-         if(oMatcher.find())
-         {
-            sBukvi = oMatcher.group();
-            
-            String sBukviResponse = getHttpResponse(sBukvi);
-
-            if(sBukviResponse != null)
-            {
-               oMatcher = ptnBukviFile.matcher(sBukviResponse);
-               while(oMatcher.find())
-               {
-                  sBukviFile = oMatcher.group(1);
-                  if(!sBukviFile.contains(BUKVI_URL))
-                     sBukviFile = BUKVI_URL + sBukviFile;
-               }
-            }
-         }         
+//         oMatcher = ptnSubsunacs.matcher(sResponse);
+//         while(oMatcher.find())
+//         {
+//            sSubsunacs = oMatcher.group(1);
+//            alSubsunacs.add(sSubsunacs);
+//         }
+//         
+//         oMatcher = ptnSubssab.matcher(sResponse);
+//         while(oMatcher.find())
+//         {
+//            sSubssab = oMatcher.group(0).replace("&amp;", "&");;
+//            alSubssab.add(sSubssab);
+//         }
+//         
+//         oMatcher = ptnSubssabURL.matcher(sResponse);
+//         while(oMatcher.find())
+//         {
+//
+//            String sSubssabURL = oMatcher.group(1).replace("&amp;", "&");
+//            
+//            String sSubssabRespone = getHttpResponse(sSubssabURL);
+//            Matcher m = ptnSubssabURLs.matcher(sSubssabRespone);
+//            while(m.find())
+//            {
+//               String s = m.group(1);
+//               s = s.replace("&amp;", "&");
+////                  alSubssab.add("http://" + SUBSUNACS_DOMAIN + s);
+//               alSubssab.add(s);
+//            }
+//         }
+//         
+//         oMatcher = ptnAddic7ed.matcher(sResponse);
+//         if(oMatcher.find())
+//         {
+//            sAddic7ed = oMatcher.group(1);
+//            
+//            String sAddic7edRespone = getHttpResponse(sAddic7ed);
+//
+//            if(sAddic7edRespone != null)
+//            {
+//               oMatcher = ptnUrlAddic7ed.matcher(sAddic7edRespone);
+//               while(oMatcher.find())
+//                  alAddic7ed.add(HTTP + "addic7ed.com" + oMatcher.group(1));
+//            }
+//         }
+//         
+//         oMatcher = ptnBukvi.matcher(sResponse);
+//         if(oMatcher.find())
+//         {
+//            sBukvi = oMatcher.group();
+//            
+//            String sBukviResponse = getHttpResponse(sBukvi);
+//
+//            if(sBukviResponse != null)
+//            {
+//               oMatcher = ptnBukviFile.matcher(sBukviResponse);
+//               while(oMatcher.find())
+//               {
+//                  sBukviFile = oMatcher.group(1);
+//                  if(!sBukviFile.contains(BUKVI_URL))
+//                     sBukviFile = BUKVI_URL + sBukviFile;
+//               }
+//            }
+//         }         
       }
-
+      
+      downloader.checkContetsVsPlugins(sTitle.replace("/", "").trim(), sResponse);
+      
       return sTitle;
    }
 
@@ -272,7 +286,7 @@ public class ArenaBG extends Plugin
       
       sFolderName = sTitle.replace("/", "").trim();
       String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
-      oMovieTorrent = new Movie(sFolderName + File.separator + sTorrentName, sTorrent, null, sDescription);
+      oMovieTorrent = new Movie(sFolderName + File.separator + sTorrentName, sTorrent, sMagnet, sDescription);
       vFilesFnd.add(oMovieTorrent);
       
       if(sImage != null && !sImage.isEmpty())
@@ -282,41 +296,41 @@ public class ArenaBG extends Plugin
          vFilesFnd.add(flImage);
       }
       
-      if(alSubsunacs != null && !alSubsunacs.isEmpty())
-      {
-         for(String sSubsunacs : alSubsunacs)
-         {
-            flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
-            vFilesFnd.add(flSubsunacs);
-         }
-         alSubsunacs.clear();
-      }
-      
-      if(alSubssab != null && !alSubssab.isEmpty())
-      {
-         for(String sSubssab : alSubssab)
-         {
-            flSubssab= new CFile(sFolderName + File.separator, sSubssab);
-            vFilesFnd.add(flSubssab);
-         }
-         alSubssab.clear();
-      }
-      
-      if(alAddic7ed != null && !alAddic7ed.isEmpty())
-      {
-         for(String sAddic7ed : alAddic7ed)
-         {
-            flAddic7ed = new CFile(sFolderName + File.separator, sAddic7ed);
-            vFilesFnd.add(flAddic7ed);
-         }
-         alAddic7ed.clear();
-      }
-      
-      if(sBukviFile != null && !sBukviFile.isEmpty())
-      {
-         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
-         vFilesFnd.add(flBukvi);
-      }      
+//      if(alSubsunacs != null && !alSubsunacs.isEmpty())
+//      {
+//         for(String sSubsunacs : alSubsunacs)
+//         {
+//            flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
+//            vFilesFnd.add(flSubsunacs);
+//         }
+//         alSubsunacs.clear();
+//      }
+//      
+//      if(alSubssab != null && !alSubssab.isEmpty())
+//      {
+//         for(String sSubssab : alSubssab)
+//         {
+//            flSubssab= new CFile(sFolderName + File.separator, sSubssab);
+//            vFilesFnd.add(flSubssab);
+//         }
+//         alSubssab.clear();
+//      }
+//      
+//      if(alAddic7ed != null && !alAddic7ed.isEmpty())
+//      {
+//         for(String sAddic7ed : alAddic7ed)
+//         {
+//            flAddic7ed = new CFile(sFolderName + File.separator, sAddic7ed);
+//            vFilesFnd.add(flAddic7ed);
+//         }
+//         alAddic7ed.clear();
+//      }
+//      
+//      if(sBukviFile != null && !sBukviFile.isEmpty())
+//      {
+//         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
+//         vFilesFnd.add(flBukvi);
+//      }      
       
    
       return vFilesFnd;
@@ -530,12 +544,14 @@ public class ArenaBG extends Plugin
    }
  
    @XmlAccessorType(XmlAccessType.FIELD)
-   @XmlType(name = "", propOrder = {"bDownloadTorrent","bDownloadImage","bDownloadDescription","bDownloadSubtitles","sUser","sPassword","sCookieUID","sCookiePass"})
+   @XmlType(name = "", propOrder = {"bDownloadTorrent","bDownloadMagnet","bDownloadImage","bDownloadDescription","bDownloadSubtitles","sUser","sPassword","sCookieUID","sCookiePass"})
    @XmlRootElement(name = "settings")
    static private class ArenaBGSettings
    {
       @XmlElement(name = "download_torrent", required = true)
       public boolean bDownloadTorrent = true;
+      @XmlElement(name = "download_magnet", required = true)
+      public boolean bDownloadMagnet = true;
       @XmlElement(name = "download_image", required = true)
       public boolean bDownloadImage = true;
       @XmlElement(name = "download_description", required = true)

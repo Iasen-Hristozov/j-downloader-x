@@ -47,6 +47,11 @@ public class Bukvi extends Plugin
 //   }
 
    @Override
+   protected void loadSettings()
+   {
+   }
+
+   @Override
    protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       String sUrl;
@@ -83,11 +88,6 @@ public class Bukvi extends Plugin
       new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
    }
 
-   @Override
-   protected void loadSettings()
-   {
-   }
-   
    @Override
    protected Pattern getUrlPattern()
    {

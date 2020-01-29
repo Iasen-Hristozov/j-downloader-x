@@ -73,7 +73,7 @@ public class Addic7ed extends Plugin
    public void downloadFile(CFile file, String sDownloadFolder)
    {
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      alHttpProperties.add(new SHttpProperty("Referer", file.getURL()));
+      alHttpProperties.add(new SHttpProperty(REQ_PROP_REFERER, file.getURL()));
       
       new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
    }

@@ -37,15 +37,11 @@ import com.discworld.jdownloaderx.dto.SHttpProperty;
 public class ZamundaSe extends Plugin
 {
    private final static String DOMAIN = "zelka.org",
-//                               URL = "(http://)?zelka\\.org/details\\.php\\?id=(\\d)*",
                                COOKIE_UID_NAME = "uid",
                                COOKIE_PASS_NAME = "pass",
                                SETTINGS_FILE = "zamunda_se.xml",
                                MAGNET_FILE = "magnet.txt",
                                INFO_FILE = "info.txt";
-//                               BUKVI_URL = "http://bukvi.bg";
-
-//   private final static String[] DOMAINS = {DOMAIN, "zamunda.se"};
 
    private final static Pattern ptnURL = Pattern.compile("((http://)?zelka\\.org/details\\.php\\?id=(\\d)*)"),
                                 ptnTitle = Pattern.compile("(<h1>)(.+)(<[\\s]*/h1>)"),
@@ -53,31 +49,17 @@ public class ZamundaSe extends Plugin
                                 ptnTorrent = Pattern.compile("download.php/\\S+\\.(torrent?)"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("<img border=\\\"0\\\" src=\\\"(.+?)\\\">"),
-//                                ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(\u0412\u0438\u0434\u0435\u043e)|(NFO))"),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(NFO))"),
-//                                ptnSubsunacs = Pattern.compile("(<a href=)((http(s)?://)?(www\\.)?subsunacs.net/(((get|info)\\.php\\?id=\\d+)|(subtitles/.+?)))(( target=_blank)?>)"),
-                                ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>"),
-//                                ptnSubssab = Pattern.compile("(<a href=)((http://)?(www\\.)?subs\\.sab\\.bz/index\\.php\\?(s=[\\d\\w]+&amp;)?act=download&amp;attach_id=.+?)((target=_blank)?>)"),
-                              //  ptnSubssab = Pattern.compile("(<a href=)((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+&amp;)?(act=download&amp;)?attach_id=.+?)((target=_blank)?>)"),
-//                                ptnSubssab = Pattern.compile("((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+(&amp;){1,2})?(act=download&amp;)?(sid=[\\d]+&amp;)?attach_id=.+?) "),
-                                ptnSubtitrite = Pattern.compile("(http://)?subtitrite.net/subs/\\d+/.*?/");
-//                                ptnAddic7ed = Pattern.compile("((http:\\/\\/)?(www.)?addic7ed.com\\/\\S*)"),
-//                                ptnUrlAddic7ed = Pattern.compile("href=\"(/(original|updated)/.+?)\""),
-//                                ptnBukvi = Pattern.compile("(http:\\/\\/)?bukvi\\.bg\\/load\\/(\\d+\\/\\w+\\/)?[\\d\\-]+"),
-//                                ptnBukviFile = Pattern.compile("a href=(\\\'|\\\")(((http:\\/\\/)?bukvi(\\.mmcenter)?\\.bg)?\\/load\\/[\\d\\-]+)(\\\"|\\\')><button");
+                                ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>");
+//                                ptnSubtitrite = Pattern.compile("(http://)?subtitrite.net/subs/\\d+/.*?/");
 
    private String              sTitle, 
                                sMagnet,
                                sTorrent,
                                sImage,
                                sDescription,
-//                               sSubsunacs,
                                sZelkasubs,
-//                               sSubssab,
-                               sSutitrite,
-//                               sAddic7ed,
-//                               sBukvi,
-//                               sBukviFile,
+//                               sSutitrite,
                                sFilesName,
                                sFolderName;
    
@@ -95,12 +77,8 @@ public class ZamundaSe extends Plugin
    }
    
    private CFile               flImage = null,
-//                               flSubsunacs = null,
-//                               flSubssab = null,
-                               flZelkasubs = null,
-                               flSubtitrite = null;
-//                               flAddic7ed = null,
-//                               flBukvi = null;
+                               flZelkasubs = null;
+//                               flSubtitrite = null;
 
    public ZamundaSe()
    {
@@ -119,9 +97,7 @@ public class ZamundaSe extends Plugin
       sTorrent = "";
       sImage = "";
       sDescription = "";
-//      sSubsunacs = "";
       sZelkasubs = "";
-//      sSubssab = "";
 
       if(oZamundaSeSettings.sCookieUID == null || 
          oZamundaSeSettings.sCookieUID.isEmpty() || 
@@ -174,62 +150,9 @@ public class ZamundaSe extends Plugin
          oMatcher = ptnZelkasubs.matcher(sResponse);
          if(oMatcher.find())
             sZelkasubs = oMatcher.group(2);
-
-         oMatcher = ptnSubtitrite.matcher(sResponse);
-         if(oMatcher.find())
-            sSutitrite = oMatcher.group();
-         
-//         oMatcher = ptnSubsunacs.matcher(sResponse);
+//         oMatcher = ptnSubtitrite.matcher(sResponse);
 //         if(oMatcher.find())
-//            sSubsunacs = oMatcher.group(2);
-   
-//         oMatcher = ptnSubssab.matcher(sResponse);
-//         if(oMatcher.find())
-//         {
-////            sSubssab = oMatcher.group(2);
-//            sSubssab = oMatcher.group(1);
-//            sSubssab = sSubssab.replace("&amp;", "&");
-//         }
-         
-         
-//         oMatcher = ptnAddic7ed.matcher(sResponse);
-//         if(oMatcher.find())
-//         {
-//            sAddic7ed = oMatcher.group(0);
-//            
-//            String sAddic7edRespone = getHttpResponse(sAddic7ed);
-//
-//            if(sAddic7edRespone != null)
-//            {
-//               oMatcher = ptnUrlAddic7ed.matcher(sAddic7edRespone);
-//               while(oMatcher.find())
-//                  alAddic7ed.add(HTTP + "addic7ed.com" + oMatcher.group(1));
-//            }
-//         }
-//         
-//         oMatcher = ptnBukvi.matcher(sResponse);
-//         if(oMatcher.find())
-//         {
-//            sBukvi = oMatcher.group();
-//            
-//            String sBukviResponse = getHttpResponse(sBukvi);
-//            
-//            if(sBukviResponse != null)
-//            {
-//               if(!sBukviResponse.startsWith("Rar!"))
-//               {
-//                  oMatcher = ptnBukviFile.matcher(sBukviResponse);
-//                  while(oMatcher.find())
-//                  {
-//                     sBukviFile = oMatcher.group(2);
-//                     if(!sBukviFile.contains("http://bukvi."))
-//                        sBukviFile = BUKVI_URL + sBukviFile;
-//                  }
-//               }
-//               else
-//                  sBukviFile = sBukvi;
-//            }
-//         }
+//            sSutitrite = oMatcher.group();
       }
       
       downloader.checkContetsVsPlugins(sTitle, sResponse);
@@ -262,18 +185,6 @@ public class ZamundaSe extends Plugin
          flImage = new CFile(sFolderName + File.separator + sFolderName + "." + sExtension, sImage);
          vFilesFnd.add(flImage);
       }
-      
-//      if(sSubsunacs != null && !sSubsunacs.isEmpty())
-//      {
-//         flSubsunacs = new CFile(sFolderName + File.separator, sSubsunacs);
-//         vFilesFnd.add(flSubsunacs);
-//      }
-//      
-//      if(sSubssab != null && !sSubssab.isEmpty())
-//      {
-//         flSubssab= new CFile(sFolderName + File.separator, sSubssab);
-//         vFilesFnd.add(flSubssab);
-//      }
    
       if(sZelkasubs != null && !sZelkasubs.isEmpty())
       {
@@ -282,27 +193,11 @@ public class ZamundaSe extends Plugin
          vFilesFnd.add(flZelkasubs);
       }
       
-      if(sSutitrite != null && !sSutitrite.isEmpty())
-      {
-         flSubtitrite = new CFile(sFolderName + File.separator, sSutitrite);
-         vFilesFnd.add(flSubtitrite);
-      }
-      
-//      if(alAddic7ed != null && !alAddic7ed.isEmpty())
+//      if(sSutitrite != null && !sSutitrite.isEmpty())
 //      {
-//         for(String sAddic7ed : alAddic7ed)
-//         {
-//            flAddic7ed = new CFile(sFolderName + File.separator, sAddic7ed);
-//            vFilesFnd.add(flAddic7ed);
-//         }
-//         alAddic7ed.clear();
+//         flSubtitrite = new CFile(sFolderName + File.separator, sSutitrite);
+//         vFilesFnd.add(flSubtitrite);
 //      }
-      
-//      if(sBukviFile != null && !sBukviFile.isEmpty())
-//      {
-//         flBukvi = new CFile(sFolderName + File.separator + sFilesName + ".rar", sBukviFile);
-//         vFilesFnd.add(flBukvi);
-//      }            
    
       return vFilesFnd;
    }
@@ -412,7 +307,6 @@ public class ZamundaSe extends Plugin
       String request        = HTTP + WWW + DOMAIN + "/takelogin.php";
       URL url;
       BufferedReader in;
-//      String sResponse;
       try
       {
          url = new URL( request );
@@ -466,18 +360,19 @@ public class ZamundaSe extends Plugin
             while((inputLine = in.readLine()) != null)
                sbResponse.append(inputLine + "\n");
             in.close();
-
-//            sResponse = sbResponse.toString();
          }
-      } catch(MalformedURLException e)
+      } 
+      catch(MalformedURLException e)
       {
          // TODO Auto-generated catch block
          e.printStackTrace();
-      } catch(ProtocolException e)
+      } 
+      catch(ProtocolException e)
       {
          // TODO Auto-generated catch block
          e.printStackTrace();
-      } catch(IOException e)
+      } 
+      catch(IOException e)
       {
          // TODO Auto-generated catch block
          e.printStackTrace();
