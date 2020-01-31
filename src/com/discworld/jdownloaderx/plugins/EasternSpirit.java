@@ -267,6 +267,12 @@ protected Pattern getFileUrlPattern()
       return ptnTitle;
    }
 
+   @Override
+   public String getDomain()
+   {
+      return DOMAIN;
+   }
+
 //   private void createRequestHeader(ArrayList<SHttpProperty> alHttpProperties,
 //                                    HttpURLConnection httpURLConnection) throws ProtocolException
 //   {

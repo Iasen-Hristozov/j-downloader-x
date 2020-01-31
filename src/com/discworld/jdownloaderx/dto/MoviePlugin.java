@@ -34,6 +34,7 @@ public abstract class MoviePlugin extends Plugin
                                  MAGNET_FILE = "magnet.txt",
                                  INFO_FILE = "info.txt",
                                  GRP_TITLE = "title",
+                                 GRP_IMAGE = "image",
                                  GRP_DESCRIPTION = "decription";
    
    protected String sFolderName;
@@ -134,11 +135,266 @@ public abstract class MoviePlugin extends Plugin
       return sTitle;
    }
 
+   protected void login()
+      {
+         URL url;
+         BufferedReader in;
+   //      String sResponse;
+         try
+         {
+            url = new URL( getLoginUrl() );
+            HttpURLConnection conn= (HttpURLConnection) url.openConnection();
+            
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            conn.setUseCaches(false);
+            conn.setInstanceFollowRedirects(false);
+            conn.setRequestProperty("Host", getDomain());
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            conn.setRequestProperty("Referer", getReferer());
+            conn.setRequestProperty("Connection", "keep-alive");
+            conn.setDoInput(true);
+               conn.setRequestProperty("Content-Length", Integer.toString(getLoginUrlParamtres().length()));
+            conn.connect();
+      
+            DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
+            wr.writeBytes(getLoginUrlParamtres());
+            wr.flush();
+            wr.close();
+            
+            if(conn.getResponseCode() == 302)
+            {
+               List<String> cookies = conn.getHeaderFields().get("Set-Cookie");
+               if (cookies != null) 
+               {
+                  for(String cookie : cookies)
+                  {
+                     cookie = cookie.substring(0, cookie.indexOf(";"));
+                     String cookieName = cookie.substring(0, cookie.indexOf("="));
+                     String cookieValue = cookie.substring(cookie.indexOf("=") + 1, cookie.length());
+                     if(cookieName.equals(COOKIE_UID_NAME))
+                        getMovieSettings().sCookieUID = cookieValue;
+                     else if(cookieName.equals(COOKIE_PASS_NAME))
+                        getMovieSettings().sCookiePass = cookieValue;
+                        
+                     System.out.println(cookie);
+                  }
+               }
+            }
+            if(conn.getResponseCode() == 200)
+            {
+               in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+      
+               String inputLine;
+               StringBuffer sbResponse = new StringBuffer();
+      
+               while((inputLine = in.readLine()) != null)
+                  sbResponse.append(inputLine + "\n");
+               in.close();
+      
+   //            sResponse = sbResponse.toString();
+   //            
+   //            System.out.print(sResponse);            
+            }
+            
+         } 
+         catch(MalformedURLException e)
+         {
+            e.printStackTrace();
+         } 
+         catch(ProtocolException e)
+         {
+            e.printStackTrace();
+         } 
+         catch(IOException e)
+         {
+            e.printStackTrace();
+         }
+      }
+
+   abstract protected String getLoginUrl();
+
+   abstract protected String getLoginUrlParamtres();
+
+   @Override
+   protected ArrayList<CFile> doneHttpParse(String sResult)
+   {
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+   
+      sFilesName = getFilesName();
+      
+      sFolderName = sTitle.replace("/", "").trim();
+      String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
+      Movie movie = new Movie(sFolderName + File.separator + sTorrentName, sTorrent, sMagnet, sDescription);
+      alFilesFound.add(movie);
+      
+      addImageFile(alFilesFound);
+   
+      return alFilesFound;
+   }
+
+   abstract protected String getFilesName();
+
+   protected void addImageFile(ArrayList<CFile> alFilesFound)
+   {
+      if(sImage != null && !sImage.isEmpty())
+      {
+         String sExtension =  sImage.substring(sImage.lastIndexOf(".")+1);
+         flImage = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sImage);
+         alFilesFound.add(flImage);
+      }
+   }
+
+   @Override
+   public void downloadFile(CFile oFile, String sDownloadFolder)
+   {
+      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
+      
+      String sCookies = COOKIE_UID_NAME + "=" + getMovieSettings().sCookieUID + "; " + COOKIE_PASS_NAME + "=" + getMovieSettings().sCookiePass;
+      alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
+      alHttpProperties.add(new SHttpProperty("Referer", getDomain()));
+   
+      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
+   }
+
+   @Override
+   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
+   {
+      downloader.deleteFileFromLists(file);
+   
+      downloader.saveFilesList();
+      
+      try
+      {
+         File f;
+   
+         if(file instanceof Movie)
+         {
+            Movie oMovie = (Movie) file;
+            sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
+            
+            if(oMovie.getName().endsWith(File.separator))
+               f = new File(sDownloadFolder + File.separator + file.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
+            else
+               f = new File(sDownloadFolder + File.separator + file.getName());
+            f.getParentFile().mkdirs();
+            File source = new File(saveFilePath);
+            Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            FileOutputStream fos; 
+            
+            if(oMovie.getMagnet() != null && !oMovie.getMagnet().isEmpty())
+            {
+               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
+               f.createNewFile();
+               fos = new FileOutputStream(f);
+               fos.write(oMovie.getMagnet().getBytes());
+               fos.close();
+            }
+   
+            if(oMovie.getInfo() != null && !oMovie.getInfo().isEmpty())
+            {
+               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
+               f.createNewFile();
+               fos = new FileOutputStream(f);
+               fos.write(oMovie.getInfo().getBytes());
+               fos.close();
+            }
+   
+         } 
+         else
+         {
+            if(file.getName().endsWith(File.separator))
+               f = new File(sDownloadFolder + File.separator + file.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
+            else
+               f = new File(sDownloadFolder + File.separator + file.getName());
+            f.getParentFile().mkdirs();
+            File source = new File(saveFilePath);
+            Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         }
+      } 
+      catch(IOException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+   
+   }
+
+   abstract protected Pattern getUrlPattern();
+
+   @Override
+   abstract protected Pattern getTitlePattern();
+
+   @Override
+   abstract protected Pattern getFileUrlPattern();
+
+   abstract protected Pattern getTorrentUrlPattern();
+
    abstract protected String getTorrentUrl(String sURL, String sResponse);
+
+   abstract protected Pattern getMagnetPattern();
+
+   abstract protected Pattern getImageUrlPattern();
+
+   abstract protected Pattern getDescriptionPattern();
+
+   protected String getTitle(String sResponse)
+   {
+      String sTitle = "";
+      Matcher oMatcher = getTitlePattern().matcher(sResponse);
+      if(oMatcher.find())
+      {
+         sTitle = oMatcher.group(GRP_TITLE);
+         sTitle = sTitle.replace(":", " -")
+                        .replace("*", "-")
+                        .replace("?", "")
+                        .replace("&quot;", "")
+                        .replace("/", "")
+                        .trim();
+      }
+      
+      return sTitle;
+   }
 
    protected String getTorrentUrl(String sContent)
    {
       return null;
+   }
+
+   protected String getMagnet(String sResponse)
+   {
+      String sMagnet = "";
+      Matcher matcher = getMagnetPattern().matcher(sResponse);
+      if(matcher.find())
+      {
+         sMagnet = matcher.group();
+      }
+      return sMagnet;
+   }
+
+   protected String getImageUrl(String sResponse)
+   {
+      String sImageUrl = "";
+      Matcher matcher = getImageUrlPattern().matcher(sResponse);
+      if(matcher.find())
+      {
+         sImageUrl = matcher.group(GRP_IMAGE);
+      }
+      
+      return sImageUrl;
+   }
+
+   protected String getDescription(String sResponse)
+   {
+      String sDescription = "";
+      Matcher matcher = getDescriptionPattern().matcher(sResponse);
+      if(matcher.find())
+      {
+         sDescription = matcher.group(GRP_DESCRIPTION);
+      }
+      return sDescription;
    }
 
    protected void loadSettings()
@@ -189,76 +445,13 @@ public abstract class MoviePlugin extends Plugin
    
    abstract protected String getMoviesSettingsFile();
 
-   abstract protected String getUser();
-   
-   abstract protected String getPassword();
-   
    abstract protected MovieSettings getMovieSettings();
    
    abstract protected void setMoviesSettings(MovieSettings movieSettings);
 
-   abstract protected Pattern getTorrentUrlPattern();
-   
-   abstract protected Pattern getMagnetPattern();
-   
-   abstract protected Pattern getImageUrlPattern();
-   
-   abstract protected Pattern getDescriptionPattern();
-   
-   abstract protected Pattern getUrlPattern();
+   abstract protected String getUser();
 
-   @Override
-   abstract protected Pattern getFileUrlPattern();
-
-   @Override
-   abstract protected Pattern getTitlePattern();
-   
-   protected String getTitle(String sResponse)
-   {
-      String sTitle = "";
-      Matcher oMatcher = getTitlePattern().matcher(sResponse);
-      if(oMatcher.find())
-      {
-         sTitle = oMatcher.group(GRP_TITLE);
-         sTitle = sTitle.replace(":", " -").replace("*", "-").replace("?", "").trim();
-      }
-      
-      return sTitle;
-   }
-   
-   protected String getMagnet(String sResponse)
-   {
-      String sMagnet = "";
-      Matcher matcher = getMagnetPattern().matcher(sResponse);
-      if(matcher.find())
-      {
-         sMagnet = matcher.group();
-      }
-      return sMagnet;
-   }
-
-   protected String getDescription(String sResponse)
-   {
-      String sDescription = "";
-      Matcher matcher = getDescriptionPattern().matcher(sResponse);
-      if(matcher.find())
-      {
-         sDescription = matcher.group(GRP_DESCRIPTION);
-      }
-      return sDescription;
-   }
-
-   protected String getImageUrl(String sResponse)
-   {
-      String sImageUrl = "";
-      Matcher matcher = getImageUrlPattern().matcher(sResponse);
-      if(matcher.find())
-      {
-         sImageUrl = matcher.group();
-      }
-      
-      return sImageUrl;
-   }
+   abstract protected String getPassword();
 
    protected String getURLResponse(String sURL) throws Exception
    {
@@ -269,192 +462,5 @@ public abstract class MoviePlugin extends Plugin
       return getHttpResponse(sURL, alHttpProperties);
    }
    
-   @Override
-   protected void downloadFileDone(CFile file, String sDownloadFolder, String saveFilePath)
-   {
-      downloader.deleteFileFromLists(file);
-
-      downloader.saveFilesList();
-      
-      try
-      {
-         File f;
-
-         if(file instanceof Movie)
-         {
-            Movie oMovie = (Movie) file;
-            sFolderName = oMovie.getName().substring(0, oMovie.getName().lastIndexOf(File.separator));
-            
-            if(oMovie.getName().endsWith(File.separator))
-               f = new File(sDownloadFolder + File.separator + file.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
-            else
-               f = new File(sDownloadFolder + File.separator + file.getName());
-            f.getParentFile().mkdirs();
-            File source = new File(saveFilePath);
-            Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            FileOutputStream fos; 
-            
-            if(oMovie.getMagnet() != null && !oMovie.getMagnet().isEmpty())
-            {
-               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
-               f.createNewFile();
-               fos = new FileOutputStream(f);
-               fos.write(oMovie.getMagnet().getBytes());
-               fos.close();
-            }
-
-            if(oMovie.getInfo() != null && !oMovie.getInfo().isEmpty())
-            {
-               f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + INFO_FILE);
-               f.createNewFile();
-               fos = new FileOutputStream(f);
-               fos.write(oMovie.getInfo().getBytes());
-               fos.close();
-            }
-
-         } 
-         else
-         {
-            if(file.getName().endsWith(File.separator))
-               f = new File(sDownloadFolder + File.separator + file.getName() + saveFilePath.substring(saveFilePath.lastIndexOf(File.separator) + 1));
-            else
-               f = new File(sDownloadFolder + File.separator + file.getName());
-            f.getParentFile().mkdirs();
-            File source = new File(saveFilePath);
-            Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-         }
-      } 
-      catch(IOException e)
-      {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-
-   }
-
-   @Override
-   public void downloadFile(CFile oFile, String sDownloadFolder)
-   {
-      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      
-      String sCookies = COOKIE_UID_NAME + "=" + getMovieSettings().sCookieUID + "; " + COOKIE_PASS_NAME + "=" + getMovieSettings().sCookiePass;
-      alHttpProperties.add(new SHttpProperty("Cookie", sCookies));
-      alHttpProperties.add(new SHttpProperty("Referer", getDomain()));
-   
-      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
-   }
-
-   abstract protected String getLoginUrl();
-
-   abstract protected String getLoginUrlParamtres();
-
-   protected void login()
-   {
-      URL url;
-      BufferedReader in;
-      String sResponse;
-      try
-      {
-         url = new URL( getLoginUrl() );
-         HttpURLConnection conn= (HttpURLConnection) url.openConnection();
-         
-         conn.setRequestMethod("POST");
-         conn.setDoOutput(true);
-         conn.setUseCaches(false);
-         conn.setInstanceFollowRedirects(false);
-         conn.setRequestProperty("Host", "www.zamunda.net");
-         conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-         conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-         conn.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-         conn.setRequestProperty("Referer", getReferer());
-         conn.setRequestProperty("Connection", "keep-alive");
-         conn.setDoInput(true);
-            conn.setRequestProperty("Content-Length", Integer.toString(getLoginUrlParamtres().length()));
-         conn.connect();
-   
-         DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
-         wr.writeBytes(getLoginUrlParamtres());
-         wr.flush();
-         wr.close();
-         
-         if(conn.getResponseCode() == 302)
-         {
-            List<String> cookies = conn.getHeaderFields().get("Set-Cookie");
-            if (cookies != null) 
-            {
-               for(String cookie : cookies)
-               {
-                  cookie = cookie.substring(0, cookie.indexOf(";"));
-                  String cookieName = cookie.substring(0, cookie.indexOf("="));
-                  String cookieValue = cookie.substring(cookie.indexOf("=") + 1, cookie.length());
-                  if(cookieName.equals(COOKIE_UID_NAME))
-                     getMovieSettings().sCookieUID = cookieValue;
-                  else if(cookieName.equals(COOKIE_PASS_NAME))
-                     getMovieSettings().sCookiePass = cookieValue;
-                     
-                  System.out.println(cookie);
-               }
-            }
-         }
-         if(conn.getResponseCode() == 200)
-         {
-            in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-   
-            String inputLine;
-            StringBuffer sbResponse = new StringBuffer();
-   
-            while((inputLine = in.readLine()) != null)
-               sbResponse.append(inputLine + "\n");
-            in.close();
-   
-            sResponse = sbResponse.toString();
-            
-            System.out.print(sResponse);            
-         }
-         
-      } 
-      catch(MalformedURLException e)
-      {
-         e.printStackTrace();
-      } 
-      catch(ProtocolException e)
-      {
-         e.printStackTrace();
-      } 
-      catch(IOException e)
-      {
-         e.printStackTrace();
-      }
-   }
-
    abstract protected String getReferer();
-
-   @Override
-   protected ArrayList<CFile> doneHttpParse(String sResult)
-   {
-      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-   
-      sFilesName = getFilesName();
-      
-      sFolderName = sTitle.replace("/", "").trim();
-      String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
-      Movie movie = new Movie(sFolderName + File.separator + sTorrentName, sTorrent, sMagnet, sDescription);
-      alFilesFound.add(movie);
-      
-      addImageFile(alFilesFound);
-   
-      return alFilesFound;
-   }
-
-   protected void addImageFile(ArrayList<CFile> alFilesFound)
-   {
-      if(sImage != null && !sImage.isEmpty())
-      {
-         String sExtension =  sImage.substring(sImage.lastIndexOf(".")+1);
-         flImage = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sImage);
-         alFilesFound.add(flImage);
-      }
-   }
-   
-   abstract protected String getFilesName();
 }

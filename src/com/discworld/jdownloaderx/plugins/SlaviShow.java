@@ -335,5 +335,11 @@ public class SlaviShow extends Plugin
    protected Pattern getTitlePattern()
    {
       return ptnName;
+   }
+
+   @Override
+   public String getDomain()
+   {
+      return DOMAIN;
    }   
 }

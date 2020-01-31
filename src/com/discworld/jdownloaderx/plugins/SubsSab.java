@@ -88,6 +88,12 @@ public class SubsSab extends Plugin
    protected Pattern getTitlePattern()
    {
       return ptnTitle;
+   }
+
+   @Override
+   public String getDomain()
+   {
+      return DOMAIN;
    }   
    
 }

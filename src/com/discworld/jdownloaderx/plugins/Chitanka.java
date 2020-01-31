@@ -317,4 +317,10 @@ public class Chitanka extends Plugin
    {
       return ptnTitle;
    }
+
+   @Override
+   public String getDomain()
+   {
+      return DOMAIN;
+   }
 }

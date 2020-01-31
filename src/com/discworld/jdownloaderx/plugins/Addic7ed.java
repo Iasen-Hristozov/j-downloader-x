@@ -101,4 +101,10 @@ public class Addic7ed extends Plugin
       return ptnTitle;
    }
 
+   @Override
+   public String getDomain()
+   {
+      return DOMAIN;
+   }
+
 }

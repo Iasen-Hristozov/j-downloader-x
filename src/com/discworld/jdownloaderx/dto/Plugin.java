@@ -444,10 +444,7 @@ public abstract class Plugin
       return alURLs;
    }
    
-   public String getDomain()
-   {
-      return "";
-   }
+   abstract public String getDomain();
 
    abstract protected void loadSettings();
 

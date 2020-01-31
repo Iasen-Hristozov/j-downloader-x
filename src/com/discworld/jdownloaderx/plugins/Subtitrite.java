@@ -73,5 +73,12 @@ public class Subtitrite extends Plugin
    {
       return ptnTitle;
    }
+
+   @Override
+   public String getDomain()
+   {
+      // TODO Auto-generated method stub
+      return DOMAIN;
+   }
    
 }

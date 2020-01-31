@@ -105,5 +105,12 @@ public class Bukvi extends Plugin
    {
       return ptnTitle;
    }
+
+   @Override
+   public String getDomain()
+   {
+      // TODO Check it
+      return DOMAIN;
+   }
    
 }
