@@ -14,7 +14,7 @@ public class Yavka extends Plugin
 {
    private final static String DOMAIN = "yavka.net";
                                
-   private final static Pattern ptnTitle = Pattern.compile("&nbsp;(.+?)<\\/h1>"),
+   private final static Pattern ptnTitle = Pattern.compile("<h1>.*&nbsp;(.+?)<\\/h1>"),
                                 ptnURL = Pattern.compile("((http(s)?:\\/\\/)yavka.net\\/subs\\/\\d+\\/\\w{1,3})"),
                                 ptnFileURL = Pattern.compile("((http(s)?:\\/\\/)yavka.net\\/subs\\/\\d+\\/\\w{1,3}\\/)");
 
@@ -37,49 +37,21 @@ public class Yavka extends Plugin
    protected void loadSettings()
    {}
    
-   @Override
-   protected ArrayList<CFile> doneHttpParse(String sResult)
-   {
-      sResult = sResult.replace("\n", "");
-      String sUrl = getFileUrl(sResult);
-      String sTitle = getTitle(sResult).replace("nbsp;", " ").trim();
-
-      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-      alFilesFound.add(new CFile(sTitle, sUrl));
-
-      return alFilesFound;
-   }   
-   
 //   @Override
-//   protected void initHttpUrlConnection(HttpURLConnection httpURLConnection,
-//                                        ArrayList<SHttpProperty> alHttpProperties) throws ProtocolException
-//     {
-//        httpURLConnection.setRequestMethod("POST");
-//        Matcher matcher = ptnURL.matcher(httpURLConnection.getURL().toString());
-//        if(matcher.find())
-//        {
-//           String sID = matcher.group(4);
-//           String sLNG = matcher.group(5);
-//           String sParams = String.format("id=%s&lng=%s", sID, sLNG);
-//           byte[] postData= sParams.getBytes(StandardCharsets.UTF_8 );
-//           try
-//           {
-//              httpURLConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-//              httpURLConnection.setRequestProperty("Content-Length", String.valueOf(postData.length));
-//              httpURLConnection.setDoOutput(true);
-//              httpURLConnection.getOutputStream().write(postData);
-//           }
-//           catch(IOException e)
-//           {
-//              // TODO Auto-generated catch block
-//              e.printStackTrace();
-//           }
-//        }
-//           
-//        createHttpURLConnectionHeader(alHttpProperties, httpURLConnection);
-//     }
-   
-   
+//   protected ArrayList<CFile> doneHttpParse(String sResult)
+//   {
+//      sResult = sResult.replace("\n", "");
+////      String sUrl = getFileUrl(sResult);
+//      ArrayList<String> alURLs = getFileUrl(sResult);
+//      String sTitle = getTitle(sResult).replace("nbsp;", " ").trim();
+//
+//      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+//      for(String sURL: alURLs)
+//       alFilesFound.add(new CFile(sTitle + File.separator, sURL));
+//
+//      return alFilesFound;
+//   }   
+  
    @Override
    protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
    {

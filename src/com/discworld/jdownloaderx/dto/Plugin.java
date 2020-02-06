@@ -14,6 +14,7 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -66,15 +67,15 @@ public abstract class Plugin
       loadSettings();
    }
 
-   public Plugin(IDownloader oDownloader)
+   public Plugin(IDownloader downloader)
    {
       this();
-      this.downloader = oDownloader;
+      this.downloader = downloader;
    }
 
-   public void setDownloader(IDownloader oDownloader)
+   public void setDownloader(IDownloader downloader)
    {
-      this.downloader = oDownloader;
+      this.downloader = downloader;
    }
 
    class HTTPParser extends SwingWorker<String, Void>
@@ -403,11 +404,11 @@ public abstract class Plugin
 
    public void parseUrl(String sURL)
    {
-      HTTPParser oHttpParser = new HTTPParser(sURL);
-      oHttpParser.execute();
+      HTTPParser httpParser = new HTTPParser(sURL);
+      httpParser.execute();
       try
       {
-         oHttpParser.get();
+         httpParser.get();
       }
       catch(InterruptedException
             | ExecutionException e)
@@ -418,9 +419,9 @@ public abstract class Plugin
       // new HTTPParser(sURL).execute();
    }
 
-   public void downloadFile(CFile oFile, String sDownloadFolder)
+   public void downloadFile(CFile file, String sDownloadFolder)
    {
-      new DownloadFileThread(oFile, sDownloadFolder).execute();
+      new DownloadFileThread(file, sDownloadFolder).execute();
    }
 
    public void downloadFile(CFile oFile,
@@ -434,11 +435,12 @@ public abstract class Plugin
    {
       ArrayList<String> alURLs = new ArrayList<String>();
    
-      Matcher m = getUrlPattern().matcher(sContent);
-      while(m.find())
+      Matcher matcher = getUrlPattern().matcher(sContent);
+      String sURL;
+      while(matcher.find())
       {
-         String s = m.group(1);
-         alURLs.add(s);
+         sURL = matcher.group(1);
+         alURLs.add(sURL);
       }
    
       return alURLs;
@@ -458,10 +460,10 @@ public abstract class Plugin
    protected String getHttpResponse(String sURL,
                                     ArrayList<SHttpProperty> alHttpProperties) throws Exception
    {
+
       HttpURLConnection httpURLConnection = (HttpURLConnection) new URL(sURL).openConnection();
 
       initHttpUrlConnection(httpURLConnection, alHttpProperties);
-
       int iResponseCode = httpURLConnection.getResponseCode();
 
       if(iResponseCode == HttpURLConnection.HTTP_OK)
@@ -657,77 +659,61 @@ public abstract class Plugin
       return new CFile(sPath + File.separator, sURL);
    }
 
-//   private void createRequestHeader(ArrayList<SHttpProperty> alHttpProperties,
-//                                    HttpURLConnection httpURLConnection) throws ProtocolException
-//   {
-//      httpURLConnection.setRequestMethod("GET");
-//
-//      //header
-//      httpURLConnection.setRequestProperty("User-Agent", USER_AGENT);
-//      if(alHttpProperties != null && !alHttpProperties.isEmpty())
-//      {
-//         for(SHttpProperty httpProperty : alHttpProperties)
-//            httpURLConnection.setRequestProperty(httpProperty.name, httpProperty.value);
-//      }
-//   }
-   
    protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
    {}
-   
-//   public ArrayList<CFile> checkContetWithPlugin(String sPath, String sContent)
-//   {
-//      return new ArrayList<CFile>();
-//   }
-   
    
    abstract protected Pattern getUrlPattern();
 
    abstract protected Pattern getFileUrlPattern();
 
-   /*
-    * TODO Make them abstract
-    */
-
-   
    abstract protected Pattern getTitlePattern();
-   
-//   protected int getUrlPatternGroupId()
-//   {
-//      return 0;
-//   }
-//      
-//   protected int getFileUrlPatternGroupId()
-//   {
-//      return 0;
-//   }
    
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
       sResult = sResult.replace("\n", "");
-      String sUrl = getFileUrl(sResult);
-      String sTitle = getTitle(sResult).trim();
+//      String sUrl = getFileUrl(sResult);
+      ArrayList<String> alURLs = getFileUrl(sResult);
+      String sTitle = getTitle(sResult);
 
       ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-      alFilesFound.add(new CFile(sTitle + File.separator, sUrl));
+      for(String sURL: alURLs)
+         alFilesFound.add(new CFile(sTitle + File.separator, sURL));
    
       return alFilesFound;
    }
 
-protected String getTitle(String sResult)
-{
-   String sTitle = "";
-   Matcher matcher = getTitlePattern().matcher(sResult);
-   if(matcher.find())
-      sTitle = matcher.group(1).replace("/", "-").trim();
-   return sTitle;
-}
-
-   protected String getFileUrl(String sResult)
+   protected String getTitle(String sResult)
    {
-      String sURL = "";
+      String sTitle = "";
+      Matcher matcher = getTitlePattern().matcher(sResult);
+      if(matcher.find()) 
+      {
+         sTitle = matcher.group(1).replace("/", "-")
+                                  .replace("&nbsp;", " ")
+                                  .replaceAll("<.*?>", "")
+                                  .trim();
+         sTitle = Normalizer.normalize(sTitle, Normalizer.Form.NFD);
+//         Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+//         sTitle = pattern.matcher(sTitle).replaceAll("");
+         sTitle = sTitle.replaceAll("[^\\x00-\\x7F]", "");
+      }
+      return sTitle;
+   }
+
+   protected ArrayList<String> getFileUrl(String sResult)
+   {
+      ArrayList<String> alURLs = new ArrayList<String>(); 
+//      String sURL = "";
       Matcher matcher = getFileUrlPattern().matcher(sResult);
-      if(matcher.find())
-         sURL = matcher.group();
+      while(matcher.find())
+         alURLs.add(clearUrl(matcher.group(1)));
+//      alURLs.add(matcher.group(1).replaceAll("&amp;", "&"));
+//         sURL = matcher.group(1);
+      return alURLs;
+   }
+   
+   protected String clearUrl(String sURL)
+   {
       return sURL;
    }
 

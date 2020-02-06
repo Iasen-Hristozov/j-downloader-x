@@ -2,7 +2,9 @@ package com.discworld.jdownloaderx.plugins;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,6 +27,7 @@ import com.discworld.jdownloaderx.dto.Plugin;
 
 public class Chitanka extends Plugin
 {
+   private final static int MAX_FILE_LEN = 90;
    private final static String 
           DOMAIN = "chitanka.info",
           URL_DWN_BGN = "http://" + DOMAIN,
@@ -48,12 +51,6 @@ public class Chitanka extends Plugin
                                 ptnUrlSfb = Pattern.compile(String.format(URL, "sfb.zip", "sfb")),
                                 ptnUrlPdf = Pattern.compile(String.format(URL, "pdf", "pdf")),
                                 ptnUrlDjvu = Pattern.compile(String.format(URL, "djvu", "djvu")),
-//                                ptnUrlFb2 = Pattern.compile(URL_BGN + URL_TTL + "fb2.zip" + URL_BTN + "fb2" + URL_BTN_END + "fb2.zip" + URL_END),
-//                                ptnUrlEpub = Pattern.compile(URL_BGN + URL_TTL + "epub" + URL_BTN + "epub" + URL_BTN_END + "epub" + URL_END),
-//                                ptnUrlTxt = Pattern.compile(URL_BGN + URL_TTL + "txt.zip( \\(.*\\))?" + URL_BTN + "txt" + URL_BTN_END + "txt.zip" + URL_END),
-//                                ptnUrlSfb = Pattern.compile(URL_BGN + URL_TTL + "sfb.zip" + URL_BTN + "sfb" + URL_BTN_END + "sfb.zip" + URL_END),
-//                                ptnUrlPdf = Pattern.compile(URL_BGN + URL_TTL + "pdf" + URL_BTN + "pdf" + URL_BTN_END + "pdf" + URL_END),
-//                                ptnUrlDjvu = Pattern.compile(URL_BGN + URL_TTL + "djvu" + URL_BTN + "djvu" + URL_BTN_END + "djvu" + URL_END),
                                 URLS[] = {ptnUrlFb2, ptnUrlEpub, ptnUrlTxt, ptnUrlSfb, ptnUrlPdf, ptnUrlDjvu};
    
    private String sAuthor,
@@ -62,7 +59,7 @@ public class Chitanka extends Plugin
                   sUrls[];
    
    
-   private ChitankaSettings oChitankaSettings;
+   private ChitankaSettings chitankaSettings;
    
    static
    {
@@ -88,48 +85,90 @@ public class Chitanka extends Plugin
    @Override
    protected String inBackgroundHttpParse(String sURL) throws Exception
    {
-      sAuthor = null;
-      sTitle = null;
-      sVolume = null;
-      String sAuthorTitle = null;
-      ArrayList<String> alAuthors = new ArrayList<>();
-      sUrls = new String[URLS.length];
+//      sUrls = new String[URLS.length];
       
       String sResponse = super.inBackgroundHttpParse(sURL).replace("\n", "");
       
-      Matcher oMatcher = ptnAuthorTitle.matcher(sResponse);
-      if(oMatcher.find())
-         sAuthorTitle = oMatcher.group(1);
+      String  sAuthorTitle = getAuthorTitle(sResponse);
       
-      oMatcher = ptnAuthor.matcher(sAuthorTitle);
+      sAuthor = getAuthor(sAuthorTitle);
+
+      sTitle = getTitle(sAuthorTitle);
+      
+      sVolume = getVolume(sResponse);
+
+      sUrls = getUrls(sResponse);
+      
+      String sFileName = getFileName();
+      
+      return sFileName;   
+   }
+
+   protected String getAuthorTitle(String sResponse)
+   {
+      String sAuthorTitle = null;
+      Matcher matcher = ptnAuthorTitle.matcher(sResponse);
+      if(matcher.find())
+         sAuthorTitle = matcher.group(1);
+      return sAuthorTitle;
+   }
+
+   protected String getAuthor(String sAuthorTitle)
+   {
+      String sAuthor = null;
+      ArrayList<String> alAuthors = new ArrayList<>();
+   
+      Matcher matcher = ptnAuthor.matcher(sAuthorTitle);
       String sAuthorTmp;
-      while(oMatcher.find())
+      while(matcher.find())
       {
-         sAuthorTmp = oMatcher.group(1);
+         sAuthorTmp = matcher.group(1);
          alAuthors.add(sAuthorTmp);
       }
       sAuthor = String.join(", ", alAuthors);
+      return sAuthor;
+   }
 
-      oMatcher = ptnTitle.matcher(sAuthorTitle);
-      if(oMatcher.find())
-         sTitle = oMatcher.group(2);
+   protected String getTitle(String sAuthorTitle)
+   {
+      String sTitle = null;
+      Matcher matcher = ptnTitle.matcher(sAuthorTitle);
+      if(matcher.find())
+         sTitle = matcher.group(2);
       
-      oMatcher = ptnVolume.matcher(sResponse);
-      if(oMatcher.find())
-         sVolume = oMatcher.group(1);
+      return sTitle;
+   }
 
-      oMatcher = ptnUrlFb2.matcher(sResponse);
-      if(oMatcher.find())
-         sUrls[0] = oMatcher.group(1);
+   protected String getVolume(String sResponse)
+   {
+      String sVolume = null;
+      Matcher matcher = ptnVolume.matcher(sResponse);
+      if(matcher.find())
+         sVolume = matcher.group(1);
+      
+      return sVolume;
+   }
+
+   protected String[] getUrls(String sResponse)
+   {
+      String sUrls[] = new String[URLS.length];
+      
+      Matcher matcher = ptnUrlFb2.matcher(sResponse);
+      if(matcher.find())
+         sUrls[0] = matcher.group(1);
       
       
       for(int i = 0; i < URLS.length; i++)
       {
-         oMatcher = URLS[i].matcher(sResponse);
-         if(oMatcher.find())
-            sUrls[i] = oMatcher.group(1);
+         matcher = URLS[i].matcher(sResponse);
+         if(matcher.find())
+            sUrls[i] = matcher.group(1);
       }
-      
+      return sUrls;
+   }
+
+   protected String getFileName()
+   {
       String sFileName = (sAuthor != null && !sAuthor.isEmpty() ? sAuthor + " - " : "") + sTitle + (sVolume != null && !sVolume.isEmpty() ? ". " + sVolume : "");
       
       sFileName = sFileName.replaceAll("[?]", ".")
@@ -141,24 +180,22 @@ public class Chitanka extends Plugin
       
       if(sFileName.endsWith("."))
          sFileName = sFileName.substring(0, sFileName.length()-1);
-      if(sFileName.length() > 90)
-         sFileName = sFileName.substring(0, 90) + "...";
-      
-      return sFileName;   
+      if(sFileName.length() > MAX_FILE_LEN)
+         sFileName = sFileName.substring(0, MAX_FILE_LEN) + "...";
+      return sFileName;
    }
 
    @Override
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
-//      CFile oBook = null;
-      Book oBook = null;
+      Book book = null;
       ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
       for(int i = 0; i < URLS.length; i++)
       {
-         if(oChitankaSettings.bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
+         if(chitankaSettings.bDownloads[i] && sUrls[i] != null && !sUrls[i].trim().isEmpty())
          {
-            oBook = new Book(sResult + EXTS[i], URL_DWN_BGN + sUrls[i], sAuthor, sTitle, sVolume);
-            alFilesFound.add(oBook);
+            book = new Book(sResult + EXTS[i], URL_DWN_BGN + sUrls[i], sAuthor, sTitle, sVolume);
+            alFilesFound.add(book);
          }
       }
       
@@ -166,73 +203,95 @@ public class Chitanka extends Plugin
    }
 
    @Override
-   protected void downloadFileDone(CFile oFile, 
+   protected void downloadFileDone(CFile file, 
                                    String sDownloadFolder,
-                                   String saveFilePath)
+                                   String sSaveFilePath)
    {
-      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
-      String sSavePath;
-      if(oFile instanceof Book)
+//      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+      
+      downloader.deleteFileFromLists(file);
+
+      downloader.saveFilesList();
+
+      String sSavePath = getSavePath(file, sDownloadFolder);
+         
+      try
       {
-         Book oBook = (Book) oFile;
-         sSavePath = sDownloadFolder 
-                   + (oChitankaSettings.bAuthorFolder ? File.separator + oBook.getAuthor() : "")
-                   + (oChitankaSettings.bTitleFolder ? File.separator + oBook.getTitle() : "")                                  
-                   + File.separator 
-                   + oBook.getName();
+         if(file.getURL().endsWith(".zip"))
+            extractFiles(sSaveFilePath, sSavePath);
+         else
+            FileUtils.renameFile(sSaveFilePath, sSavePath);
       }
-      else
-         sSavePath = sDownloadFolder 
-                   + File.separator 
-                   + oFile.getName();
-         
-         
-      if(oFile.getURL().endsWith(".zip"))
+      catch(InterruptedException e)
       {
-         File oFolder = new File(saveFilePath.substring(0, saveFilePath.lastIndexOf(".zip")));
-         ExtractFile oExtractFile = new ExtractFile(saveFilePath, oFolder.getPath());
-         oExtractFile.execute();
-         try
-         {
-            oExtractFile.get();
-            new File(saveFilePath).delete();
-            if(oFolder.listFiles().length == 1)
-            {
-               File file = oFolder.listFiles()[0];
-            
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+      catch(ExecutionException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+      catch(IOException e)
+      {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      } 
+   }
+
+   protected void extractFiles(String saveFilePath, String sSavePath) throws InterruptedException, ExecutionException, IOException
+   {
+      File extractFolder = new File(saveFilePath.substring(0, saveFilePath.lastIndexOf(".zip")));
+      ExtractFile extractFile = new ExtractFile(saveFilePath, extractFolder.getPath());
+      extractFile.execute();
+      extractFile.get();
+      new File(saveFilePath).delete();
+      File file;
+      if(extractFolder.listFiles().length == 1)
+      {
+         file = extractFolder.listFiles()[0];
+      
 //               Files.move(file.toPath(), new File(sSavePath).toPath(), StandardCopyOption.REPLACE_EXISTING);
-               FileUtils.renameFile(file.getPath(), sSavePath);
-               FileUtils.deleteFile(oFolder);
-            }
-            else
-            {
-               FileFilter filter = new FileFilter() 
-               {
-                  @Override
-                  public boolean accept(File pathname) 
-                  {
-                     return pathname.getName().endsWith(".sfb")|| pathname.getName().endsWith(".fb2") || pathname.getName().endsWith(".txt") || pathname.getName().endsWith(".epub");
-                  }
-               };                  
-               for(int i = 0; i < oFolder.listFiles(filter).length; i++)
-               {
-                  File file = oFolder.listFiles(filter)[i];
-                  FileUtils.renameFile(file.getPath(), sSavePath);
-               }
-            
-               FileUtils.renameFile(oFolder.getPath(), sSavePath);
-            }         
-         } 
-         catch(Exception e)
-         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         } 
+         FileUtils.renameFile(file.getPath(), sSavePath);
+         FileUtils.deleteFile(extractFolder);
       }
       else
       {
-         FileUtils.renameFile(saveFilePath, sSavePath);
-      }                     
+         FileFilter filter = new FileFilter() 
+         {
+            @Override
+            public boolean accept(File pathname) 
+            {
+               return pathname.getName().endsWith(".sfb")|| pathname.getName().endsWith(".fb2") || pathname.getName().endsWith(".txt") || pathname.getName().endsWith(".epub");
+            }
+         };                  
+         for(int i = 0; i < extractFolder.listFiles(filter).length; i++)
+         {
+            file = extractFolder.listFiles(filter)[i];
+            FileUtils.renameFile(file.getPath(), sSavePath);
+         }
+      
+         FileUtils.renameFile(extractFolder.getPath(), sSavePath);
+      }         
+   }
+
+   protected String getSavePath(CFile file, String sDownloadFolder)
+   {
+      String sSavePath;
+      if(file instanceof Book)
+      {
+         Book book = (Book) file;
+         sSavePath = sDownloadFolder 
+                   + (chitankaSettings.bAuthorFolder ? File.separator + book.getAuthor() : "")
+                   + (chitankaSettings.bTitleFolder ? File.separator + book.getTitle() : "")                                  
+                   + File.separator 
+                   + book.getName();
+      }
+      else
+         sSavePath = sDownloadFolder 
+                   + File.separator 
+                   + file.getName();
+      return sSavePath;
    }
    
    @Override
@@ -246,21 +305,21 @@ public class Chitanka extends Plugin
          if(file.exists())
          {
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            oChitankaSettings = (ChitankaSettings)jaxbUnmarshaller.unmarshal(file);
-            oChitankaSettings.reload();
+            chitankaSettings = (ChitankaSettings)jaxbUnmarshaller.unmarshal(file);
+            chitankaSettings.reload();
          }
          else
          {
-            oChitankaSettings = new ChitankaSettings();
+            chitankaSettings = new ChitankaSettings();
             Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
             jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            jaxbMarshaller.marshal(oChitankaSettings, file);
+            jaxbMarshaller.marshal(chitankaSettings, file);
          }
       } 
-      catch(JAXBException e1)
+      catch(JAXBException e)
       {
          // TODO Auto-generated catch block
-         e1.printStackTrace();
+         e.printStackTrace();
       }         
    }
 

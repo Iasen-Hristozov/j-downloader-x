@@ -2,15 +2,15 @@ package com.discworld.jdownloaderx.dto;
 
 public class DownloaderPassClass
 {
-   private static IDownloader oDownloader;
+   private static IDownloader downloader;
 
    public static IDownloader getDownloader()
    {
-      return oDownloader;
+      return downloader;
    }
 
-   public static void setDownloader(IDownloader oDownloader)
+   public static void setDownloader(IDownloader downloader)
    {
-      DownloaderPassClass.oDownloader = oDownloader;
+      DownloaderPassClass.downloader = downloader;
    }
 }

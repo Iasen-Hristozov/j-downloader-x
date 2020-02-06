@@ -1,5 +1,6 @@
 package com.discworld.jdownloaderx.plugins;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,29 +50,31 @@ public class SubsUnacs extends Plugin
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
       sResult = sResult.replace("\n", "");
-      String sUrl = HTTPS + DOMAIN + getFileUrl(sResult);
-      String sTitle = getTitle(sResult).replace("nbsp;", " ");
+      ArrayList<String> alURLs = getFileUrl(sResult);
+//      String sUrl = HTTPS + DOMAIN + getFileUrl(sResult);
+      String sTitle = getTitle(sResult);
 
       ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-      alFilesFound.add(new CFile(sTitle, sUrl));
+      for(String sURL: alURLs)
+         alFilesFound.add(new CFile(sTitle + File.separator, HTTPS + DOMAIN + sURL));
 
       return alFilesFound;
    }
 
-   @Override
-   public ArrayList<String> getURLsFromContent(String sContent)
-   {
-      ArrayList<String> alUrlMovies = new ArrayList<String>();
-      
-      Matcher m = ptnFileURL.matcher(sContent);
-      while(m.find())
-      {
-         String s = m.group();
-         alUrlMovies.add(s);
-      }
-
-      return alUrlMovies;
-   }
+//   @Override
+//   public ArrayList<String> getURLsFromContent(String sContent)
+//   {
+//      ArrayList<String> alUrlMovies = new ArrayList<String>();
+//      
+//      Matcher m = ptnFileURL.matcher(sContent);
+//      while(m.find())
+//      {
+//         String s = m.group();
+//         alUrlMovies.add(s);
+//      }
+//
+//      return alUrlMovies;
+//   }
    
    @Override
    public void downloadFile(CFile file, String sDownloadFolder)

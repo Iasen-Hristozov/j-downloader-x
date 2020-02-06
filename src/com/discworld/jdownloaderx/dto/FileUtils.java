@@ -2,7 +2,9 @@ package com.discworld.jdownloaderx.dto;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -10,7 +12,7 @@ public class FileUtils
 {
    static final boolean bOverride = true;
    
-   public static void renameFile(String sOldName, String sNewName)
+   public static void renameFile(String sOldName, String sNewName) throws IOException
    {
    // File (or directory) with old name
       File file = new File(sOldName);
@@ -22,7 +24,7 @@ public class FileUtils
       renameFile(file, file2);
    }
    
-   public static void renameFile(File flOld, File flNew)
+   public static void renameFile(File flOld, File flNew) throws IOException
    {
       boolean success;
       
@@ -33,15 +35,18 @@ public class FileUtils
             deleteFile(flNew);
          }
          else
-            return;
+            throw new FileAlreadyExistsException(flNew.getName());
 //         throw new java.io.IOException("file exists");
       }
+      
+      if(!flOld.exists())
+         throw new FileNotFoundException(flOld.getName());
 
       // Rename file (or directory)
       success = flOld.renameTo(flNew);
 
       if (!success) {
-         // File was not successfully renamed
+         throw new IOException("File " + flOld.getName() + " can't be renamed");
       }      
    }
 

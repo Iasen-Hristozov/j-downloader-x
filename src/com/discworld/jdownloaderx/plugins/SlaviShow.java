@@ -51,9 +51,9 @@ public class SlaviShow extends Plugin
       super();
    }
    
-   public SlaviShow(IDownloader oDownloader)
+   public SlaviShow(IDownloader downloader)
    {
-      super(oDownloader);
+      super(downloader);
    }
 
 //   @Override
@@ -81,42 +81,34 @@ public class SlaviShow extends Plugin
    protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       String sResponse = null;
-//      try
-//      {
-         this.sURL = sURL; 
-         
-         Matcher oMatcher = ptnName.matcher(sURL);
-         if(!oMatcher.find())
-            return null;
-         
-         sName = oMatcher.group(1);
-         
-         String sNameEnc = URLEncoder.encode(sName, "UTF-8");
-         
+      this.sURL = sURL; 
+      
+      Matcher matcher = ptnName.matcher(sURL);
+      if(!matcher.find())
+         return null;
+      
+      sName = matcher.group(1);
+      
+      String sNameEnc = URLEncoder.encode(sName, "UTF-8");
+      
 //         sURLEnc = HTTP + WWW + DOMAIN + "/" + sNameEnc + "/";
-         sURLEnc = HTTP + DOMAIN + "/" + sNameEnc + "/";
-         
-         sResponse = getHttpResponse(sURLEnc);
+      sURLEnc = HTTP + DOMAIN + "/" + sNameEnc + "/";
+      
+      sResponse = getHttpResponse(sURLEnc);
 
-         oMatcher = ptnMp4.matcher(sResponse);
-         if(!oMatcher.find())
-            return null;
-         
-         sMP4 = oMatcher.group(1);
-         
-         int iDateEnd = sMP4.indexOf("_") >= 0 ? sMP4.indexOf("_") : sMP4.indexOf(".");
-         
-         String sDate = sMP4.substring(0, iDateEnd);
+      matcher = ptnMp4.matcher(sResponse);
+      if(!matcher.find())
+         return null;
+      
+      sMP4 = matcher.group(1);
+      
+      int iDateEnd = sMP4.indexOf("_") >= 0 ? sMP4.indexOf("_") : sMP4.indexOf(".");
+      
+      String sDate = sMP4.substring(0, iDateEnd);
 
-         sName = sDate + "_" + sName;
+      sName = sDate + "_" + sName;
 
-         sNameLat = cyr2lat(sName);
-         
-//      } 
-//      catch(UnsupportedEncodingException e)
-//      {
-//         e.printStackTrace();
-//      }
+      sNameLat = cyr2lat(sName);
 
       return sResponse;
    }
@@ -124,24 +116,24 @@ public class SlaviShow extends Plugin
    @Override
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
-      ArrayList<CFile> vFilesFnd = new ArrayList<CFile>();
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
 
-      CFile oMovie = new RPTDump(sNameLat+".flv", sURL, sMP4, sURLEnc); 
-      vFilesFnd.add(oMovie);
+      CFile movie = new RPTDump(sNameLat+".flv", sURL, sMP4, sURLEnc); 
+      alFilesFound.add(movie);
       
-      return vFilesFnd;
+      return alFilesFound;
    }
 
    @Override
-   public void downloadFile(CFile oFile, String sDownloadFolder)
+   public void downloadFile(CFile file, String sDownloadFolder)
    {
-      if (oFile instanceof RPTDump) 
+      if (file instanceof RPTDump) 
       {
          
          File flDownload = new File(sDownloadFolder);
          flDownload.mkdirs();
          
-         final String sRTMPDumpCmd = String.format(RTMP_DUMP_CMD, ((RPTDump)oFile).getURLEnc(), ((RPTDump)oFile).getMp4(), flDownload.getAbsolutePath() + File.separator, oFile.getName());
+         final String sRTMPDumpCmd = String.format(RTMP_DUMP_CMD, ((RPTDump)file).getURLEnc(), ((RPTDump)file).getMp4(), flDownload.getAbsolutePath() + File.separator, file.getName());
          System.out.print(sRTMPDumpCmd);
          
          String sRTMPDump = RTMP_DUMP_PATH + sRTMPDumpCmd;
@@ -153,24 +145,25 @@ public class SlaviShow extends Plugin
                   sRTMPDump 
          };
          
-         oRTMPDumpThread = new RTMPDumpThread(cmd, downloader, oFile);
+         oRTMPDumpThread = new RTMPDumpThread(cmd, downloader, file);
          oRTMPDumpThread.start();
-         
-         
-
       }
    }
 
    @Override
-   protected void downloadFileDone(CFile oFile, String sDownloadFolder, String saveFilePath)
+   protected void downloadFileDone(CFile file, String sDownloadFolder, String sSaveFilePath)
    {
-      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+//      super.downloadFileDone(oFile, sDownloadFolder, saveFilePath);
+      
+      downloader.deleteFileFromLists(file);
+
+      downloader.saveFilesList();
+
    }
 
    @Override
    protected void loadSettings()
-   {
-   }
+   {}
    
    private static String cyr2lat(String sCyr)
    {
@@ -193,39 +186,39 @@ public class SlaviShow extends Plugin
       OutputStream os;
 
       String[]     cmd;
-      IDownloader oDownloader;
-      CFile oFile;
+      IDownloader  downloader;
+      CFile file;
       
       StreamGobbler errorGobbler, outputGobbler;
 
-      Process p;
+      Process process;
       
-      RTMPDumpThread(String[] cmd, IDownloader oDownloader, CFile oFile)
+      RTMPDumpThread(String[] cmd, IDownloader downloader, CFile file)
       {
          this.cmd = cmd;
-         this.oDownloader = oDownloader;
-         this.oFile = oFile;
+         this.downloader = downloader;
+         this.file = file;
       }
 
       public void run()
       {
          try
          {
-            p = Runtime.getRuntime().exec(cmd);
+            process = Runtime.getRuntime().exec(cmd);
 
             // any error message?
-            StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), oDownloader, oFile);
+            StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream(), downloader, file);
 
             // any output?
             // StreamGobbler(p.getInputStream(), "OUTPUT", fos);
-            StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), oDownloader, oFile);
+            StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream(), downloader, file);
 
             // kick them off
             errorGobbler.start();
             outputGobbler.start();
 
             // any error???
-            p.waitFor();
+            process.waitFor();
 //            int exitVal = p.waitFor();
 //            System.out.println("ExitValue: " + exitVal);
          } 
@@ -240,8 +233,8 @@ public class SlaviShow extends Plugin
          }
          finally
          {
-            oDownloader.deleteFileFromLists(oFile);
-            oDownloader.saveFilesList();
+            downloader.deleteFileFromLists(file);
+            downloader.saveFilesList();
          }
       }
    }
@@ -251,8 +244,8 @@ public class SlaviShow extends Plugin
       InputStream  is;
       String       type = null;
       OutputStream os = null;
-      IDownloader  oDownloader;
-      CFile        oFile;
+      IDownloader  downloader;
+      CFile        file;
       
       int          iPrgPos = -1,
                    iLen;
@@ -262,11 +255,11 @@ public class SlaviShow extends Plugin
          this.is = is;
       }
 
-      StreamGobbler(InputStream is, IDownloader oDownloader, CFile oFile)
+      StreamGobbler(InputStream is, IDownloader downloader, CFile file)
       {
          this(is);
-         this.oDownloader = oDownloader; 
-         this.oFile = oFile;
+         this.downloader = downloader; 
+         this.file = file;
       }
       
       
@@ -287,28 +280,21 @@ public class SlaviShow extends Plugin
       {
          try
          {
-//            PrintWriter pw = null;
-//            if(os != null)
-//               pw = new PrintWriter(os);
-
             InputStreamReader isr = new InputStreamReader(is);
             BufferedReader br = new BufferedReader(isr);
             String line = null;
             while((line = br.readLine()) != null)
             {
-               Matcher oMatcher = ptnPrg.matcher(line);
-               if(oMatcher.find())
+               Matcher matcher = ptnPrg.matcher(line);
+               if(matcher.find())
                {
-                  String sPrg = oMatcher.group(1);
+                  String sPrg = matcher.group(1);
                   int iPrg = Integer.valueOf(sPrg);
-                  oDownloader.setFileProgress(oFile, iPrg);
-//                  System.out.print(line+"\r");
+                  downloader.setFileProgress(file, iPrg);
                }
                else
                   System.out.println(line);
             }
-//            if(pw != null)
-//               pw.flush();
          } 
          catch(IOException ioe)
          {

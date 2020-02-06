@@ -15,10 +15,7 @@ public class Subtitrite extends Plugin
    private final static String DOMAIN = "subtitrite.net";
    
    private final static Pattern ptnTitle = Pattern.compile("<h2>\u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438 \u0437\u0430 (.+?)</h2>"),
-                                ptnURL = Pattern.compile("((http://)?subtitrite.net/download/\\d+/.*?/)");
-   
-//   private String              sTitle;
-//                               sUrl;
+                                ptnURL = Pattern.compile("((http://)?(ww(1|w).)?subtitrite.net/download/\\d+/.*?/)");
 
    static
    {
@@ -77,7 +74,6 @@ public class Subtitrite extends Plugin
    @Override
    public String getDomain()
    {
-      // TODO Auto-generated method stub
       return DOMAIN;
    }
    
