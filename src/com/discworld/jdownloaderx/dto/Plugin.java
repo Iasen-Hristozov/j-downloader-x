@@ -668,6 +668,8 @@ public abstract class Plugin
 
    abstract protected Pattern getTitlePattern();
    
+   abstract public boolean isForCheck();
+   
    protected ArrayList<CFile> doneHttpParse(String sResult)
    {
       sResult = sResult.replace("\n", "");

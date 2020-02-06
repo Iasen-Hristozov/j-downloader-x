@@ -43,33 +43,11 @@ public class SubsSab extends Plugin
    protected void loadSettings()
    {}
 
-//   @Override
-//   protected ArrayList<String> getFileUrl(String sResult)
-//   {
-//      ArrayList<String> alURLs = super.getFileUrl(sResult); 
-//      for(int i = 0; i<alURLs.size(); i++ )
-//         alURLs.set(i, alURLs.get(i).replaceAll("&amp;", "&"));
-//      return alURLs;
-//   }
-   
    @Override 
    protected String clearUrl(String sURL)
    {
       return sURL.replaceAll("&amp;", "&");
    }
-   
-//   @Override
-//   protected ArrayList<CFile> doneHttpParse(String sResult)
-//   {
-//      sResult = sResult.replace("\n", "");
-////      String sUrl = getFileUrl(sResult).replaceAll("&amp;", "&"); 
-//      String sTitle = getTitle(sResult).replaceAll("<.*?>", "");
-//      
-//      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-//      alFilesFound.add(new CFile(sTitle + File.separator, sUrl));
-//   
-//      return alFilesFound;
-//   }
 
    @Override
    public void downloadFile(CFile file, String sDownloadFolder)
@@ -92,12 +70,6 @@ public class SubsSab extends Plugin
       return ptnFileURL;
    }
    
-//   @Override
-//   protected String getTitle(String sResult)
-//   {
-//      return super.getTitle(sResult).replaceAll("</span>", "");
-//   }
-   
    @Override
    protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
    {
@@ -114,6 +86,12 @@ public class SubsSab extends Plugin
    public String getDomain()
    {
       return DOMAIN;
+   }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return true;
    }   
    
 }

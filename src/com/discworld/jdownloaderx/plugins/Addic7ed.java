@@ -166,4 +166,10 @@ public class Addic7ed extends Plugin
       return DOMAIN;
    }
 
+   @Override
+   public boolean isForCheck()
+   {
+      return true;
+   }
+
 }

@@ -182,4 +182,10 @@ protected Pattern getFileUrlPattern()
    {
       return DOMAIN;
    }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return true;
+   }
 }

@@ -76,5 +76,11 @@ public class Subtitrite extends Plugin
    {
       return DOMAIN;
    }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return true;
+   }
    
 }

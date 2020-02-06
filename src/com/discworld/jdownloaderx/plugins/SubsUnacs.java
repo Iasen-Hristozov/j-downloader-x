@@ -17,14 +17,10 @@ public class SubsUnacs extends Plugin
    private final static String DOMAIN = "subsunacs.net",
                                DWN = "http://subsunacs.net/get.php?id="; 
                                
-   private final static Pattern ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
+   private final static Pattern ptnURL = Pattern.compile("((http(s)?:\\/\\/)?(www\\.)?subsunacs.net\\/(((get|info)\\.php\\?id=\\d+)|(subtitles\\/.+?\\/)))"), 
+                                ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnFileURL = Pattern.compile("<div id=\"buttonBox\"><a href=\"(.+?)\""),
-                                ptnID = Pattern.compile("http(s?)://(www\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?"),
-                                ptnURL = Pattern.compile("((http(s)?:\\/\\/)?(www\\.)?subsunacs.net\\/(((get|info)\\.php\\?id=\\d+)|(subtitles\\/.+?\\/)))");
-//                                ptnURLs = Pattern.compile("<a href=\"(\\/subtitles\\/[\\w\\d_\\-]+\\/)?\"");
-   
-//   private String              sTitle,
-//                               sUrl;
+                                ptnID = Pattern.compile("http(s?)://(www\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?");
 
    static
    {
@@ -51,7 +47,6 @@ public class SubsUnacs extends Plugin
    {
       sResult = sResult.replace("\n", "");
       ArrayList<String> alURLs = getFileUrl(sResult);
-//      String sUrl = HTTPS + DOMAIN + getFileUrl(sResult);
       String sTitle = getTitle(sResult);
 
       ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
@@ -60,21 +55,6 @@ public class SubsUnacs extends Plugin
 
       return alFilesFound;
    }
-
-//   @Override
-//   public ArrayList<String> getURLsFromContent(String sContent)
-//   {
-//      ArrayList<String> alUrlMovies = new ArrayList<String>();
-//      
-//      Matcher m = ptnFileURL.matcher(sContent);
-//      while(m.find())
-//      {
-//         String s = m.group();
-//         alUrlMovies.add(s);
-//      }
-//
-//      return alUrlMovies;
-//   }
    
    @Override
    public void downloadFile(CFile file, String sDownloadFolder)
@@ -121,38 +101,10 @@ public class SubsUnacs extends Plugin
    {
       return ptnTitle;
    }
-   
-//   @Override
-//   public ArrayList<CFile> checkContetWithPlugin(String sPath, String sContent)
-//   {
-//      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-//
-//      ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-//      createCookiesCollection(alHttpProperties);
-//      
-//      Matcher matcher = getUrlPattern().matcher(sContent);
-//      while(matcher.find())
-//      {
-//         String sURL = matcher.group(1).replaceAll("&amp;", "&");
-//         try
-//         {
-////            alHttpProperties.add(new SHttpProperty("Referer", sURL));
-//            checkAddHttpProperty(alHttpProperties, new SHttpProperty("Referer", HTTPS+DOMAIN));
-//            alFilesFound.addAll(getFilesFromUrl(sPath, alHttpProperties, sURL));
-//         }
-//         catch(Exception e)
-//         {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//         }
-//      }
-//      
-//      return alFilesFound;
-//   }
 
-//   @Override
-//   public boolean isMine(String sURL)
-//   {
-//      return sURL.contains(DOMAIN);
-//   }
+   @Override
+   public boolean isForCheck()
+   {
+      return true;
+   }
 }

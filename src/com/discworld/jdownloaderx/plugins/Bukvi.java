@@ -43,19 +43,6 @@ public class Bukvi extends Plugin
    protected void loadSettings()
    {}
 
-//   @Override
-//   protected ArrayList<CFile> doneHttpParse(String sResult)
-//   {
-//      sResult = sResult.replace("\n", "");
-//      String sUrl = getFileUrl(sResult);
-////      String sTitle = getTitle(sResult) + ".rar";
-//      String sTitle = getTitle(sResult);
-//
-//      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-//      alFilesFound.add(new CFile(sTitle + File.separator, sUrl));
-//      return alFilesFound;
-//   }
-
    @Override
    public void downloadFile(CFile oFile, String sDownloadFolder)
    {
@@ -88,6 +75,12 @@ public class Bukvi extends Plugin
    {
       // TODO Check it
       return DOMAIN;
+   }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return true;
    }
    
 }

@@ -843,19 +843,21 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    @Override
    public void checkContetsVsPlugins(String sPath, String sContents)
    {
-      Plugin plugin = PluginFactory.getPlugin("www.easternspirit.org");
-//      plugin.checkContetWithPlugin(sPath, sContents);
-      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
-      plugin = PluginFactory.getPlugin("bukvi.bg");
-      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
-      plugin = PluginFactory.getPlugin("www.addic7ed.com");
-      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
-      plugin = PluginFactory.getPlugin("subs.sab.bz");
-      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
-      plugin = PluginFactory.getPlugin("subsunacs.net");
-      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
-      plugin = PluginFactory.getPlugin("yavka.net");
-      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+//      Plugin plugin = PluginFactory.getPlugin("www.easternspirit.org");
+////      plugin.checkContetWithPlugin(sPath, sContents);
+//      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+//      plugin = PluginFactory.getPlugin("bukvi.bg");
+//      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+//      plugin = PluginFactory.getPlugin("www.addic7ed.com");
+//      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+//      plugin = PluginFactory.getPlugin("subs.sab.bz");
+//      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+//      plugin = PluginFactory.getPlugin("subsunacs.net");
+//      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+//      plugin = PluginFactory.getPlugin("yavka.net");
+//      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
+      
+      foundFiles.addAll(PluginFactory.checkContetWithPlugins(sPath, sContents));
       
       updateFilesFndTable();
    }

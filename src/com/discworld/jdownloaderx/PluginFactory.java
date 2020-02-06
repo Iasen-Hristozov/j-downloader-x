@@ -1,7 +1,10 @@
 package com.discworld.jdownloaderx;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
+import com.discworld.jdownloaderx.dto.CFile;
 import com.discworld.jdownloaderx.dto.Plugin;
 
 public class PluginFactory
@@ -31,5 +34,23 @@ public class PluginFactory
 //      ((Product)m_RegisteredProducts.get(pluginID)).createProduct();
 //      return (Plugin) m_RegisteredPlugins.get(pluginID);
       return (Plugin) instance.registeredPlugins.get(pluginID);
+   }
+   
+   public static ArrayList<CFile> checkContetWithPlugins(String sPath, String sContent)
+   {
+      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
+      
+      for(Entry<String, Plugin> entry : instance.registeredPlugins.entrySet())
+      {
+         Plugin value = entry.getValue();
+         if(value.isForCheck())
+         {
+            alFilesFound.addAll(value.checkContetWithPlugin(sPath, sContent));
+         }
+      }
+
+//      instance.registeredPlugins.forEach((key,value) -> alFilesFound.addAll(value.checkContetWithPlugin(sPath, sContent)));
+      
+      return alFilesFound;
    }
 }

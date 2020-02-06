@@ -65,4 +65,10 @@ public class Subsland extends Plugin
       return DOMAIN;
    }
 
+   @Override
+   public boolean isForCheck()
+   {
+      return true;
+   }
+
 }

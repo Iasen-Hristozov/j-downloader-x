@@ -22,7 +22,7 @@ public class ZamundaNet extends MoviePlugin
                               USER = "Rincewind123",
                               PASSWORD = "suleiman";
 
-   private final static Pattern ptnURL = Pattern.compile("((http(s?)://)?(www.)?zamunda\\.net/banan\\?id=\\d+)"),
+   private final static Pattern ptnURL = Pattern.compile("((http(s?):\\/\\/)?(www.)?zamunda\\.net/banan\\?id=\\d+)"),
                                 ptnTitle = Pattern.compile("<h1(.*?)>(?<"+GRP_TITLE+">.*?)<\\/.*?>"),
                                 ptnTitleParts = Pattern.compile("^(.+?)(\\/.+?)*(\\(\\d+(\\-\\d+)?\\))?([ ]?\\[.+?\\])?$"),
                                 ptnTorrent = Pattern.compile("/download_go\\.php\\?id=(\\d+)\"[\\s]*>(.+?)</a>"),
@@ -345,5 +345,11 @@ public class ZamundaNet extends MoviePlugin
    protected String getReferer()
    {
       return HTTPS + DOMAIN;
+   }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return false;
    }
 }

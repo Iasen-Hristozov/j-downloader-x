@@ -382,4 +382,10 @@ public class Chitanka extends Plugin
    {
       return DOMAIN;
    }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return false;
+   }
 }

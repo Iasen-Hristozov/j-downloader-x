@@ -16,7 +16,7 @@ public class ArenaBG extends MoviePlugin
                               USER = "Rincewind123",
                               PASSWORD = "suleiman";
 
-   private final static Pattern ptnUrlMovie = Pattern.compile("((http(s)?://)?(www\\.)?arenabg.com/[\\w\\d\\-]+?/)"),
+   private final static Pattern ptnUrlMovie = Pattern.compile("(http(s)?:\\/\\/?(www\\.)?arenabg.com/[\\w\\d\\-]+?/)"),
                                 ptnTorrent = Pattern.compile("/(download|get)/key:.+?/"),
                                 ptnTitle = Pattern.compile("<title>(?<"+GRP_TITLE+">.+?) (\\.\\.\\. )?\u0441\u0432\u0430\u043b\u044f\u043d\u0435</title>"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
@@ -165,6 +165,12 @@ public class ArenaBG extends MoviePlugin
    protected String getFilesName()
    {
       return sTitle;
+   }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return false;
    }
 
 }

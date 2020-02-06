@@ -36,22 +36,7 @@ public class Yavka extends Plugin
    @Override
    protected void loadSettings()
    {}
-   
-//   @Override
-//   protected ArrayList<CFile> doneHttpParse(String sResult)
-//   {
-//      sResult = sResult.replace("\n", "");
-////      String sUrl = getFileUrl(sResult);
-//      ArrayList<String> alURLs = getFileUrl(sResult);
-//      String sTitle = getTitle(sResult).replace("nbsp;", " ").trim();
-//
-//      ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
-//      for(String sURL: alURLs)
-//       alFilesFound.add(new CFile(sTitle + File.separator, sURL));
-//
-//      return alFilesFound;
-//   }   
-  
+ 
    @Override
    protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
    {
@@ -90,5 +75,11 @@ public class Yavka extends Plugin
    protected Pattern getTitlePattern()
    {
       return ptnTitle;
+   }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return true;
    }
 }

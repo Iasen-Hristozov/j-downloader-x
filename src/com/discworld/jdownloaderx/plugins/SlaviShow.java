@@ -27,7 +27,8 @@ public class SlaviShow extends Plugin
                                cyr = "\u0410 \u0411 \u0412 \u0413 \u0414 \u0415 \u0416 \u0417 \u0418 \u0419 \u041A \u041B \u041C \u041D \u041E \u041F \u0420 \u0421 \u0422 \u0423 \u0424 \u0425 \u0426 \u0427 \u0428 \u0429 \u042A \u042E \u042F \u0430 \u0431 \u0432 \u0433 \u0434 \u0435 \u0436 \u0437 \u0438 \u0439 \u043A \u043B \u043C \u043D \u043E \u043F \u0440 \u0441 \u0442 \u0443 \u0444 \u0445 \u0446 \u0447 \u0448 \u0449 \u044A \u044B \u044C \u044E \u044F";
 
 
-   private final static Pattern ptnName = Pattern.compile("www\\.slavishow\\.com/(.+?)/"),
+   private final static Pattern ptnUrl = Pattern.compile("((http(s)?:\\/\\/)?www\\.slavishow\\.com\\/.+?\\/)"),
+                                ptnName = Pattern.compile("www\\.slavishow\\.com/(.+?)/"),
 //                                ptnMp4 = Pattern.compile("\"url\":\"slavishow/(.+?)\","),
                                 ptnMp4 = Pattern.compile("slavishow/(.+?\\.mp4)\""),
                                 ptnPrg = Pattern.compile("\\d{1,6}\\.\\d{3} kB / \\d{1,5}\\.\\d{2} sec \\((\\d{1,3})\\.\\d{1}%\\)");   
@@ -306,8 +307,7 @@ public class SlaviShow extends Plugin
    @Override
    protected Pattern getUrlPattern()
    {
-      // TODO Auto-generated method stub
-      return null;
+      return ptnUrl;
    }
 
    @Override
@@ -327,5 +327,11 @@ public class SlaviShow extends Plugin
    public String getDomain()
    {
       return DOMAIN;
+   }
+
+   @Override
+   public boolean isForCheck()
+   {
+      return false;
    }   
 }
