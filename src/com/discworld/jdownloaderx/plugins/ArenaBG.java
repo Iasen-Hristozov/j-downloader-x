@@ -24,7 +24,7 @@ public class ArenaBG extends MoviePlugin
                                 ptnDescription = Pattern.compile("<div class=\"torrent-text\">(?<"+GRP_DESCRIPTION+">.+?)</div>"),
                                 ptnProtocolDomain = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.com");
       
-   public MovieSettings àrenaBGSettings;
+   public MovieSettings arenaBGSettings;
 
    public CFile  flImage = null;
 
@@ -116,13 +116,13 @@ public class ArenaBG extends MoviePlugin
    @Override
    protected MovieSettings getMovieSettings()
    {
-      return àrenaBGSettings;
+      return arenaBGSettings;
    }
 
    @Override
    protected void setMoviesSettings(MovieSettings movieSettings)
    {
-      àrenaBGSettings = movieSettings;
+      arenaBGSettings = movieSettings;
    }
    
    @Override
@@ -152,7 +152,7 @@ public class ArenaBG extends MoviePlugin
    @Override
    protected String getLoginUrlParamtres()
    {
-      return String.format("username=%s&password=%s", àrenaBGSettings.sUser, àrenaBGSettings.sPassword);
+      return String.format("username=%s&password=%s", arenaBGSettings.sUser, arenaBGSettings.sPassword);
    }
 
    @Override

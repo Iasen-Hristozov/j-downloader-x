@@ -44,6 +44,7 @@
 			<include name="Book.java" />
 			<include name="DownloaderPassClass.java" />
 			<include name="Plugin.java" />
+			<include name="MoviePlugin.java" />
 		</javac>
 	</target>
 	

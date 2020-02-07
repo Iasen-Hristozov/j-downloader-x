@@ -15,7 +15,7 @@ public class PluginFactory
    
    private PluginFactory()
    {
-      System.out.println("Singleton(): Initializing Instance");
+//      System.out.println("Singleton(): Initializing Instance");
    }
 
 //   public static PluginFactory getInstance()
