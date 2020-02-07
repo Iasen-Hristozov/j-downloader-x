@@ -6,7 +6,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingWorker;
 
@@ -86,18 +85,13 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
    private boolean bIsStarted = false;
    
-   private JButton btnAdd,
-                   btnRemove,
+   private JButton btnRemove,
                    btnStart,
                    btnSearch;
 
    private JFrame frame;
-   
-   JTabbedPane tabbedPane;
 
    private JTextField txtURL;
-   
-   private JTable tblFilesUrl;
    
    private ClipboardListener clipboardListener;
    
@@ -105,23 +99,19 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
    private JScrollPane spFilesDwn;
    
-   FileURLsTableModel fileURLsTableModel;
+//   FileURLsTableModel fileURLsTableModel;
    
    FileDownloadTableModel fileDownloadTableModel;
    
    Settings settings;
 
    Vector<CFile> downloadFiles,
-                 foundFiles,
+//                 foundFiles,
                  downloadFilesQueue;
    
    private static ArrayList<Plugin> alPlugins = new ArrayList<Plugin>();
    private JPanel pnlFilesDwnStatus;
    private JLabel lblFilesDwn;
-   private JPanel pnlFilesFndStatus;
-   private JPanel panel_2;
-   private JLabel lblFilesFnd;
-   private JLabel lblFilesFndSel;
    private JLabel lblFilesDwnSel;
    
    /**
@@ -246,8 +236,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    
       if(oSource == btnSearch)
          vSearch();
-      else if(oSource == btnAdd)
-         vAdd();
+//      else if(oSource == btnAdd)
+//         vAdd();
       else if(oSource == btnRemove)
          vRemove();
       else if(oSource == btnStart)
@@ -259,19 +249,22 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
    {
 //      vFilesFnd.addAll(alFilesFnd);
       boolean isNew = false;
-      for(CFile oFile : alFilesFnd)
-         if(!foundFiles.contains(oFile))
+      for(CFile file : alFilesFnd)
+//         if(!foundFiles.contains(file))
+         if(!downloadFiles.contains(file))
          {
-            foundFiles.add(oFile);
+//            foundFiles.add(file);
+            downloadFiles.add(file);
             isNew = true;
          }
    
       
       if(isNew)
       {
-         updateFilesFndTable();
+//         updateFilesFndTable();
+         updateFilesDwnTable();
          
-         tabbedPane.setSelectedIndex(PNL_NDX_FND);
+//         tabbedPane.setSelectedIndex(PNL_NDX_FND);
       }
    }
 
@@ -298,20 +291,16 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
     */
    private void initialize()
    {
+      downloadFiles = new Vector<CFile>();
+      fileDownloadTableModel = new FileDownloadTableModel(downloadFiles);
+      
       frame = new JFrame("JDownloaderX " + (sVersion != null ? sVersion : "" ));
       frame.setBounds(100, 100, 348, 319);
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       
       JPanel pnlButtons = new JPanel();
       frame.getContentPane().add(pnlButtons, BorderLayout.NORTH);
-      
-      btnAdd = new JButton("");
-      btnAdd.setAlignmentX(Component.CENTER_ALIGNMENT);
-      btnAdd.setToolTipText("Add");
-      btnAdd.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/1421707472_add.png")));
-      btnAdd.addActionListener(this);
       pnlButtons.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      pnlButtons.add(btnAdd);
       
       btnStart = new JButton("");
       btnStart.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -327,29 +316,44 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       btnRemove.addActionListener(this);
       pnlButtons.add(btnRemove);
       
-      tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-      frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
-      
       JPanel panel = new JPanel(false);
+//      frame.getContentPane().add(panel, BorderLayout.SOUTH);
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      frame.getContentPane().add(panel, BorderLayout.CENTER);
+
+      JPanel pnlSearch = new JPanel();
+      pnlSearch.setMaximumSize(new Dimension(32767, 30));
+      pnlSearch.setMinimumSize(new Dimension(10, 30));
+      panel.add(pnlSearch);
+      pnlSearch.setLayout(new BorderLayout(0, 0));
+
+      txtURL = new JTextField();
+      txtURL.setHorizontalAlignment(SwingConstants.LEFT);
+      pnlSearch.add(txtURL, BorderLayout.CENTER);
+      txtURL.setFont(new Font("Courier New", Font.PLAIN, 13));
+      txtURL.setColumns(10);
       
-      spFilesDwn = new JScrollPane();
-      spFilesDwn.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-      panel.add(spFilesDwn);
+      btnSearch = new JButton("");
+      btnSearch.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/Search.png")));
+      btnSearch.setToolTipText("Search");
+      btnSearch.setAlignmentX(0.5f);
+      btnSearch.addActionListener(this);
+      pnlSearch.add(btnSearch, BorderLayout.EAST);
       
       lblFilesDwnSel = new JLabel(" ");
       tblFilesDwn = new JTable();
       ListSelectionModel listSelectionModel = tblFilesDwn.getSelectionModel();
       listSelectionModel.addListSelectionListener(new SharedListSelectionHandler(lblFilesDwnSel));
       tblFilesDwn.setSelectionModel(listSelectionModel);
-      downloadFiles = new Vector<CFile>();
-      fileDownloadTableModel = new FileDownloadTableModel(downloadFiles);
       tblFilesDwn.setModel(fileDownloadTableModel);
       tblFilesDwn.getColumn("Progress").setCellRenderer(new ProgressCellRender());
+
+      spFilesDwn = new JScrollPane();
+      spFilesDwn.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      panel.add(spFilesDwn);
+      
       
       spFilesDwn.setViewportView(tblFilesDwn);
-      
-      tabbedPane.addTab("Downloads", null, panel, null);
       
       pnlFilesDwnStatus = new JPanel();
       pnlFilesDwnStatus.setMaximumSize(new Dimension(32767, 30));
@@ -365,65 +369,7 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       lblFilesDwn = new JLabel("0");
       lblFilesDwn.setFont(new Font("Tahoma", Font.PLAIN, 11));
       pnlFilesDwnStatus.add(lblFilesDwn);
-      tabbedPane.setMnemonicAt(0, KeyEvent.VK_2);      
       
-      tabbedPane.setTabPlacement(JTabbedPane.TOP);
-      
-      panel_2 = new JPanel();
-      tabbedPane.addTab("Link Grabber", null, panel_2, null);
-      panel_2.setLayout(new BoxLayout(panel_2, BoxLayout.Y_AXIS));
-      
-      JPanel pnlSearch = new JPanel();
-      pnlSearch.setMaximumSize(new Dimension(32767, 30));
-      pnlSearch.setMinimumSize(new Dimension(10, 30));
-      panel_2.add(pnlSearch);
-      pnlSearch.setLayout(new BorderLayout(0, 0));
-      
-      txtURL = new JTextField();
-      txtURL.setHorizontalAlignment(SwingConstants.LEFT);
-      pnlSearch.add(txtURL, BorderLayout.CENTER);
-      txtURL.setFont(new Font("Courier New", Font.PLAIN, 13));
-      txtURL.setColumns(10);
-      
-      btnSearch = new JButton("");
-      btnSearch.setIcon(new ImageIcon(JDownloaderX.class.getResource("/icons/Search.png")));
-      btnSearch.setToolTipText("Search");
-      btnSearch.setAlignmentX(0.5f);
-      btnSearch.addActionListener(this);
-      pnlSearch.add(btnSearch, BorderLayout.EAST);
-      
-      lblFilesFndSel = new JLabel();
-      lblFilesFndSel.setText(" ");
-      tblFilesUrl = new JTable();
-      listSelectionModel = tblFilesUrl.getSelectionModel();
-      listSelectionModel.addListSelectionListener(new SharedListSelectionHandler(lblFilesFndSel));
-      tblFilesUrl.setSelectionModel(listSelectionModel);
-      foundFiles = new Vector<CFile>();
-      fileURLsTableModel = new FileURLsTableModel(foundFiles);
-      tblFilesUrl.setModel(fileURLsTableModel);
-      
-      JScrollPane spFilesUrl = new JScrollPane(tblFilesUrl);
-      spFilesUrl.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-      
-      panel_2.add(spFilesUrl);
-      
-      pnlFilesFndStatus = new JPanel();
-      pnlFilesFndStatus.setMaximumSize(new Dimension(32767, 30));
-      FlowLayout flowLayout = (FlowLayout) pnlFilesFndStatus.getLayout();
-      flowLayout.setAlignment(FlowLayout.RIGHT);
-      pnlFilesFndStatus.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
-
-      panel_2.add(pnlFilesFndStatus);
-      
-      lblFilesFndSel.setHorizontalAlignment(SwingConstants.RIGHT);
-      lblFilesFndSel.setFont(new Font("Tahoma", Font.PLAIN, 11));
-      pnlFilesFndStatus.add(lblFilesFndSel);
-      
-      lblFilesFnd = new JLabel("0");
-      lblFilesFnd.setHorizontalTextPosition(SwingConstants.LEFT);
-      lblFilesFnd.setHorizontalAlignment(SwingConstants.LEFT);
-      lblFilesFnd.setFont(new Font("Tahoma", Font.PLAIN, 11));
-      pnlFilesFndStatus.add(lblFilesFnd);
       
       KeyListener klDelete = new KeyListener()
       {
@@ -446,9 +392,8 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
             
          }
       };
-      
       tblFilesDwn.addKeyListener(klDelete);
-      tblFilesUrl.addKeyListener(klDelete);
+
    }
 
    @Override
@@ -541,33 +486,35 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       }
    }
    
-   private void vAdd()
-   {
-      for(CFile oFile : foundFiles)
-      {
-         if(!downloadFiles.contains(oFile))
-            downloadFiles.add(oFile);
-      }
-
-      _saveFiles();
-    
-      updateFilesDwnTable();
-      tabbedPane.setSelectedIndex(PNL_NDX_DWN);
-
-      foundFiles.removeAllElements();
-      updateFilesFndTable();
-   }
+//   private void vAdd()
+//   {
+//      for(CFile oFile : foundFiles)
+////      for(CFile oFile : foundFiles)
+//      {
+//         if(!downloadFiles.contains(oFile))
+//            downloadFiles.add(oFile);
+//      }
+//
+//      _saveFiles();
+//    
+//      updateFilesDwnTable();
+//      tabbedPane.setSelectedIndex(PNL_NDX_DWN);
+//
+//      foundFiles.removeAllElements();
+//      updateFilesFndTable();
+//   }
    
    private void vRemove()
    {
       int[] tiRowNdxs;
-      switch(tabbedPane.getSelectedIndex())
-      {
-         case PNL_NDX_DWN:
+//      switch(tabbedPane.getSelectedIndex())
+//      {
+//         case PNL_NDX_DWN:
             tiRowNdxs = tblFilesDwn.getSelectedRows();
             
             if(tiRowNdxs.length == 0)
-               break;
+               return;
+//            break;
             
 //            for(int i = 0; i < tiRowNdxs.length; i++)
             for(int i = tiRowNdxs.length-1; i >= 0; i--)
@@ -575,20 +522,20 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
             updateFilesDwnTable();
             
             _saveFiles();
-         break;
-         
-         case PNL_NDX_FND:
-            tiRowNdxs = tblFilesUrl.getSelectedRows();
-            
-            if(tiRowNdxs.length == 0)
-               break;
-            
-//            for(int i = 0; i < tiRowNdxs.length; i++)
-            for(int i = tiRowNdxs.length-1; i >= 0; i--)
-               foundFiles.remove(tiRowNdxs[i]);
-            updateFilesFndTable();
-         break;
-      }      
+//         break;
+//         
+//         case PNL_NDX_FND:
+////            tiRowNdxs = tblFilesUrl.getSelectedRows();
+////            
+////            if(tiRowNdxs.length == 0)
+////               break;
+////            
+//////            for(int i = 0; i < tiRowNdxs.length; i++)
+////            for(int i = tiRowNdxs.length-1; i >= 0; i--)
+////               foundFiles.remove(tiRowNdxs[i]);
+////            updateFilesFndTable();
+//         break;
+//      }      
    }
    
    private void vStartStop()
@@ -809,11 +756,11 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
       }
   }
    
-   private void updateFilesFndTable()
-   {
-      fileURLsTableModel.fireTableDataChanged();
-      lblFilesFnd.setText(String.valueOf(foundFiles.size()));
-   }
+//   private void updateFilesFndTable()
+//   {
+//      fileURLsTableModel.fireTableDataChanged();
+//      lblFilesFnd.setText(String.valueOf(foundFiles.size()));
+//   }
    
    private void updateFilesDwnTable()
    {
@@ -857,8 +804,10 @@ public class JDownloaderX extends JFrame implements ActionListener, IDownloader
 //      plugin = PluginFactory.getPlugin("yavka.net");
 //      foundFiles.addAll(plugin.checkContetWithPlugin(sPath, sContents));
       
-      foundFiles.addAll(PluginFactory.checkContetWithPlugins(sPath, sContents));
+//      foundFiles.addAll(PluginFactory.checkContetWithPlugins(sPath, sContents));
+      downloadFiles.addAll(PluginFactory.checkContetWithPlugins(sPath, sContents));
       
-      updateFilesFndTable();
+//      updateFilesFndTable();
+      updateFilesDwnTable();
    }
 }
