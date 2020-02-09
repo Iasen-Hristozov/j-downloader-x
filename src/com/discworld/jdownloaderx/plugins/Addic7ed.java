@@ -24,7 +24,7 @@ public class Addic7ed extends Plugin
    
    
    private final static Pattern ptnTitle = Pattern.compile("<span class=\"titulo\">(.+?)<small>"),
-                                ptnURL = Pattern.compile("((http(s)?:\\/\\/)?(www\\.)?addic7ed.com\\/\\S*)"),
+                                ptnURL = Pattern.compile("((http(s)?:\\/\\/)?(www\\.)?addic7ed\\.com\\/.*?)(\\\"|\\s|<)"),
                                 ptnFileURL = Pattern.compile("href=\\\"(\\/(original|updated)\\/.+?)\\\"");
    
    static 
@@ -37,9 +37,9 @@ public class Addic7ed extends Plugin
       super();
    }
    
-   public Addic7ed(IDownloader oDownloader)
+   public Addic7ed(IDownloader downloader)
    {
-      super(oDownloader);
+      super(downloader);
    }
 
 //   @Override
@@ -68,37 +68,6 @@ public class Addic7ed extends Plugin
       return alURLS;
    }
 
-//   public static ArrayList<String> parseResponse(String sResponse)
-//   {
-//      ArrayList<String> alUrlMovies = new ArrayList<String>();
-//   
-//      Matcher matcher = ptnFileURL.matcher(sResponse);
-//      String sURL;
-//      while(matcher.find())
-//      {
-//         sURL = matcher.group(1);
-//         alUrlMovies.add(sURL);
-//      }
-//   
-//      return alUrlMovies;
-//   }
-   
-//   @Override
-//   protected String getHttpResponse(String sURL,
-//                                    ArrayList<SHttpProperty> alHttpProperties) throws Exception
-//   {
-//      try
-//      {
-//         sURL = convertURLtoUTF8(sURL);
-//      }
-//      catch(Exception e)
-//      {
-//         e.printStackTrace();
-//      }
-//      
-//      return super.getHttpResponse(sURL, alHttpProperties);
-//   }
-
    protected String convertURLtoUTF8(String sURL) throws MalformedURLException,
                                                   URISyntaxException,
                                                   UnsupportedEncodingException
@@ -115,14 +84,9 @@ public class Addic7ed extends Plugin
       ArrayList<CFile> alFilesFound = new ArrayList<CFile>();
 
       sResult = sResult.replace("\n", "");
-//      String sUrl = HTTPS + DOMAIN + getFileUrl(sResult);
       ArrayList<String> alURLs = getFileUrl(sResult);
 
       String sTitle = getTitle(sResult);
-//      sTitle = Normalizer.normalize(sTitle, Normalizer.Form.NFD);
-//      Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-//      sTitle = pattern.matcher(sTitle).replaceAll("");
-//      sTitle = sTitle.replaceAll("[^\\x00-\\x7F]", "");
       for(String sURL: alURLs)
          alFilesFound.add(new CFile(sTitle + File.separator, HTTPS + DOMAIN + sURL));
 
@@ -138,6 +102,12 @@ public class Addic7ed extends Plugin
       new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
    }
 
+   @Override
+   protected void prepareHttpRequestHeader(ArrayList<SHttpProperty> alHttpProperties)
+   {
+      alHttpProperties.add(new SHttpProperty(REQ_PROP_REFERER, HTTPS + DOMAIN));
+   }   
+   
    @Override
    protected void loadSettings()
    {}

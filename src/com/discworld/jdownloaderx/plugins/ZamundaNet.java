@@ -28,7 +28,7 @@ public class ZamundaNet extends MoviePlugin
                                 ptnTorrent = Pattern.compile("/download_go\\.php\\?id=(\\d+)\"[\\s]*>(.+?)</a>"),
                                 ptnMagnetLink = Pattern.compile("/magnetlink/download_go\\.php\\?id=\\d+&m=x"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
-                                ptnImage = Pattern.compile("img border=(\\\")?0(\\\")? src=\\\"(((http(s?):\\/\\/)?(img(\\d)?.)?zamunda.net\\/(pic\\/)?(img(\\d)\\/)?)bitbucket\\/([\\d]+\\/)?(.+?))\\\""),
+                                ptnImage = Pattern.compile("((http(s?):\\/\\/)?(img(\\d)?.)?zamunda.net\\/(pic\\/)?(img(\\d)?\\/)?bitbucket\\/([\\d]+\\/)?(.+?))\\\""),
                                 ptnImage1 = Pattern.compile("img border=(\\\")?0(\\\")? src=\\\"((http:\\/\\/)?i.imgur.com\\/(.+?))\\\""),
                                 ptnDescription = Pattern.compile("<div id=description>(<br \\/><br>)?<div align=center>(?<"+GRP_DESCRIPTION+">[\\S\\s]+?)<div align=center"),
                                 ptnZamundaSubs = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.]+))");
@@ -274,12 +274,12 @@ public class ZamundaNet extends MoviePlugin
       {
          try
          {
-            String sImageTmp = matcher.group(3);
+            String sImageTmp = matcher.group(1);
             
             if(!isValidURI(sImageTmp))
                sImageTmp = URLEncoder.encode(sImageTmp, "UTF-8");
               
-            sImage = matcher.group(3);
+            sImage = matcher.group(1);
          } 
          catch(UnsupportedEncodingException e)
          {

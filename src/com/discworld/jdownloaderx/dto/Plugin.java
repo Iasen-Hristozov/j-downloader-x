@@ -37,6 +37,7 @@ public abstract class Plugin
                                CONTENT_TYPE_APP_RAR = "application/x-rar-compressed",
                                CONTENT_TYPE_APP_DWN = "application/download",
                                CONTENT_TYPE_APP_OCT = "application/octet-stream",
+                               CONTENT_TYPE_TXT_SRT = "text/srt",
                                CONTENT_TYPE_TXT_HTML = "text/html";
    
 
@@ -637,7 +638,8 @@ public abstract class Plugin
          else if(contentType.contains(CONTENT_TYPE_APP_ZIP)
                   || contentType.contains(CONTENT_TYPE_APP_RAR)
                   || contentType.contains(CONTENT_TYPE_APP_DWN)
-                  || contentType.contains(CONTENT_TYPE_APP_OCT))
+                  || contentType.contains(CONTENT_TYPE_APP_OCT)
+                  || contentType.contains(CONTENT_TYPE_TXT_SRT))
          {
             return TYPE_ZIP;
          }
