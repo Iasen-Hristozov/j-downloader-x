@@ -15,8 +15,8 @@ public class SubsSab extends Plugin
    private final static String DOMAIN = "subs.sab.bz";
    
    private final static Pattern ptnTitle = Pattern.compile("<big><.+?>?<.+?>(.+?)<\\/div><\\/big>"),
-                                ptnURL = Pattern.compile("((http(s)?:\\/\\/)?subs.sab.bz\\/index.php\\?act=download&(amp;)?(sid|attach_id)=\\d+)"),
-                                ptnFileURL = Pattern.compile("(((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+(&amp;){1,2})?(act=download&amp;)?(sid=[\\d]+&amp;)?attach_id=.+?))(\\s|\\\")");
+                                ptnURL = Pattern.compile("((http(s)?:\\/\\/)?subs.sab.bz\\/index.php\\?(&(amp;)?)?act=download(&(amp;)?)?(sid=\\d+(&(amp;)?)?)?(attach_id)=\\d+)");
+//                                ptnFileURL = Pattern.compile("(((http:\\/\\/)?(www\\.)?subs\\.sab\\.bz\\/index\\.php\\?(&amp;act=download&amp;)?(s(id)?=[\\d\\w]+(&amp;){1,2})?(act=download&amp;)?(sid=[\\d]+&amp;)?attach_id=.+?))(\\s|\\\")");
    
    static
    {
@@ -67,7 +67,8 @@ public class SubsSab extends Plugin
    @Override
    protected Pattern getFileUrlPattern()
    {
-      return ptnFileURL;
+//      return ptnFileURL;
+      return ptnURL;
    }
    
    @Override

@@ -15,16 +15,18 @@ import com.discworld.jdownloaderx.dto.SHttpProperty;
 public class SubsUnacs extends Plugin
 {
    private final static String DOMAIN = "subsunacs.net",
-                               DWN = "http://subsunacs.net/get.php?id="; 
+                               DWN = "http://subsunacs.net/get.php?id=",
+                               GRP_ID = "id"; 
                                
-   private final static Pattern ptnURL = Pattern.compile("((http(s)?:\\/\\/)?(www\\.)?subsunacs.net\\/(((get|info)\\.php\\?id=\\d+)|(subtitles\\/.+?\\/)))"), 
+   private final static Pattern ptnURL = Pattern.compile("((http(s)?:\\/\\/)?((www|utf)\\.)?subsunacs.net\\/(((get|info)\\.php\\?id=\\d+)|(subtitles\\/.+?\\/)))"), 
                                 ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnFileURL = Pattern.compile("<div id=\"buttonBox\"><a href=\"(.+?)\""),
-                                ptnID = Pattern.compile("http(s?)://(www\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(\\d+)/?");
+                                ptnID = Pattern.compile("http(s?)://((www|utf)\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(?<" + GRP_ID + ">\\d+)/?");
 
    static
    {
       PluginFactory.registerPlugin(DOMAIN, new SubsUnacs(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin("utf.subsunacs.net", new SubsUnacs(DownloaderPassClass.getDownloader()));
    }      
    
    public SubsUnacs()
@@ -61,7 +63,8 @@ public class SubsUnacs extends Plugin
    {
       Matcher oMatcher = ptnID.matcher(file.getURL());
       if(oMatcher.find())
-         file.setURL(DWN + oMatcher.group(7));
+//         file.setURL(DWN + oMatcher.group(7));
+         file.setURL(DWN + oMatcher.group(GRP_ID));
       if(!file.getURL().contains(HTTP) && !file.getURL().contains(HTTPS))
          file.setURL(HTTPS + file.getURL());
       
