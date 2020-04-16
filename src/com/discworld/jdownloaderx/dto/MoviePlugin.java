@@ -280,10 +280,14 @@ public abstract class MoviePlugin extends Plugin
             else
                f = new File(sDownloadFolder + File.separator + file.getName());
             f.getParentFile().mkdirs();
-            File source = new File(saveFilePath);
-            Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            FileOutputStream fos; 
             
+            if(saveFilePath != null)
+            {
+               File source = new File(saveFilePath);
+               Files.move(source.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            FileOutputStream fos; 
             if(oMovie.getMagnet() != null && !oMovie.getMagnet().isEmpty())
             {
                f = new File(sDownloadFolder + File.separator + sFolderName + File.separator + MAGNET_FILE);
@@ -301,7 +305,6 @@ public abstract class MoviePlugin extends Plugin
                fos.write(oMovie.getInfo().getBytes());
                fos.close();
             }
-   
          } 
          else
          {

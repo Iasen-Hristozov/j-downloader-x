@@ -178,25 +178,55 @@ public abstract class Plugin
          try
          {
             int responseCode = httpURLConnection.getResponseCode();
-            if(responseCode == HttpURLConnection.HTTP_OK)
+//            if(responseCode == HttpURLConnection.HTTP_OK)
+//            {
+//               String contentType = httpURLConnection.getContentType();
+//               if(contentType != null && contentType.equalsIgnoreCase(CONTENT_TYPE_TXT_HTML))
+//                  throw new Exception("Wrong content type: " + contentType);
+//               bResult = writeHttpResponseToFile(httpURLConnection);
+//            }
+//            else if(responseCode == HttpURLConnection.HTTP_MOVED_PERM
+//                    || responseCode == HttpURLConnection.HTTP_MOVED_TEMP)
+//            {
+//               String sNewURL = httpURLConnection.getHeaderField(HDR_FLD_LOCATION);
+//               file.setURL(sNewURL);
+//               bResult = getResponse();
+//            }
+//            else if(responseCode == HttpURLConnection.HTTP_NOT_FOUND)
+//            {
+//               bResult = true;
+//            }
+//            else
+//            {
+//               Logger.log("No file to download. Server replied HTTP code: "
+//                        + responseCode);
+//               bResult = false;
+//            }
+            
+            switch(responseCode)
             {
-               String contentType = httpURLConnection.getContentType();
-               if(contentType != null && contentType.equalsIgnoreCase(CONTENT_TYPE_TXT_HTML))
-                  throw new Exception("Wrong content type: " + contentType);
-               bResult = writeHttpResponseToFile(httpURLConnection);
-            }
-            else if(responseCode == HttpURLConnection.HTTP_MOVED_PERM
-                    || responseCode == HttpURLConnection.HTTP_MOVED_TEMP)
-            {
-               String sNewURL = httpURLConnection.getHeaderField(HDR_FLD_LOCATION);
-               file.setURL(sNewURL);
-               bResult = getResponse();
-            }
-            else
-            {
-               Logger.log("No file to download. Server replied HTTP code: "
-                        + responseCode);
-               bResult = false;
+               case HttpURLConnection.HTTP_OK:
+                  String contentType = httpURLConnection.getContentType();
+                  if(contentType != null && contentType.equalsIgnoreCase(CONTENT_TYPE_TXT_HTML))
+                     throw new Exception("Wrong content type: " + contentType);
+                  bResult = writeHttpResponseToFile(httpURLConnection);                  
+               break;
+               
+               case HttpURLConnection.HTTP_MOVED_PERM:
+               case HttpURLConnection.HTTP_MOVED_TEMP:
+                  String sNewURL = httpURLConnection.getHeaderField(HDR_FLD_LOCATION);
+                  file.setURL(sNewURL);
+                  bResult = getResponse();             
+               break;
+               
+               case HttpURLConnection.HTTP_NOT_FOUND:
+                  bResult = true;
+               break;
+               
+               default:
+                  Logger.log("No file to download. Server replied HTTP code: "
+                           + responseCode);
+                  bResult = false;
             }
          }
          catch(Exception e)
@@ -548,7 +578,7 @@ public abstract class Plugin
       Matcher matcher = getUrlPattern().matcher(sContent);
       while(matcher.find())
       {
-         String sURL = matcher.group(1).replaceAll("&amp;", "&");
+         String sURL = matcher.group(1).replace("&amp;", "&");//.replace("%20", " ");
          try
          {
             alFilesFound.addAll(getFilesFromUrl(sPath, alHttpProperties, sURL));
@@ -610,7 +640,7 @@ public abstract class Plugin
       Matcher matcher = getFileUrlPattern().matcher(sHttpResponse);
       while(matcher.find())
       {
-         String sNewURL = matcher.group(1).replaceAll("&amp;", "&");
+         String sNewURL = matcher.group(getFileUrlGroup()).replace("&amp;", "&");
          if(!sNewURL.contains(getDomain()))
             sNewURL = HTTPS + getDomain() + sNewURL;
          alFilesFound.addAll(getFilesFromUrl(sPath, alHttpProperties, sNewURL));
@@ -665,8 +695,13 @@ public abstract class Plugin
    {}
    
    abstract protected Pattern getUrlPattern();
-
+   
    abstract protected Pattern getFileUrlPattern();
+   
+   protected int getFileUrlGroup()
+   {
+      return 1;
+   }   
 
    abstract protected Pattern getTitlePattern();
    
@@ -707,10 +742,9 @@ public abstract class Plugin
    protected ArrayList<String> getFileUrl(String sResult)
    {
       ArrayList<String> alURLs = new ArrayList<String>(); 
-//      String sURL = "";
       Matcher matcher = getFileUrlPattern().matcher(sResult);
       while(matcher.find())
-         alURLs.add(clearUrl(matcher.group(1)));
+         alURLs.add(clearUrl(matcher.group(getFileUrlGroup())));
 //      alURLs.add(matcher.group(1).replaceAll("&amp;", "&"));
 //         sURL = matcher.group(1);
       return alURLs;

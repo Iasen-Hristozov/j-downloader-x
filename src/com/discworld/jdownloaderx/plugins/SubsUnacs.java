@@ -18,9 +18,9 @@ public class SubsUnacs extends Plugin
                                DWN = "http://subsunacs.net/get.php?id=",
                                GRP_ID = "id"; 
                                
-   private final static Pattern ptnURL = Pattern.compile("((http(s)?:\\/\\/)?((www|utf)\\.)?subsunacs.net\\/(((get|info)\\.php\\?id=\\d+)|(subtitles\\/.+?\\/)))"), 
+   private final static Pattern ptnURL = Pattern.compile("((http(s)?:\\/\\/)?((www|utf)\\.)?subsunacs\\.net\\/(((get|info)\\.php\\?id=\\d+)|(subtitles\\/.+?\\/)|(search\\.php\\?[\\w\\%\\-\\;\\=\\&\\s]+)))"), 
                                 ptnTitle = Pattern.compile("<h1>(.+?)</h1>"),
-                                ptnFileURL = Pattern.compile("<div id=\"buttonBox\"><a href=\"(.+?)\""),
+                                ptnFileURL = Pattern.compile("(<td class=\"tdMovie\">|<div id=\"buttonBox\">)<a href=\"(\\/subtitles\\/[\\w\\-]+?\\/)\""),
                                 ptnID = Pattern.compile("http(s?)://((www|utf)\\.)?subsunacs\\.net(/){1,2}((subtitles/.+?-)|(info\\.php\\?id=))(?<" + GRP_ID + ">\\d+)/?");
 
    static
@@ -97,6 +97,12 @@ public class SubsUnacs extends Plugin
    protected Pattern getFileUrlPattern()
    {
       return ptnFileURL;
+   }
+   
+   @Override 
+   protected int getFileUrlGroup() 
+   {
+      return 2;
    }
 
    @Override

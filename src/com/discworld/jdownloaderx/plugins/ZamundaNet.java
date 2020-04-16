@@ -30,8 +30,9 @@ public class ZamundaNet extends MoviePlugin
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
                                 ptnImage = Pattern.compile("((http(s?):\\/\\/)?(img(\\d)?.)?zamunda.net\\/(pic\\/)?(img(\\d)?\\/)?bitbucket\\/([\\d]+\\/)?(.+?))\\\""),
                                 ptnImage1 = Pattern.compile("img border=(\\\")?0(\\\")? src=\\\"((http:\\/\\/)?i.imgur.com\\/(.+?))\\\""),
-                                ptnDescription = Pattern.compile("<div id=description>(<br \\/><br>)?<div align=center>(?<"+GRP_DESCRIPTION+">[\\S\\s]+?)<div align=center"),
-                                ptnZamundaSubs = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.]+))");
+                                ptnDescription = Pattern.compile("<div id=description>(<br \\/><br>)?(<div align=center>)?(?<"+GRP_DESCRIPTION+">[\\S\\s]+?)(</td>|<div align=center|Link<\\/font>)"),
+                                ptnZamundaSubs = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.\\&\\%\\;\\']+))(('|\") )");
+//                              ptnZamundaSubs = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.\\&\\%\\;\\']+))");
    
    public MovieSettings zamundaNetSettings;
 
@@ -101,7 +102,9 @@ public class ZamundaNet extends MoviePlugin
       String sZamundaSubs = "";
       Matcher matcher = ptnZamundaSubs.matcher(sResponse);
       if(matcher.find())
-         sZamundaSubs = matcher.group();
+         sZamundaSubs = matcher.group(1).replace("%20", " ").replace("&amp;", "&");
+      if(!sZamundaSubs.isEmpty() && !sZamundaSubs.contains(HTTP) && !sZamundaSubs.contains(HTTPS))
+         sZamundaSubs = HTTPS + sZamundaSubs;
       return sZamundaSubs;
    }
 
@@ -119,12 +122,12 @@ public class ZamundaNet extends MoviePlugin
    protected String getFilesName()
    {
       String sFilesName;
-      Matcher oMatcher = ptnTitleParts.matcher(sTitle);
-      if(oMatcher.find())
+      Matcher matcher = ptnTitleParts.matcher(sTitle);
+      if(matcher.find())
       {
-         sFilesName = oMatcher.group(1);
-         if(oMatcher.group(3) != null)
-            sFilesName += " " + oMatcher.group(3); 
+         sFilesName = matcher.group(1);
+         if(matcher.group(3) != null)
+            sFilesName += " " + matcher.group(3); 
          sFilesName = sFilesName.trim();
       }
       else
@@ -147,8 +150,8 @@ public class ZamundaNet extends MoviePlugin
           
    protected static boolean isValidURI(String uri)
    {
-      Matcher oMatcher = ptnUri.matcher(uri);
-      return !oMatcher.find();
+      Matcher matcher = ptnUri.matcher(uri);
+      return !matcher.find();
    }
 
    @Override
