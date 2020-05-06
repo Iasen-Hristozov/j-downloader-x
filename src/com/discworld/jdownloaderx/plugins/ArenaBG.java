@@ -11,18 +11,19 @@ import com.discworld.jdownloaderx.dto.IDownloader;
 
 public class ArenaBG extends MoviePlugin
 {
-   public final static String DOMAIN = "arenabg.com",
+   public final static String DOMAIN = "arenabg.ch",
+                              DOMAIN_COM = "arenabg.com",
                               SETTINGS_FILE = "arena_bg.xml", 
                               USER = "Rincewind123",
                               PASSWORD = "suleiman";
 
-   private final static Pattern ptnUrlMovie = Pattern.compile("(http(s)?:\\/\\/?(www\\.)?arenabg.com/[\\w\\d\\-]+?/)"),
+   private final static Pattern ptnUrlMovie = Pattern.compile("(http(s)?:\\/\\/?(www\\.)?arenabg.ch/[\\w\\d\\-]+?/)"),
                                 ptnTorrent = Pattern.compile("/(download|get)/key:.+?/"),
                                 ptnTitle = Pattern.compile("<title>(?<"+GRP_TITLE+">.+?) (\\.\\.\\. )?\u0441\u0432\u0430\u043b\u044f\u043d\u0435</title>"),
                                 ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
-                                ptnImage = Pattern.compile("(?<"+GRP_IMAGE+">http(s)?:\\/\\/cdn.arenabg.com\\/resize\\/500\\/-\\/var\\/assets\\/posters\\/([\\d\\-]\\/)?.+?\\.jpg)"),
+                                ptnImage = Pattern.compile("(?<"+GRP_IMAGE+">http(s)?:\\/\\/cdn.arenabg.(com|ch)\\/resize\\/500\\/-\\/var\\/assets\\/posters\\/([\\d\\-]\\/)?.+?\\.jpg)"),
                                 ptnDescription = Pattern.compile("<div class=\"torrent-text\">(?<"+GRP_DESCRIPTION+">.+?)</div>"),
-                                ptnProtocolDomain = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.com");
+                                ptnProtocolDomain = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.ch");
       
    public MovieSettings arenaBGSettings;
 
@@ -32,6 +33,8 @@ public class ArenaBG extends MoviePlugin
    {
       PluginFactory.registerPlugin(DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
       PluginFactory.registerPlugin("cdn." + DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(DOMAIN_COM, new ArenaBG(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin("cdn." + DOMAIN_COM, new ArenaBG(DownloaderPassClass.getDownloader()));
    }
    
    public ArenaBG()

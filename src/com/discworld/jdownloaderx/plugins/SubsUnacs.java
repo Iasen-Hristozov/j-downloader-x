@@ -26,7 +26,8 @@ public class SubsUnacs extends Plugin
    static
    {
       PluginFactory.registerPlugin(DOMAIN, new SubsUnacs(DownloaderPassClass.getDownloader()));
-      PluginFactory.registerPlugin("utf.subsunacs.net", new SubsUnacs(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin("utf." + DOMAIN, new SubsUnacs(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin(WWW + DOMAIN, new SubsUnacs(DownloaderPassClass.getDownloader()));
    }      
    
    public SubsUnacs()

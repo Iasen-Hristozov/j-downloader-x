@@ -15,7 +15,7 @@ public class Bukvi extends Plugin
    private final static String DOMAIN = "bukvi.";
    
    private final static Pattern ptnTitle = Pattern.compile("<div class=\\\"main-head\\\">(.+?)</div>"),
-                                ptnUrl = Pattern.compile("((http:\\/\\/)?bukvi.bg\\/load\\/\\d+(\\/\\w+)?(/[\\d\\-]+)?)"),
+                                ptnUrl = Pattern.compile("((http:\\/\\/)?bukvi.bg\\/load\\/[\\d\\-]+(\\/\\w+)?(\\/[\\d\\-]+)?)"),
                                 ptnUrlFile = Pattern.compile("<a href=\\\"((http:\\/\\/)?bukvi(.mmcenter)?.bg\\/load\\/[\\d\\-]+)\\\"");
    
    static {
