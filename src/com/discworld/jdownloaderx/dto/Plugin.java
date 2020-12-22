@@ -578,7 +578,8 @@ public abstract class Plugin
       Matcher matcher = getUrlPattern().matcher(sContent);
       while(matcher.find())
       {
-         String sURL = matcher.group(1).replace("&amp;", "&");//.replace("%20", " ");
+         String sURL = matcher.group(1).replace("&amp;", "&")
+                                       .replace("%27", "'");//.replace("%20", " ");
          try
          {
             alFilesFound.addAll(getFilesFromUrl(sPath, alHttpProperties, sURL));

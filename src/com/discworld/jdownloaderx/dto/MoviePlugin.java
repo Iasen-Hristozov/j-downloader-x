@@ -35,7 +35,10 @@ public abstract class MoviePlugin extends Plugin
                                  INFO_FILE = "info.txt",
                                  GRP_TITLE = "title",
                                  GRP_IMAGE = "image",
-                                 GRP_DESCRIPTION = "decription";
+                                 GRP_DESCRIPTION = "description",
+                                 GRP_MAGNET = "magnet",
+                                 GRP_TORRENT = "torrent",
+                                 TORRENT_SUFIX = "torrent";
    
    protected String sFolderName;
    
@@ -71,8 +74,8 @@ public abstract class MoviePlugin extends Plugin
    }
 
    protected String sTitle, 
-                    sTorrent,
-                    sImage,
+                    sTorrentUrl,
+                    sImageUrl,
                     sDescription,
                     sMagnet,
                     sFilesName;
@@ -93,8 +96,8 @@ public abstract class MoviePlugin extends Plugin
    protected String inBackgroundHttpParse(String sURL) throws Exception
    {
       sMagnet = "";
-      sTorrent = "";
-      sImage = "";
+      sTorrentUrl = "";
+      sImageUrl = "";
       sDescription = "";
    
       if(getMovieSettings().sCookieUID == null || 
@@ -110,21 +113,17 @@ public abstract class MoviePlugin extends Plugin
       sTitle = getTitle(sResponse);
 
       if(getMovieSettings().bDownloadTorrent)
-         sTorrent = getTorrentUrl(sURL, sResponse);
+         sTorrentUrl = getTorrentUrl(sURL, sResponse);
 
       if(getMovieSettings().bDownloadMagnet)
          sMagnet = getMagnet(sResponse);
 
       if(getMovieSettings().bDownloadImage)
-         sImage = getImageUrl(sResponse).replace("https", "http");
+         sImageUrl = getImageUrl(sResponse);
 
       if(getMovieSettings().bDownloadDescription)
       {
-         sDescription = getDescription(sResponse).replaceAll("<br[\\s]*/>", "\n")
-                                                 .replace("&nbsp;", " ")
-                                                 .replaceAll("<.*?>", "")
-                                                 .replaceAll("\n\n", "\n")
-                                                 .trim();
+         sDescription = getDescription(sResponse);
       }
 
       if(getMovieSettings().bDownloadSubtitles)
@@ -226,8 +225,10 @@ public abstract class MoviePlugin extends Plugin
       sFilesName = getFilesName();
       
       sFolderName = sTitle.replace("/", "").trim();
-      String sTorrentName = sTorrent.substring(sTorrent.lastIndexOf("/")+1);
-      Movie movie = new Movie(sFolderName + File.separator + sTorrentName, sTorrent, sMagnet, sDescription);
+      String sTorrentName = sTorrentUrl.substring(sTorrentUrl.lastIndexOf("/")+1);
+      if(!sTorrentName.endsWith("." + TORRENT_SUFIX))
+         sTorrentName = sFolderName + "." + TORRENT_SUFIX; 
+      Movie movie = new Movie(sFolderName + File.separator + sTorrentName, sTorrentUrl, sMagnet, sDescription);
       alFilesFound.add(movie);
       
       addImageFile(alFilesFound);
@@ -239,10 +240,10 @@ public abstract class MoviePlugin extends Plugin
 
    protected void addImageFile(ArrayList<CFile> alFilesFound)
    {
-      if(sImage != null && !sImage.isEmpty())
+      if(sImageUrl != null && !sImageUrl.isEmpty())
       {
-         String sExtension =  sImage.substring(sImage.lastIndexOf(".")+1);
-         flImage = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sImage);
+         String sExtension =  sImageUrl.substring(sImageUrl.lastIndexOf(".")+1);
+         flImage = new CFile(sFolderName + File.separator + sFilesName + "." + sExtension, sImageUrl);
          alFilesFound.add(flImage);
       }
    }
@@ -372,7 +373,7 @@ public abstract class MoviePlugin extends Plugin
       Matcher matcher = getMagnetPattern().matcher(sResponse);
       if(matcher.find())
       {
-         sMagnet = matcher.group();
+         sMagnet = matcher.group(GRP_MAGNET);
       }
       return sMagnet;
    }
@@ -383,7 +384,7 @@ public abstract class MoviePlugin extends Plugin
       Matcher matcher = getImageUrlPattern().matcher(sResponse);
       if(matcher.find())
       {
-         sImageUrl = matcher.group(GRP_IMAGE);
+         sImageUrl = matcher.group(GRP_IMAGE).replace("https", "http");
       }
       
       return sImageUrl;
@@ -395,7 +396,12 @@ public abstract class MoviePlugin extends Plugin
       Matcher matcher = getDescriptionPattern().matcher(sResponse);
       if(matcher.find())
       {
-         sDescription = matcher.group(GRP_DESCRIPTION);
+         sDescription = matcher.group(GRP_DESCRIPTION).replaceAll("<br[\\s]*/>", "\n")
+                  .replace("&nbsp;", " ")
+                  .replaceAll("<.*?>", "")
+                  .replaceAll("\n\n", "\n")
+                  .replaceAll("\t", "")
+                  .trim();
       }
       return sDescription;
    }

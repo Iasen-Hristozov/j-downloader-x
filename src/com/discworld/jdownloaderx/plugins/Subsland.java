@@ -12,7 +12,7 @@ public class Subsland extends Plugin
    private final static String DOMAIN = "subsland.com";
    
    private final static Pattern ptnTitle = Pattern.compile("<TITLE>subsland.com - \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438 (.+?)</TITLE>"),
-                                ptnURL = Pattern.compile("((http(s)?:\\/\\/)?subsland\\.com\\/subtitles\\/.+?\\.html)"),
+                                ptnURL = Pattern.compile("((http(s)?:\\/\\/)?subsland\\.com\\/subtitles((\\/.+?\\.html)|(\\.php\\?id=\\d+)))"),
                                 ptnFileURL = Pattern.compile("((http(s)?:\\/\\/)?subsland\\.com\\/downloadsubtitles\\/(.+?)((\\.rar)|(\\.zip)))");
    
    static

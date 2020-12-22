@@ -7,7 +7,7 @@
 	</taskdef>
 
 	<target name="build-all">
-		<for list="Chitanka,ZamundaSe,SubsUnacs,SubsSab,ZamundaNet,ArenaBG,Addic7ed,Subtitrite,Subsland,SlaviShow,Bukvi,EasternSpirit,Yavka" param="plugin-name">
+		<for list="Chitanka,ZamundaSe,SubsUnacs,SubsSab,ZamundaNet,ArenaBG,Addic7ed,Subtitrite,Subsland,SlaviShow,Bukvi,EasternSpirit,Yavka,Picbg,Imgur" param="plugin-name">
 			<sequential>
 				<echo>Plugin @{plugin-name}</echo>
 				<ant antfile="build_plugin.xml">

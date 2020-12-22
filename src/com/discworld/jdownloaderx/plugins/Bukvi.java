@@ -44,12 +44,12 @@ public class Bukvi extends Plugin
    {}
 
    @Override
-   public void downloadFile(CFile oFile, String sDownloadFolder)
+   public void downloadFile(CFile file, String sDownloadFolder)
    {
       ArrayList<SHttpProperty> alHttpProperties = new ArrayList<SHttpProperty>();
-      alHttpProperties.add(new SHttpProperty("Referer", oFile.getURL()));
+      alHttpProperties.add(new SHttpProperty("Referer", file.getURL()));
       
-      new DownloadFileThread(oFile, sDownloadFolder, alHttpProperties).execute();
+      new DownloadFileThread(file, sDownloadFolder, alHttpProperties).execute();
    }
 
    @Override

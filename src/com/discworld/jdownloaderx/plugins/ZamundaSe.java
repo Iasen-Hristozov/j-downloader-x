@@ -20,7 +20,7 @@ public class ZamundaSe extends MoviePlugin
                                 ptnTitle = Pattern.compile("(<h1>)(?<" + GRP_TITLE + ">.+)(<[\\s]*/h1>)"),
                                 ptnTitleParts = Pattern.compile("(.*?)( / .*?)* (\\(\\d+(\\-\\d+)?\\))"),
                                 ptnTorrent = Pattern.compile("(download.php/\\S+\\.(torrent?))"),
-                                ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
+                                ptnMagnet = Pattern.compile("(?<" + GRP_MAGNET + ">magnet:\\?xt=urn:btih:[\\w]*)"),
                                 ptnImage = Pattern.compile("<img border=\\\"0\\\" src=\\\"(?<"+GRP_IMAGE+">.+?)\\\">"),
                                 ptnDescription = Pattern.compile("(\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435)(?<"+GRP_DESCRIPTION+">.*?)((\u0421\u0432\u0430\u043b\u0438 \u0421\u0443\u0431\u0442\u0438\u0442\u0440\u0438)|(NFO))"),
                                 ptnZelkasubs = Pattern.compile("(<a href=)((http://)?(www\\.)?((zelka.org)|(zamunda.se))/getsubs.php/(.+?))( target=_blank)?>");

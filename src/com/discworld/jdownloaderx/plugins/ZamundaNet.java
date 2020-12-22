@@ -22,16 +22,16 @@ public class ZamundaNet extends MoviePlugin
                               USER = "Rincewind123",
                               PASSWORD = "suleiman";
 
-   private final static Pattern ptnURL = Pattern.compile("((http(s?):\\/\\/)?(www.)?zamunda\\.net/banan\\?id=\\d+)"),
-                                ptnTitle = Pattern.compile("<h1(.*?)>(?<"+GRP_TITLE+">.*?)<\\/.*?>"),
+   private final static Pattern ptnURL = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/banan\\?id=\\d+)"),
+                                ptnTitle = Pattern.compile("<h1(.*?)>(?<" + GRP_TITLE + ">.*?)<\\/.*?>"),
                                 ptnTitleParts = Pattern.compile("^(.+?)(\\/.+?)*(\\(\\d+(\\-\\d+)?\\))?([ ]?\\[.+?\\])?$"),
                                 ptnTorrent = Pattern.compile("/download_go\\.php\\?id=(\\d+)\"[\\s]*>(.+?)</a>"),
                                 ptnMagnetLink = Pattern.compile("/magnetlink/download_go\\.php\\?id=\\d+&m=x"),
-                                ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
+                                ptnMagnet = Pattern.compile("(?<" + GRP_MAGNET + ">magnet:\\?xt=urn:btih:[\\w]*)"),
                                 ptnImage = Pattern.compile("((http(s?):\\/\\/)?(img(\\d)?.)?zamunda.net\\/(pic\\/)?(img(\\d)?\\/)?bitbucket\\/([\\d]+\\/)?(.+?))\\\""),
-                                ptnImage1 = Pattern.compile("img border=(\\\")?0(\\\")? src=\\\"((http:\\/\\/)?i.imgur.com\\/(.+?))\\\""),
-                                ptnDescription = Pattern.compile("<div id=description>(<br \\/><br>)?(<div align=center>)?(?<"+GRP_DESCRIPTION+">[\\S\\s]+?)(</td>|<div align=center|Link<\\/font>)"),
-                                ptnZamundaSubs = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.\\&\\%\\;\\']+))(('|\") )");
+                                ptnImage1 = Pattern.compile("img border=(\")?0(\")? src=\"((http(s)?:\\/\\/)?i.imgur.com\\/(.+?))\\\""),
+                                ptnDescription = Pattern.compile("<div id=description>(<br \\/><br>)?((\\s)*<div align=center>)?(?<"+GRP_DESCRIPTION+">[\\S\\s]+?)(<\\/td>|<div align=center|Link<\\/font>)"),
+                                ptnZamundaSubs = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.\\&\\%\\;\\'\\)\\(\\+]+))(('|\\\") )");
 //                              ptnZamundaSubs = Pattern.compile("((http(s?):\\/\\/)?(www\\.)?zamunda\\.net\\/getsubs\\.php\\/([\\w\\-\\.\\&\\%\\;\\']+))");
    
    public MovieSettings zamundaNetSettings;

@@ -15,8 +15,10 @@ public class Yavka extends Plugin
    private final static String DOMAIN = "yavka.net";
                                
    private final static Pattern ptnTitle = Pattern.compile("<h1>.*&nbsp;(.+?)<\\/h1>"),
-                                ptnURL = Pattern.compile("((http(s)?:\\/\\/)yavka.net\\/subs\\/\\d+\\/\\w{1,3})"),
-                                ptnFileURL = Pattern.compile("((http(s)?:\\/\\/)yavka.net\\/subs\\/\\d+\\/\\w{1,3}\\/)");
+                                ptnURL = Pattern.compile("(((http(s)?:\\/\\/)yavka\\.net)?\\/((subs\\/\\d+\\/\\w{1,3})|(subtitles\\.php\\?s=[\\w\\+\\&\\;\\=]+)))"),
+                                ptnFileURL = Pattern.compile("\\\"(((http(s)?:\\/\\/)yavka\\.net\\/subs\\/\\d+\\/\\w{1,3}\\/)|(\\/subs\\/\\d+\\/\\w{1,3}))\\\"");
+//                                ptnFileURL = Pattern.compile("(\\\"((http(s)?:\\/\\/)yavka\\.net\\/subs\\/\\d+\\/\\w{1,3}\\/)\\\")|(\\\"(\\/subs\\/\\d+\\/\\w{1,3})\\\")");
+   
 
    static
    {
@@ -81,5 +83,11 @@ public class Yavka extends Plugin
    public boolean isForCheck()
    {
       return true;
+   }
+
+   @Override
+   protected int getFileUrlGroup()
+   {
+      return 1;
    }
 }

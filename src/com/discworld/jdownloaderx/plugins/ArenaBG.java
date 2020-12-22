@@ -11,19 +11,19 @@ import com.discworld.jdownloaderx.dto.IDownloader;
 
 public class ArenaBG extends MoviePlugin
 {
-   public final static String DOMAIN = "arenabg.ch",
-                              DOMAIN_COM = "arenabg.com",
+   public final static String DOMAIN_CH = "arenabg.ch",
+                              DOMAIN = "arenabg.com",
                               SETTINGS_FILE = "arena_bg.xml", 
                               USER = "Rincewind123",
                               PASSWORD = "suleiman";
-
-   private final static Pattern ptnUrlMovie = Pattern.compile("(http(s)?:\\/\\/?(www\\.)?arenabg.ch/[\\w\\d\\-]+?/)"),
-                                ptnTorrent = Pattern.compile("/(download|get)/key:.+?/"),
-                                ptnTitle = Pattern.compile("<title>(?<"+GRP_TITLE+">.+?) (\\.\\.\\. )?\u0441\u0432\u0430\u043b\u044f\u043d\u0435</title>"),
-                                ptnMagnet = Pattern.compile("magnet:\\?xt=urn:btih:[\\w]*"),
-                                ptnImage = Pattern.compile("(?<"+GRP_IMAGE+">http(s)?:\\/\\/cdn.arenabg.(com|ch)\\/resize\\/500\\/-\\/var\\/assets\\/posters\\/([\\d\\-]\\/)?.+?\\.jpg)"),
-                                ptnDescription = Pattern.compile("<div class=\"torrent-text\">(?<"+GRP_DESCRIPTION+">.+?)</div>"),
-                                ptnProtocolDomain = Pattern.compile("(http(s)?://)?(www\\.)?arenabg.ch");
+   
+   private final static Pattern ptnUrlMovie = Pattern.compile("(http(s)?:\\/\\/?(www\\.)?arenabg\\.(ch|com)\\/bg\\/torrents\\/[\\w\\d\\-]+?\\/)"),
+                                ptnTorrent = Pattern.compile("\\\"(?<" + GRP_TORRENT + ">\\/bg\\/torrents\\/(download|get)\\/\\?key=.+?)\\\""),
+                                ptnTitle = Pattern.compile("<h1>(?<" + GRP_TITLE + ">.+?)<\\/h1>"),
+                                ptnMagnet = Pattern.compile("\\\"(?<" + GRP_MAGNET + ">magnet:\\?xt=urn:btih:.*?)\\\""),
+                                ptnImage = Pattern.compile("(?<" + GRP_IMAGE + ">http(s)?:\\/\\/cdn\\.arenabg\\.(com|ch)\\/var\\/torrents(\\/[\\d\\-]+)?\\/(\\w+)\\/.+?\\.jpg)"),
+                                ptnDescription = Pattern.compile("<div class=\\\"card-body border-left border-right border-bottom p-3\\\">(?<" + GRP_DESCRIPTION + ">[\\S\\s]+?)<\\/div>"),
+                                ptnProtocolDomain = Pattern.compile("(http(s)?://)?(www\\.)?arenabg\\.(ch|com)");
       
    public MovieSettings arenaBGSettings;
 
@@ -31,10 +31,10 @@ public class ArenaBG extends MoviePlugin
 
    static
    {
+      PluginFactory.registerPlugin(DOMAIN_CH, new ArenaBG(DownloaderPassClass.getDownloader()));
+      PluginFactory.registerPlugin("cdn." + DOMAIN_CH, new ArenaBG(DownloaderPassClass.getDownloader()));
       PluginFactory.registerPlugin(DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
       PluginFactory.registerPlugin("cdn." + DOMAIN, new ArenaBG(DownloaderPassClass.getDownloader()));
-      PluginFactory.registerPlugin(DOMAIN_COM, new ArenaBG(DownloaderPassClass.getDownloader()));
-      PluginFactory.registerPlugin("cdn." + DOMAIN_COM, new ArenaBG(DownloaderPassClass.getDownloader()));
    }
    
    public ArenaBG()
@@ -97,17 +97,17 @@ public class ArenaBG extends MoviePlugin
 
    protected String getTorrentUrl(String sURL, String sResponse)
    {
-      String sTorrent = "";
+      String sTorrentUrl = "";
       Matcher matcher = ptnProtocolDomain.matcher(sURL);
       String sProtocolDomain = "";
       if(matcher.find())
          sProtocolDomain = matcher.group();
       else
-         sProtocolDomain = HTTP + DOMAIN; 
+         sProtocolDomain = HTTP + DOMAIN_CH; 
       matcher = ptnTorrent.matcher(sResponse);
       if(matcher.find())
-         sTorrent = sProtocolDomain + matcher.group();
-      return sTorrent;
+         sTorrentUrl = sProtocolDomain + matcher.group(GRP_TORRENT);
+      return sTorrentUrl;
    }
 
    @Override
@@ -143,13 +143,13 @@ public class ArenaBG extends MoviePlugin
    @Override
    public String getDomain()
    {
-      return DOMAIN;
+      return DOMAIN_CH;
    }
    
    @Override
    protected String getLoginUrl()
    {
-      return HTTPS + WWW + DOMAIN + "users/login/";
+      return HTTPS + WWW + DOMAIN_CH + "users/login/";
    }
 
    @Override
@@ -161,7 +161,7 @@ public class ArenaBG extends MoviePlugin
    @Override
    protected String getReferer()
    {
-      return HTTPS + WWW + DOMAIN;
+      return HTTPS + WWW + DOMAIN_CH;
    }
 
    @Override
