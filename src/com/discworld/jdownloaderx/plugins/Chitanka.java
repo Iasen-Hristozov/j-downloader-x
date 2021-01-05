@@ -30,7 +30,7 @@ public class Chitanka extends Plugin
    private final static int MAX_FILE_LEN = 90;
    private final static String 
           DOMAIN = "chitanka.info",
-          URL_DWN_BGN = "http://" + DOMAIN,
+          URL_DWN_BGN = "https://" + DOMAIN,
           EXT_FB2 = ".fb2",
           EXT_EPUB = ".epub",
           EXT_SFB = ".sfb",
@@ -38,9 +38,10 @@ public class Chitanka extends Plugin
           EXT_PDF = ".pdf",
           EXT_DJVU = ".djvu",
           EXTS[] = {EXT_FB2, EXT_EPUB, EXT_TXT, EXT_SFB, EXT_PDF, EXT_DJVU},
-          URL = "<a href=\"(/(book|text)/[\\d\\w\\-\\.]+)\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 %1$s\" class=\"(btn btn-default )?dl dl-%2$s action\"><span( class=\"sr-only\")?>%1$s</span>";
+//          URL = "<a href=\"(/(book|text)/[\\d\\w\\-\\.]+)\" title=\"\u0421\u0432\u0430\u043b\u044f\u043d\u0435 \u0432\u044a\u0432 \u0444\u043e\u0440\u043c\u0430\u0442 %1$s\" class=\"(btn btn-default )?dl dl-%2$s action\"><span( class=\"sr-only\")?>%1$s</span>";
+          URL = "<a href=\\\"(\\/(book|text)\\/[\\d\\w\\-\\.]+)\\\" title=\\\"\\u0421\\u0432\\u0430\\u043b\\u044f\\u043d\\u0435 \\u0432\\u044a\\u0432 \\u0444\\u043e\\u0440\\u043c\\u0430\\u0442 %1$s\\\" class=\\\"(btn btn-default )?dl dl-%2$s action \\\"><span( class=\\\"sr-only\\\")?>%1$s<\\/span>";
 
-   private final static Pattern ptnAuthor = Pattern.compile("<span itemscope itemtype=\"http://schema\\.org/Person\"><a href=\"/person/[\\w\\-]+\" itemprop=\"name\" data-edit=\"/admin/person/\\d+/edit\">(.+?)</a></span>"),
+   private final static Pattern ptnAuthor = Pattern.compile("<span itemscope itemtype=\\\"http:\\/\\/schema\\.org\\/Person\\\"><a href=\\\"\\/person\\/[\\w\\-]+\\\" itemprop=\\\"name\\\" data-edit=\\\"\\/admin\\/person\\/\\d+\\/edit\\\">(.+?)<\\/a><\\/span>"),
                                 ptnAuthorTitle = Pattern.compile("<h1>(.+?)</h1>"),
                                 ptnTitle = Pattern.compile("<a class=\"selflink\" itemprop=\"name\" data-edit=\"/admin/(book|text)/\\d+/edit\">(.+?)</a>"),
                                 ptnVolume = Pattern.compile("<h2><span>(.+?)</span></h2>"),
